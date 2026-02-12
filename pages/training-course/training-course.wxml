@@ -1,0 +1,31 @@
+<view class="container">
+  <!-- 进度提示 -->
+  <view class="progress-tip">
+    <text class="tip-text">已完成 {{completedCourses.length}}/{{courses.length}} 个教程</text>
+  </view>
+
+  <!-- 教程列表 -->
+  <view class="course-list" wx:if="{{courses.length > 0}}">
+    <view class="course-item" wx:for="{{courses}}" wx:key="id">
+      <view class="course-icon">{{item.type === 'video' ? '📹' : '📄'}}</view>
+      <view class="course-info">
+        <text class="course-title">{{item.title}}</text>
+        <text class="course-status">{{completedCourses.includes(item.id) ? '✅ 已完成' : '⏳ 未完成'}}</text>
+      </view>
+      <button class="view-btn" bindtap="viewCourse" data-id="{{item.id}}">学习</button>
+    </view>
+  </view>
+
+  <!-- 空状态 -->
+  <view class="empty-tip" wx:else>
+    <text>暂无培训教程</text>
+  </view>
+
+  <!-- 考试按钮 -->
+  <button class="exam-btn {{canTakeExam ? '' : 'disabled'}}" bindtap="goToExam">
+    {{canTakeExam ? '参加考试' : '完成所有教程后可参加考试'}}
+  </button>
+
+  <!-- 跳过按钮 -->
+  <button class="skip-btn" bindtap="skipToHome">跳过培训，直接进入主页</button>
+</view>

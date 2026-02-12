@@ -1,0 +1,52 @@
+<view class="container">
+  <!-- 考试基本信息 -->
+  <view class="section">
+    <view class="section-title">考试信息</view>
+    <view class="form-item">
+      <text class="label">考试标题</text>
+      <input class="input" placeholder="请输入考试标题" value="{{examTitle}}" bindinput="onTitleInput" />
+    </view>
+    <view class="form-item">
+      <text class="label">及格分数</text>
+      <input class="input" type="number" placeholder="60" value="{{passScore}}" bindinput="onPassScoreInput" />
+    </view>
+  </view>
+
+  <!-- 题目列表 -->
+  <view class="section">
+    <view class="section-header">
+      <text class="section-title">题目列表 ({{questions.length}}题)</text>
+      <button class="add-btn" bindtap="addQuestion">+ 添加题目</button>
+    </view>
+
+    <view class="question-list">
+      <view class="question-item" wx:for="{{questions}}" wx:key="id" wx:for-index="qindex">
+        <view class="question-header">
+          <text class="question-number">第{{qindex + 1}}题</text>
+          <button class="delete-btn" bindtap="deleteQuestion" data-index="{{qindex}}">删除</button>
+        </view>
+
+        <view class="form-item">
+          <text class="label">题目内容</text>
+          <textarea class="textarea" placeholder="请输入题目内容" value="{{item.question}}" bindinput="onQuestionInput" data-index="{{qindex}}" />
+        </view>
+
+        <view class="options-section">
+          <text class="label">选项</text>
+          <view class="option-item" wx:for="{{item.options}}" wx:key="*this" wx:for-index="oindex" wx:for-item="option">
+            <view class="option-header">
+              <text class="option-label">{{['A', 'B', 'C', 'D'][oindex]}}</text>
+              <radio checked="{{item.correctAnswer === oindex}}" bindtap="setCorrectAnswer" data-qindex="{{qindex}}" data-oindex="{{oindex}}" />
+            </view>
+            <input class="input" placeholder="请输入选项内容" value="{{option}}" bindinput="onOptionInput" data-qindex="{{qindex}}" data-oindex="{{oindex}}" />
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 保存按钮 -->
+  <view class="bottom-section">
+    <button class="save-btn" bindtap="saveExam">保存考试</button>
+  </view>
+</view>

@@ -1,0 +1,136 @@
+<view class="container">
+  <!-- 月份切换头部 -->
+  <view class="calendar-header">
+    <view class="header-left">
+      <text class="month-title">{{currentYear}}年 {{currentMonth}}月</text>
+    </view>
+    <view class="header-right">
+      <view class="nav-btn" bindtap="prevMonth">
+        <text class="nav-icon">‹</text>
+      </view>
+      <view class="today-btn" bindtap="goToToday">今天</view>
+      <view class="nav-btn" bindtap="nextMonth">
+        <text class="nav-icon">›</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 星期标题 -->
+  <view class="weekdays">
+    <view class="weekday" wx:for="{{weekDays}}" wx:key="index">{{item}}</view>
+  </view>
+
+  <!-- 日历网格 -->
+  <view class="calendar-grid">
+    <view class="calendar-day {{item.isToday ? 'today' : ''}} {{item.isSelected ? 'selected' : ''}} {{item.day ? '' : 'empty'}}"
+          wx:for="{{generateCalendarDays()}}"
+          wx:key="index"
+          bindtap="onSelectDate"
+          data-date="{{item.dateStr}}">
+      <view class="day-content" wx:if="{{item.day}}">
+        <text class="day-number">{{item.day}}</text>
+        <!-- 预约内容显示 -->
+        <view class="day-appointments" wx:if="{{item.appointments && item.appointments.length > 0}}">
+          <view class="apt-mini" wx:for="{{item.appointments}}" wx:for-item="apt" wx:for-index="idx" wx:key="id" wx:if="{{idx < 2}}">
+            <text class="apt-time-mini">{{apt.timeSlot}}</text>
+            <text class="apt-name-mini">{{userType === 'disabled' ? apt.volunteerName : apt.blindName}}</text>
+          </view>
+          <text class="apt-more" wx:if="{{item.appointments.length > 2}}">+{{item.appointments.length - 2}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 选中日期信息 -->
+  <view class="selected-date-section" wx:if="{{selectedDate}}">
+    <view class="section-header">
+      <text class="section-title">{{selectedDate}}</text>
+      <view class="add-appointment-btn" bindtap="showBookingModal" wx:if="{{userType === 'disabled'}}">
+        <text class="add-icon">+</text>
+        <text>预约</text>
+      </view>
+    </view>
+
+    <!-- 预约列表 -->
+    <view class="appointment-list" wx:if="{{selectedAppointments.length > 0}}">
+      <view class="appointment-item" wx:for="{{selectedAppointments}}" wx:key="id">
+        <view class="apt-time">
+          <text class="time-icon">🕐</text>
+          <text class="time-text">{{item.timeSlot}}</text>
+        </view>
+
+        <view class="apt-content">
+          <view class="apt-user">
+            <text class="user-icon">{{userType === 'disabled' ? '👤' : '👁️'}}</text>
+            <text class="user-name">{{userType === 'disabled' ? item.volunteerName : item.blindName}}</text>
+          </view>
+          <view class="apt-status {{item.status}}">
+            <text class="status-text">{{item.status === 'pending' ? '待确认' : item.status === 'confirmed' ? '已确认' : '已完成'}}</text>
+          </view>
+        </view>
+
+        <view class="apt-actions">
+          <view class="action-btn call-btn" bindtap="makePhoneCall" data-phone="{{userType === 'disabled' ? item.volunteerPhone : item.blindPhone}}">
+            <text class="btn-icon">📞</text>
+          </view>
+          <view class="action-btn complete-btn" bindtap="completeAppointment" data-id="{{item.id}}" wx:if="{{userType === 'volunteer' && item.status !== 'completed'}}">
+            <text class="btn-icon">✓</text>
+          </view>
+          <view class="action-btn cancel-btn" bindtap="cancelAppointment" data-id="{{item.id}}" wx:if="{{item.status === 'pending'}}">
+            <text class="btn-icon">✕</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 空状态 -->
+    <view class="empty-state" wx:if="{{selectedAppointments.length === 0}}">
+      <text class="empty-icon">📅</text>
+      <text class="empty-text">当天暂无预约</text>
+    </view>
+  </view>
+</view>
+
+<!-- 预约弹窗 -->
+<view class="modal-mask" wx:if="{{showBookingModal}}" bindtap="closeBookingModal"></view>
+<view class="booking-modal" wx:if="{{showBookingModal}}">
+  <view class="modal-header">
+    <text class="modal-title">预约陪跑</text>
+    <view class="modal-close" bindtap="closeBookingModal">✕</view>
+  </view>
+
+  <view class="modal-body">
+    <view class="booking-date">
+      <text class="label">预约日期</text>
+      <text class="value">{{bookingDate}}</text>
+    </view>
+
+    <view class="time-slots-section">
+      <text class="label">选择时间段</text>
+      <view class="time-slots">
+        <view class="time-slot {{selectedTimeSlot === item ? 'active' : ''}}"
+              wx:for="{{timeSlots}}"
+              wx:key="index"
+              bindtap="onSelectTimeSlot"
+              data-time="{{item}}">
+          <text class="slot-icon">🕐</text>
+          <text class="slot-text">{{item}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="remark-section">
+      <text class="label">备注说明（选填）</text>
+      <textarea class="remark-input"
+                placeholder="请填写特殊需求..."
+                value="{{remark}}"
+                bindinput="onRemarkInput"
+                maxlength="200"></textarea>
+    </view>
+  </view>
+
+  <view class="modal-footer">
+    <view class="cancel-btn" bindtap="closeBookingModal">取消</view>
+    <view class="confirm-btn" bindtap="confirmBooking">选择志愿者</view>
+  </view>
+</view>

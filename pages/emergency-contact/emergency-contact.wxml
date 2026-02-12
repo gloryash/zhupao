@@ -1,0 +1,115 @@
+<view class="emergency-contact-container">
+  <!-- 标题 -->
+  <view class="header-section">
+    <text class="header-title">紧急联系人</text>
+    <text class="header-desc">紧急情况可快速联系，请务必填写</text>
+  </view>
+
+  <!-- 已有紧急联系人显示 -->
+  <view class="existing-contact" wx:if="{{hasEmergencyContact}}">
+    <view class="contact-card">
+      <view class="contact-avatar">
+        <text class="avatar-icon">👤</text>
+      </view>
+      <view class="contact-info">
+        <view class="contact-name-row">
+          <text class="contact-name">{{emergencyName}}</text>
+          <text class="contact-relation">{{emergencyRelation}}</text>
+        </view>
+        <text class="contact-phone">{{emergencyPhone}}</text>
+      </view>
+      <view class="contact-actions">
+        <view class="call-btn" bindtap="callEmergency">
+          <text class="call-icon">📞</text>
+          <text class="call-text">拨打</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 修改/删除按钮 -->
+    <view class="action-btns">
+      <button class="edit-btn" bindtap="deleteEmergencyContact">删除联系人</button>
+    </view>
+  </view>
+
+  <!-- 添加/编辑紧急联系人表单 -->
+  <view class="form-section">
+    <view class="form-card">
+      <!-- 紧急联系人姓名 -->
+      <view class="form-item">
+        <view class="form-label">
+          <text class="label-icon">👤</text>
+          <text class="label-text">姓名</text>
+          <text class="required">*</text>
+        </view>
+        <input class="form-input" placeholder="请输入紧急联系人姓名" value="{{emergencyName}}" bindinput="onNameInput" />
+      </view>
+
+      <!-- 紧急联系人电话 -->
+      <view class="form-item">
+        <view class="form-label">
+          <text class="label-icon">📱</text>
+          <text class="label-text">手机号</text>
+          <text class="required">*</text>
+        </view>
+        <input class="form-input" type="number" placeholder="请输入手机号" value="{{emergencyPhone}}" bindinput="onPhoneInput" />
+      </view>
+
+      <!-- 与本人关系 -->
+      <view class="form-item">
+        <view class="form-label">
+          <text class="label-icon">👥</text>
+          <text class="label-text">与本人关系</text>
+        </view>
+        <picker mode="selector" range="{{relations}}" bindchange="onRelationChange">
+          <view class="picker-value">
+            <text>{{relations[relationIndex]}}</text>
+            <text class="picker-arrow">></text>
+          </view>
+        </picker>
+      </view>
+
+      <!-- 备注 -->
+      <view class="form-item notes-item">
+        <view class="form-label">
+          <text class="label-icon">📝</text>
+          <text class="label-text">备注</text>
+        </view>
+        <textarea class="form-textarea" placeholder="特殊情况说明（如：何时方便接听、是否有特殊疾病等）" value="{{notes}}" bindinput="onNotesInput" />
+      </view>
+    </view>
+
+    <!-- 安全提示 -->
+    <view class="safety-tip">
+      <text class="tip-icon">🔒</text>
+      <text class="tip-text">您的紧急联系人信息仅用于紧急情况联系，不会公开显示</text>
+    </view>
+
+    <!-- 保存按钮 -->
+    <button class="save-btn" bindtap="saveEmergencyContact">{{hasEmergencyContact ? '更新信息' : '保存紧急联系人'}}</button>
+  </view>
+
+  <!-- 紧急求助说明 -->
+  <view class="help-section">
+    <view class="help-card">
+      <view class="help-header">
+        <text class="help-icon">🚨</text>
+        <text class="help-title">紧急情况求助</text>
+      </view>
+      <view class="help-content">
+        <view class="help-item">
+          <text class="help-num">1</text>
+          <text class="help-text">运动过程中遇到紧急情况</text>
+        </view>
+        <view class="help-item">
+          <text class="help-num">2</text>
+          <text class="help-text">点击"我的-紧急联系人"快速拨打</text>
+        </view>
+        <view class="help-item">
+          <text class="help-num">3</text>
+          <text class="help-text">也可直接拨打110或120求助</text>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>

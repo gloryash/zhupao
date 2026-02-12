@@ -1,0 +1,9 @@
+{
+  "name": "handleVolunteer",
+  "version": "1.0.0",
+  "description": "志愿者相关操作：列表、可用性、常联系人",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

@@ -1,0 +1,1244 @@
+/* 页面容器 - 渐变活力橙色主题 + 呼吸感背景 */
+.home-container {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #FFF8F0 0%, #FFFFFF 100%);
+  padding: 0 30rpx 180rpx;
+}
+
+/* 顶部导航栏 */
+.top-nav {
+  display: flex;
+  justify-content: flex-end;
+  padding: 30rpx 0;
+}
+
+.home-btn {
+  display: flex;
+  align-items: center;
+  background: #fff;
+  padding: 16rpx 28rpx;
+  border-radius: 30rpx;
+  box-shadow: 0 4rpx 20rpx rgba(255, 140, 0, 0.1);
+  transition: all 0.2s ease;
+}
+
+.home-btn:active {
+  transform: scale(0.95);
+}
+
+.home-icon {
+  font-size: 32rpx;
+  margin-right: 8rpx;
+}
+
+.home-text {
+  font-size: 26rpx;
+  color: #FF6B00;
+}
+
+/* 切换角色按钮 */
+.switch-role-btn {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  background: linear-gradient(135deg, #FF8C00 0%, #FF4500 100%);
+  padding: 16rpx 28rpx;
+  border-radius: 30rpx;
+  box-shadow: 0 4rpx 20rpx rgba(255, 69, 0, 0.25);
+  margin-left: 16rpx;
+  transition: all 0.2s ease;
+}
+
+.switch-role-btn:active {
+  transform: scale(0.95);
+  box-shadow: 0 2rpx 12rpx rgba(255, 69, 0, 0.35);
+}
+
+.switch-icon {
+  font-size: 28rpx;
+}
+
+.switch-text {
+  font-size: 24rpx;
+  color: #fff;
+  font-weight: 500;
+}
+
+/* ==================== 1. 顶部：个人名片区 ==================== */
+.profile-section {
+  padding-top: 40rpx;
+  margin-bottom: 30rpx;
+}
+
+.profile-card {
+  background: #fff;
+  border-radius: 24rpx;
+  padding: 40rpx;  /* 40rpx 内边距 */
+  box-shadow: 0 10rpx 40rpx rgba(255, 69, 0, 0.1);  /* 商业级阴影 */
+  transition: all 0.3s ease;
+}
+
+.profile-card:active {
+  transform: scale(0.98);
+  box-shadow: 0 6rpx 30rpx rgba(255, 69, 0, 0.15);
+}
+
+.profile-header {
+  display: flex;
+  gap: 28rpx;
+}
+
+.avatar-wrapper {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.avatar,
+.avatar-placeholder {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 50%;
+  overflow: hidden;
+}
+
+.avatar {
+  background: linear-gradient(135deg, #FF8C00 0%, #FF4500 100%);
+}
+
+.avatar-img {
+  width: 100%;
+  height: 100%;
+}
+
+.avatar-placeholder {
+  background: linear-gradient(135deg, #FF8C00 0%, #FF4500 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.avatar-emoji {
+  font-size: 56rpx;
+  color: #fff;
+}
+
+.role-indicator {
+  position: absolute;
+  bottom: -8rpx;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, #FF8C00 0%, #FF4500 100%);
+  color: #fff;
+  font-size: 20rpx;
+  padding: 6rpx 18rpx;
+  border-radius: 20rpx;
+  white-space: nowrap;
+  box-shadow: 0 2rpx 10rpx rgba(255, 140, 0, 0.3);
+}
+
+.role-indicator.disabled {
+  background: linear-gradient(135deg, #FFA500 0%, #FF8C00 100%);
+}
+
+.profile-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.name-row {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  margin-bottom: 10rpx;
+}
+
+.user-name {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+/* ==================== 段位徽章样式 ==================== */
+.tier-badge {
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+  padding: 8rpx 20rpx;
+  border-radius: 30rpx;
+  position: relative;
+  overflow: hidden;
+}
+
+/* 胶囊背景 - 橙色到金色微渐变 */
+.tier-badge-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, #FF8C00 0%, #FFA500 50%, #FFD700 100%);
+  border-radius: 30rpx;
+  box-shadow: 0 2rpx 12rpx rgba(255, 140, 0, 0.3);
+}
+
+.tier-icon {
+  font-size: 28rpx;
+  position: relative;
+  z-index: 1;
+}
+
+.tier-name {
+  font-size: 24rpx;
+  font-weight: bold;
+  color: #fff;
+  text-shadow: 0 1rpx 2rpx rgba(0, 0, 0, 0.2);
+  position: relative;
+  z-index: 1;
+}
+
+/* 闪烁光效动画 */
+.tier-sparkle {
+  position: absolute;
+  top: 50%;
+  right: 8rpx;
+  width: 8rpx;
+  height: 8rpx;
+  background: #FFF;
+  border-radius: 50%;
+  transform: translateY(-50%);
+  box-shadow: 0 0 6rpx #FFF, 0 0 12rpx #FFD700;
+  animation: sparkle 2s ease-in-out infinite;
+  opacity: 0.8;
+}
+
+@keyframes sparkle {
+  0%, 100% {
+    opacity: 0.4;
+    box-shadow: 0 0 4rpx #FFF;
+  }
+  50% {
+    opacity: 1;
+    box-shadow: 0 0 8rpx #FFF, 0 0 16rpx #FFD700;
+  }
+}
+
+/* ==================== 段位进度条样式 ==================== */
+.tier-progress {
+  margin-top: 20rpx;
+}
+
+.progress-bar {
+  height: 16rpx;
+  background: #F0F0F0;
+  border-radius: 8rpx;
+  overflow: hidden;
+  position: relative;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #FF8C00 0%, #FFA500 50%, #FF4500 100%);
+  border-radius: 8rpx;
+  transition: width 0.5s ease-in-out;
+  position: relative;
+  box-shadow: 0 0 10rpx rgba(255, 140, 0, 0.3);
+  animation: progressGrow 1s ease-in-out forwards;
+}
+
+@keyframes progressGrow {
+  from { width: 0; }
+}
+
+/* 进度条发光效果 */
+.progress-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.4) 50%,
+    transparent 100%);
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.progress-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 10rpx;
+}
+
+.progress-text {
+  font-size: 24rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+.next-level {
+  font-size: 24rpx;
+  color: #FF6B00;
+  font-weight: 500;
+}
+
+.max-level {
+  font-size: 24rpx;
+  color: #FF8C00;
+  font-weight: 500;
+}
+
+/* ==================== 志愿者接单按钮 ==================== */
+.take-order-section {
+  padding: 20rpx 30rpx;
+  margin-bottom: 20rpx;
+}
+
+.take-order-btn {
+  width: 100%;
+  height: 100rpx;
+  background: linear-gradient(135deg, #FF8C00 0%, #FF4500 100%);
+  color: #fff;
+  font-size: 32rpx;
+  font-weight: bold;
+  border-radius: 50rpx;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8rpx 20rpx rgba(255, 69, 0, 0.3);
+}
+
+.take-order-btn.taking {
+  background: linear-gradient(135deg, #52c41a 0%, #389e0d 100%);
+  box-shadow: 0 8rpx 20rpx rgba(82, 196, 26, 0.3);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 rgba(82, 196, 26, 0.4); }
+  70% { box-shadow: 0 0 0 15rpx rgba(82, 196, 26, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(82, 196, 26, 0); }
+}
+
+.take-order-btn::after {
+  border: none;
+}
+
+.order-icon {
+  font-size: 40rpx;
+  margin-right: 16rpx;
+}
+
+.order-text {
+  font-size: 32rpx;
+}
+
+.order-tip {
+  text-align: center;
+  font-size: 24rpx;
+  color: #52c41a;
+  margin-top: 12rpx;
+}
+
+/* ==================== 志愿者培训教程 ==================== */
+.training-section {
+  padding: 20rpx 30rpx;
+  margin-bottom: 20rpx;
+}
+
+.training-card {
+  background: #fff;
+  border-radius: 20rpx;
+  padding: 30rpx;
+  box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.05);
+}
+
+.training-steps {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20rpx 0;
+}
+
+.step-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+}
+
+.step-icon {
+  width: 60rpx;
+  height: 60rpx;
+  border-radius: 50%;
+  background: #e0e0e0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28rpx;
+  font-weight: bold;
+  color: #999;
+  margin-bottom: 12rpx;
+}
+
+.step-item.active .step-icon {
+  background: linear-gradient(135deg, #FF8C00 0%, #FF4500 100%);
+  color: #fff;
+  animation: breathe 2s infinite;
+}
+
+.step-item.completed .step-icon {
+  background: #52c41a;
+  color: #fff;
+}
+
+@keyframes breathe {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+.step-content {
+  text-align: center;
+}
+
+.step-name {
+  font-size: 24rpx;
+  color: #999;
+  display: block;
+}
+
+.step-item.active .step-name {
+  color: #FF6B00;
+}
+
+.step-item.completed .step-name {
+  color: #52c41a;
+}
+
+.step-status {
+  font-size: 20rpx;
+  color: #52c41a;
+  display: block;
+  margin-top: 4rpx;
+}
+
+.step-status.pending {
+  color: #999;
+}
+
+.step-line {
+  flex: 1;
+  height: 4rpx;
+  background: #e0e0e0;
+  margin: 0 10rpx;
+  margin-top: -60rpx;
+}
+
+.step-line.completed {
+  background: #52c41a;
+}
+
+.training-btn {
+  width: 100%;
+  height: 88rpx;
+  background: linear-gradient(135deg, #FF8C00 0%, #FF4500 100%);
+  color: #fff;
+  font-size: 30rpx;
+  font-weight: bold;
+  border-radius: 44rpx;
+  border: none;
+  margin-top: 20rpx;
+}
+
+.training-btn::after {
+  border: none;
+}
+
+/* 培训已完成提示 */
+.training-completed-section {
+  padding: 20rpx 30rpx;
+  margin-bottom: 20rpx;
+}
+
+.completed-badge {
+  background: linear-gradient(135deg, #52c41a 0%, #389e0d 100%);
+  border-radius: 20rpx;
+  padding: 30rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.completed-icon {
+  font-size: 48rpx;
+  margin-right: 16rpx;
+}
+
+.completed-text {
+  font-size: 28rpx;
+  font-weight: bold;
+  color: #fff;
+}
+
+/* 复习培训按钮 */
+.retrain-btn {
+  width: 100%;
+  height: 88rpx;
+  background: #fff;
+  color: #FF6B00;
+  font-size: 28rpx;
+  font-weight: bold;
+  border-radius: 44rpx;
+  border: 2rpx solid #FF6B00;
+  margin-top: 20rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.retrain-btn::after {
+  border: none;
+}
+
+.retrain-icon {
+  font-size: 32rpx;
+  margin-right: 10rpx;
+}
+
+.retrain-text {
+  font-size: 28rpx;
+}
+
+/* ==================== 视障人士发现志愿者 ==================== */
+.find-volunteer-section {
+  padding: 20rpx 30rpx;
+  margin-bottom: 20rpx;
+}
+
+.find-volunteer-btn {
+  width: 100%;
+  height: 100rpx;
+  background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
+  color: #fff;
+  font-size: 32rpx;
+  font-weight: bold;
+  border-radius: 50rpx;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8rpx 20rpx rgba(24, 144, 255, 0.3);
+}
+
+.find-volunteer-btn::after {
+  border: none;
+}
+
+.find-icon {
+  font-size: 40rpx;
+  margin-right: 16rpx;
+}
+
+.find-text {
+  font-size: 32rpx;
+}
+
+.find-tip {
+  text-align: center;
+  font-size: 24rpx;
+  color: #1890ff;
+  margin-top: 12rpx;
+}
+
+/* ==================== 我的账号列表 ==================== */
+.accounts-section {
+  margin-bottom: 30rpx;
+}
+
+.section-header-row {
+  margin-bottom: 20rpx;
+}
+
+.section-main-title {
+  font-size: 32rpx;  /* 标题 32rpx */
+  font-weight: bold;
+  color: #333;
+}
+
+.accounts-list {
+  background: #fff;
+  border-radius: 24rpx;
+  overflow: hidden;
+  box-shadow: 0 10rpx 40rpx rgba(255, 69, 0, 0.1);
+}
+
+.account-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 28rpx 32rpx;
+  border-bottom: 1rpx solid #FFF5E6;
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.account-item:last-child {
+  border-bottom: none;
+}
+
+.account-item.active {
+  background: #FFF8F0;
+}
+
+.account-item:active {
+  transform: scale(0.98);
+}
+
+.account-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
+}
+
+.account-name {
+  font-size: 30rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+.account-role {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.account-meta {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.account-time {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.account-arrow {
+  font-size: 32rpx;
+  color: #FFB347;
+}
+
+.current-badge {
+  position: absolute;
+  right: 32rpx;
+  top: 50%;
+  transform: translateY(-50%);
+  background: linear-gradient(135deg, #FF8C00 0%, #FF4500 100%);
+  color: #fff;
+  font-size: 20rpx;
+  padding: 6rpx 16rpx;
+  border-radius: 16rpx;
+  box-shadow: 0 2rpx 10rpx rgba(255, 140, 0, 0.3);
+}
+
+/* ==================== 积分与经验值 ==================== */
+.points-section {
+  margin-bottom: 30rpx;
+}
+
+.points-card {
+  background: #fff;
+  border-radius: 24rpx;
+  padding: 40rpx;  /* 40rpx 内边距 */
+  box-shadow: 0 10rpx 40rpx rgba(255, 69, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.points-card:active {
+  transform: scale(0.98);
+}
+
+.points-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+}
+
+.points-item {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  flex: 1;
+  justify-content: center;
+}
+
+.points-divider {
+  width: 1rpx;
+  height: 60rpx;
+  background: linear-gradient(180deg, transparent 0%, #FFD699 50%, transparent 100%);
+}
+
+.points-icon {
+  font-size: 48rpx;
+}
+
+.points-icon.exp {
+  font-size: 44rpx;
+}
+
+.points-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.points-value {
+  font-size: 56rpx;  /* 主要数值 56rpx */
+  font-weight: bold;
+  color: #FF6B00;
+}
+
+.points-label {
+  font-size: 24rpx;  /* 辅助说明 24rpx */
+  color: #999;
+}
+
+.checkin-tip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10rpx;
+  margin-top: 24rpx;
+  padding-top: 24rpx;
+  border-top: 1rpx solid #FFF5E6;
+}
+
+.checkin-icon {
+  font-size: 28rpx;
+}
+
+.checkin-text {
+  font-size: 24rpx;
+  color: #FF6B00;
+}
+
+.checkin-btn {
+  margin-top: 24rpx;
+  background: linear-gradient(135deg, #FF8C00 0%, #FF4500 100%);
+  color: #fff;
+  font-size: 30rpx;
+  font-weight: 500;
+  border-radius: 20rpx;
+  border: none;
+  padding: 20rpx 0;
+  box-shadow: 0 8rpx 24rpx rgba(255, 69, 0, 0.25);
+  transition: all 0.2s ease;
+}
+
+.checkin-btn::after {
+  border: none;
+}
+
+.checkin-btn:active {
+  transform: scale(0.98);
+  box-shadow: 0 4rpx 16rpx rgba(255, 69, 0, 0.35);
+}
+
+.user-tag {
+  font-size: 24rpx;
+  color: #999;
+  margin-bottom: 16rpx;
+  display: block;
+}
+
+/* ==================== 2. 中间：数据看板 ==================== */
+.stats-section {
+  margin-bottom: 30rpx;
+}
+
+.stats-section .section-header-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20rpx;
+}
+
+.stats-section .section-main-title {
+  font-size: 32rpx;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24rpx;  /* 卡片间距 */
+}
+
+.stat-item {
+  background: #fff;
+  border-radius: 24rpx;
+  padding: 32rpx;  /* 32rpx 内边距 */
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+  box-shadow: 0 10rpx 40rpx rgba(255, 69, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.stat-item:active {
+  transform: scale(0.98);
+  box-shadow: 0 6rpx 30rpx rgba(255, 69, 0, 0.15);
+}
+
+/* 活力橙渐变图标 */
+.stat-icon-gradient {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 20rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: linear-gradient(135deg, #FF8C00 0%, #FF4500 100%);
+  box-shadow: 0 4rpx 16rpx rgba(255, 69, 0, 0.2);
+}
+
+.stat-icon-text {
+  font-size: 40rpx;
+}
+
+.stat-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.stat-number {
+  font-size: 56rpx;  /* 主要数值 56rpx */
+  font-weight: bold;
+  color: #333;
+  display: block;
+  margin-bottom: 6rpx;
+  letter-spacing: 2rpx;
+}
+
+.stat-label {
+  font-size: 24rpx;  /* 辅助说明 24rpx */
+  color: #999;
+}
+
+/* ==================== 3. 列表：功能操作区 ==================== */
+.menu-section {
+  margin-bottom: 30rpx;
+}
+
+.menu-list {
+  background: #fff;
+  border-radius: 24rpx;
+  overflow: hidden;
+  box-shadow: 0 10rpx 40rpx rgba(255, 69, 0, 0.1);
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  padding: 32rpx;  /* 32rpx 内边距 */
+  border-bottom: 1rpx solid #FFF5E6;
+  transition: all 0.2s ease;
+}
+
+.menu-item:last-child {
+  border-bottom: none;
+}
+
+.menu-item:active {
+  background: #FFF8F0;
+  transform: scale(0.98);
+}
+
+.menu-icon-wrap {
+  width: 80rpx;
+  height: 80rpx;
+  background: linear-gradient(135deg, #FFF3E0 0%, #FFE0B2 100%);
+  border-radius: 20rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 24rpx;
+  flex-shrink: 0;
+}
+
+.menu-icon {
+  font-size: 40rpx;
+}
+
+.menu-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.menu-title {
+  font-size: 32rpx;  /* 标题 32rpx */
+  font-weight: 500;
+  color: #333;
+  display: block;
+  margin-bottom: 6rpx;
+}
+
+.menu-desc {
+  font-size: 24rpx;  /* 辅助说明 24rpx */
+  color: #999;
+}
+
+.menu-arrow {
+  font-size: 36rpx;
+  color: #FFB347;
+  font-weight: bold;
+}
+
+/* ==================== 4. 底部：系统支持 ==================== */
+.footer-section {
+  margin-bottom: 50rpx;
+}
+
+.footer-menu {
+  background: #fff;
+  border-radius: 24rpx;
+  overflow: hidden;
+  display: flex;
+  box-shadow: 0 10rpx 40rpx rgba(255, 69, 0, 0.1);
+  margin-bottom: 28rpx;
+}
+
+.footer-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 28rpx 20rpx;
+  gap: 14rpx;
+  border-right: 1rpx solid #FFF5E6;
+  transition: all 0.2s ease;
+}
+
+.footer-item:last-child {
+  border-right: none;
+}
+
+.footer-item:active {
+  background: #FFF8F0;
+  transform: scale(0.95);
+}
+
+.footer-item.logout .footer-icon {
+  background: linear-gradient(135deg, #FF6B6B 0%, #FF4500 100%);
+}
+
+.footer-icon {
+  width: 72rpx;
+  height: 72rpx;
+  background: linear-gradient(135deg, #FF8C00 0%, #FF4500 100%);
+  border-radius: 20rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36rpx;
+  box-shadow: 0 4rpx 16rpx rgba(255, 69, 0, 0.2);
+}
+
+.footer-text {
+  font-size: 24rpx;
+  color: #666;
+  text-align: center;
+}
+
+/* 关于我们预览 */
+.about-preview {
+  background: linear-gradient(135deg, #FF8C00 0%, #FF4500 100%);
+  border-radius: 24rpx;
+  padding: 40rpx;
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+  box-shadow: 0 10rpx 40rpx rgba(255, 69, 0, 0.3);
+  transition: all 0.3s ease;
+}
+
+.about-preview:active {
+  transform: scale(0.98);
+}
+
+.about-logo {
+  font-size: 64rpx;
+  flex-shrink: 0;
+}
+
+.about-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.about-title {
+  font-size: 34rpx;
+  font-weight: bold;
+  color: #fff;
+  display: block;
+  margin-bottom: 10rpx;
+}
+
+.about-slogan {
+  font-size: 26rpx;
+  color: rgba(255, 255, 255, 0.9);
+  display: block;
+  line-height: 1.5;
+}
+
+.about-arrow {
+  font-size: 40rpx;
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: bold;
+}
+
+/* ==================== 悬浮主要功能按钮 ==================== */
+.float-action {
+  position: fixed;
+  bottom: 40rpx;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+}
+
+.action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12rpx;
+  padding: 0 100rpx;
+  height: 110rpx;
+  border-radius: 55rpx;
+  background: linear-gradient(135deg, #FF8C00 0%, #FF4500 100%);
+  box-shadow: 0 10rpx 40rpx rgba(255, 69, 0, 0.35), 0 0 60rpx rgba(255, 140, 0, 0.2);
+  transition: all 0.3s ease;
+  animation: breathe 3s ease-in-out infinite;
+}
+
+.action-btn:active {
+  transform: scale(0.95);
+  box-shadow: 0 6rpx 30rpx rgba(255, 69, 0, 0.4);
+}
+
+/* 呼吸感动画 */
+@keyframes breathe {
+  0%, 100% {
+    box-shadow: 0 10rpx 40rpx rgba(255, 69, 0, 0.35), 0 0 60rpx rgba(255, 140, 0, 0.2);
+  }
+  50% {
+    box-shadow: 0 12rpx 50rpx rgba(255, 69, 0, 0.45), 0 0 80rpx rgba(255, 140, 0, 0.3);
+  }
+}
+
+.action-btn.primary {
+  background: linear-gradient(135deg, #FF8C00 0%, #FF4500 100%);
+}
+
+.action-btn.volunteer {
+  background: linear-gradient(135deg, #FFA500 0%, #FF8C00 100%);
+}
+
+/* 锁定状态 */
+.action-btn.btn-locked {
+  background: linear-gradient(135deg, rgba(255, 140, 0, 0.4) 0%, rgba(255, 69, 0, 0.4) 100%);
+  box-shadow: none;
+  animation: none;
+}
+
+.action-btn.btn-locked:active {
+  transform: none;
+}
+
+.btn-icon {
+  font-size: 40rpx;
+}
+
+.btn-text {
+  font-size: 34rpx;
+  font-weight: bold;
+  color: #fff;
+}
+
+/* 锁定状态小锁图标 */
+.lock-icon {
+  font-size: 32rpx;
+  margin-right: 8rpx;
+}
+
+/* ==================== 动画效果 ==================== */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20rpx);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.profile-section,
+.stats-section,
+.menu-section,
+.footer-section {
+  animation: fadeInUp 0.6s ease-out forwards;
+}
+
+.stats-section {
+  animation-delay: 0.1s;
+}
+
+.menu-section {
+  animation-delay: 0.2s;
+}
+
+.footer-section {
+  animation-delay: 0.3s;
+}
+
+/* ==================== 志愿者上岗引导弹窗 ==================== */
+.certificate-guide-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.guide-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.guide-content {
+  position: relative;
+  width: 600rpx;
+  background: #FFFFFF;
+  border-radius: 24rpx;
+  overflow: hidden;
+  box-shadow: 0 20rpx 60rpx rgba(0, 0, 0, 0.2);
+  animation: guidePopup 0.3s ease-out;
+}
+
+@keyframes guidePopup {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.guide-header {
+  background: linear-gradient(135deg, #FF6B00 0%, #FF8C00 100%);
+  padding: 40rpx 32rpx;
+  text-align: center;
+}
+
+.guide-icon {
+  font-size: 64rpx;
+  display: block;
+  margin-bottom: 16rpx;
+}
+
+.guide-title {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #FFFFFF;
+}
+
+.guide-body {
+  padding: 32rpx;
+}
+
+.guide-desc {
+  font-size: 28rpx;
+  color: #333;
+  line-height: 1.6;
+  display: block;
+  margin-bottom: 16rpx;
+}
+
+.guide-steps {
+  background: #FFF5E6;
+  border-radius: 16rpx;
+  padding: 24rpx;
+  margin-top: 24rpx;
+}
+
+.guide-step {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  padding: 12rpx 0;
+}
+
+.step-num {
+  width: 40rpx;
+  height: 40rpx;
+  background: linear-gradient(135deg, #FF6B00 0%, #FF4500 100%);
+  color: #FFFFFF;
+  font-size: 24rpx;
+  font-weight: bold;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.step-text {
+  font-size: 26rpx;
+  color: #333;
+}
+
+.guide-actions {
+  padding: 0 32rpx 32rpx;
+}
+
+.guide-btn {
+  width: 100%;
+  height: 88rpx;
+  border-radius: 44rpx;
+  font-size: 30rpx;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16rpx;
+  border: none;
+}
+
+.guide-btn::after {
+  border: none;
+}
+
+.guide-btn.primary {
+  background: linear-gradient(135deg, #FF6B00 0%, #FF4500 100%);
+  color: #FFFFFF;
+  box-shadow: 0 8rpx 24rpx rgba(255, 107, 0, 0.3);
+}
+
+.guide-btn.secondary {
+  background: #F5F5F5;
+  color: #666;
+}

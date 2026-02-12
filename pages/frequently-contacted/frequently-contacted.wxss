@@ -1,0 +1,168 @@
+/* 页面容器 */
+.container {
+  min-height: 100vh;
+  background-color: #f5f5f5;
+}
+
+/* 标题区域 */
+.header {
+  background: linear-gradient(135deg, #FF8C00 0%, #FF4500 100%);
+  padding: 40rpx 30rpx 60rpx;
+}
+
+.header-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.title {
+  font-size: 40rpx;
+  font-weight: bold;
+  color: #fff;
+}
+
+.subtitle {
+  font-size: 26rpx;
+  color: rgba(255, 255, 255, 0.8);
+  margin-top: 10rpx;
+}
+
+/* 联系人列表 */
+.contact-list {
+  padding: 20rpx 30rpx;
+  margin-top: -30rpx;
+}
+
+.contact-item {
+  background-color: #fff;
+  border-radius: 20rpx;
+  padding: 30rpx;
+  margin-bottom: 20rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.05);
+}
+
+.contact-left {
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+
+.avatar {
+  width: 100rpx;
+  height: 100rpx;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #FF8C00 0%, #FF4500 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 24rpx;
+}
+
+.avatar-text {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #fff;
+}
+
+.contact-info {
+  flex: 1;
+}
+
+.contact-name {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+.contact-phone {
+  font-size: 26rpx;
+  color: #666;
+  margin-top: 6rpx;
+}
+
+.contact-stats {
+  display: flex;
+  align-items: center;
+  margin-top: 12rpx;
+}
+
+.stat {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.stat-divider {
+  margin: 0 12rpx;
+  color: #ddd;
+}
+
+.contact-right {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.last-run {
+  font-size: 22rpx;
+  color: #999;
+  margin-bottom: 10rpx;
+}
+
+.call-btn {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #52c41a 0%, #389e0d 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4rpx 15rpx rgba(82, 196, 26, 0.4);
+}
+
+.call-icon {
+  font-size: 36rpx;
+}
+
+/* 空状态 */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 100rpx 40rpx;
+}
+
+.empty-icon {
+  font-size: 120rpx;
+  margin-bottom: 30rpx;
+}
+
+.empty-text {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+.empty-desc {
+  font-size: 26rpx;
+  color: #999;
+  margin-top: 16rpx;
+  text-align: center;
+}
+
+.empty-btn {
+  margin-top: 40rpx;
+  background: linear-gradient(135deg, #FF8C00 0%, #FF4500 100%);
+  color: #fff;
+  font-size: 28rpx;
+  padding: 20rpx 60rpx;
+  border-radius: 40rpx;
+  border: none;
+}
+
+.empty-btn::after {
+  border: none;
+}

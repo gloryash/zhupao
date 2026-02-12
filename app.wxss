@@ -1,0 +1,405 @@
+/**
+ * 全局样式文件 - 高级感设计
+ * 优化：呼吸感、层级感、精致感、动态感
+ */
+
+/* ==================== 颜色变量 ==================== */
+page {
+  /* 主色调 - 渐变活力橙（平滑过渡） */
+  --primary-gradient: linear-gradient(135deg, #FF8C00 0%, #FF4500 100%);
+  --primary-gradient-light: linear-gradient(135deg, #FFA500 0%, #FF8C00 100%);
+
+  /* 辅助色 - 浅橙色阴影 */
+  --primary-shadow: rgba(255, 69, 0, 0.2);
+  --primary-shadow-light: rgba(255, 69, 0, 0.1);
+
+  /* 背景色 - 极淡灰白，突出白色卡片层级 */
+  --bg-primary: #F8F8F8;
+  --bg-white: #FFFFFF;
+  --bg-card: #FFFFFF;
+
+  /* 文字色 */
+  --text-primary: #333333;
+  --text-secondary: #666666;
+  --text-tertiary: #999999;
+  --text-white: #FFFFFF;
+
+  /* 圆角 - 统一 24rpx */
+  --radius: 24rpx;
+
+  /* 商业级阴影 - 带主色调的淡色投影 */
+  --shadow-card: 0 10rpx 40rpx rgba(255, 69, 0, 0.1);
+  --shadow-button: 0 8rpx 24rpx rgba(255, 69, 0, 0.25);
+  --shadow-button-hover: 0 12rpx 32rpx rgba(255, 69, 0, 0.35);
+
+  /* 间距 */
+  --spacing-xs: 8rpx;
+  --spacing-sm: 16rpx;
+  --spacing-md: 24rpx;
+  --spacing-lg: 32rpx;
+  --spacing-xl: 40rpx;
+  --spacing-xxl: 48rpx;
+
+  /* 字体层级 */
+  --font-size-xl: 56rpx;   /* 主要数值：公里数、积分 */
+  --font-size-lg: 40rpx;  /* 大标题 */
+  --font-size-md: 32rpx;  /* 标题 */
+  --font-size-sm: 28rpx;  /* 正文 */
+  --font-size-xs: 24rpx;  /* 辅助说明 */
+
+  /* 全局页面样式 */
+  background-color: var(--bg-primary);
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
+  line-height: 1.6;
+}
+
+/* ==================== 容器 ==================== */
+.container {
+  padding: var(--spacing-lg);
+  min-height: 100vh;
+  box-sizing: border-box;
+  background: var(--bg-primary);
+}
+
+/* ==================== 按钮样式 ==================== */
+
+/* 大按钮样式 - 适配无障碍 */
+.btn-large {
+  width: 100%;
+  height: 120rpx;
+  line-height: 120rpx;
+  font-size: var(--font-size-md);
+  font-weight: bold;
+  border-radius: var(--radius);
+  border: none;
+  margin: var(--spacing-md) 0;
+}
+
+/* 主要按钮 - 渐变橙色 + 微小渐变外发光 */
+.btn-primary {
+  background: var(--primary-gradient);
+  color: var(--text-white);
+  box-shadow: var(--shadow-button);
+  position: relative;
+}
+
+.btn-primary::before {
+  content: '';
+  position: absolute;
+  top: -2rpx;
+  left: -2rpx;
+  right: -2rpx;
+  bottom: -2rpx;
+  background: var(--primary-gradient);
+  border-radius: var(--radius);
+  opacity: 0.3;
+  filter: blur(8rpx);
+  z-index: -1;
+}
+
+.btn-primary:active {
+  transform: scale(0.98);
+  box-shadow: var(--shadow-button-hover);
+}
+
+/* 次要按钮 - 橙色渐变浅色 */
+.btn-secondary {
+  background: var(--primary-gradient-light);
+  color: var(--text-white);
+  box-shadow: 0 6rpx 20rpx var(--primary-shadow-light);
+}
+
+.btn-secondary:active {
+  opacity: 0.9;
+  transform: scale(0.98);
+}
+
+/* 幽灵按钮 - 橙色边框 */
+.btn-ghost {
+  background: transparent;
+  color: #FF6B00;
+  border: 2rpx solid #FF6B00;
+  border-radius: var(--radius);
+}
+
+.btn-ghost:active {
+  background: var(--bg-primary);
+  transform: scale(0.98);
+}
+
+/* ==================== 卡片样式 - 呼吸感 + 层级感 ==================== */
+.card {
+  background-color: var(--bg-card);
+  border-radius: var(--radius);
+  padding: var(--spacing-xl);  /* 40rpx 内边距 */
+  margin-bottom: var(--spacing-lg);  /* 30rpx 外边距 */
+  box-shadow: var(--shadow-card);
+  transition: all 0.3s ease;
+}
+
+/* 点击反馈 - 卡片轻微缩小 */
+.card:active {
+  transform: scale(0.98);
+  box-shadow: 0 6rpx 30rpx rgba(255, 69, 0, 0.15);
+}
+
+/* 渐变背景卡片 */
+.card-gradient {
+  background: var(--primary-gradient);
+  color: var(--text-white);
+}
+
+/* ==================== 标题样式 - 字体层级 ==================== */
+.title {
+  font-size: var(--font-size-lg);
+  font-weight: bold;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-md);
+}
+
+.title-white {
+  color: var(--text-white);
+}
+
+/* 副标题 */
+.subtitle {
+  font-size: var(--font-size-md);
+  color: var(--text-secondary);
+  margin-bottom: var(--spacing-sm);
+}
+
+/* ==================== 文字样式 ==================== */
+.text {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  line-height: 1.8;
+}
+
+.text-primary {
+  color: #FF6B00;
+}
+
+.text-white {
+  color: var(--text-white);
+}
+
+/* 主要数值 - 56rpx 加粗 */
+.text-value {
+  font-size: var(--font-size-xl);
+  font-weight: bold;
+  color: var(--text-primary);
+}
+
+/* 辅助说明 - 24rpx 浅灰色 */
+.text-hint {
+  font-size: var(--font-size-xs);
+  color: var(--text-tertiary);
+}
+
+/* ==================== 徽章标签 ==================== */
+.tag {
+  display: inline-block;
+  padding: 6rpx 16rpx;
+  background: var(--bg-primary);
+  color: #FF6B00;
+  border-radius: 12rpx;
+  font-size: var(--font-size-xs);
+}
+
+.tag-primary {
+  background: var(--primary-gradient);
+  color: var(--text-white);
+}
+
+/* ==================== 进度条 - 动画效果 ==================== */
+.progress-bar {
+  height: 16rpx;
+  background: var(--bg-primary);
+  border-radius: 8rpx;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--primary-gradient);
+  border-radius: 8rpx;
+  transition: width 0.5s ease-in-out;
+  animation: progressGrow 1s ease-in-out forwards;
+}
+
+@keyframes progressGrow {
+  from { width: 0; }
+}
+
+.progress-text {
+  font-size: var(--font-size-xs);
+  color: var(--text-tertiary);
+  margin-top: var(--spacing-xs);
+}
+
+/* ==================== 输入框 ==================== */
+.input {
+  width: 100%;
+  height: 96rpx;
+  padding: 0 var(--spacing-lg);
+  background: var(--bg-primary);
+  border-radius: var(--radius);
+  font-size: var(--font-size-md);
+  color: var(--text-primary);
+  box-sizing: border-box;
+  border: 1rpx solid #EEE;
+}
+
+.input:focus {
+  outline: none;
+  border-color: #FF6B00;
+  box-shadow: 0 0 0 2rpx var(--primary-shadow-light);
+}
+
+/* ==================== 加载提示 ==================== */
+.loading {
+  text-align: center;
+  padding: var(--spacing-xxl);
+  color: var(--text-tertiary);
+  font-size: var(--font-size-sm);
+}
+
+/* ==================== 空状态 ==================== */
+.empty {
+  text-align: center;
+  padding: var(--spacing-xxl) var(--spacing-lg);
+  color: var(--text-tertiary);
+  font-size: var(--font-size-sm);
+}
+
+/* ==================== 分割线 ==================== */
+.divider {
+  height: 1rpx;
+  background: var(--bg-primary);
+  margin: var(--spacing-lg) 0;
+}
+
+/* ==================== 角标/徽章 ==================== */
+.badge {
+  position: absolute;
+  top: -10rpx;
+  right: -10rpx;
+  min-width: 36rpx;
+  height: 36rpx;
+  padding: 0 10rpx;
+  background: var(--primary-gradient);
+  color: white;
+  border-radius: 18rpx;
+  font-size: 22rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ==================== 动画 ==================== */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20rpx); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in {
+  animation: fadeIn 0.5s ease forwards;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+ 50% { transform: scale(1.05); }
+ 100% { transform: scale(1); }
+}
+
+.pulse {
+  animation: pulse 2s ease-in-out infinite;
+}
+
+/* 点击缩放动画 */
+@keyframes tapFeedback {
+  0% { transform: scale(1); }
+  50% { transform: scale(0.95); }
+  100% { transform: scale(1); }
+}
+
+.tap-feedback {
+  animation: tapFeedback 0.2s ease-in-out;
+}
+
+/* ==================== 列表项 ==================== */
+.list-item {
+  display: flex;
+  align-items: center;
+  padding: var(--spacing-lg);
+  background: var(--bg-white);
+  border-bottom: 1rpx solid var(--bg-primary);
+}
+
+.list-item:last-child {
+  border-bottom: none;
+}
+
+/* 点击反馈 */
+.list-item:active {
+  background: #FAFAFA;
+}
+
+/* ==================== 弹性布局辅助类 ==================== */
+.flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.flex-1 {
+  flex: 1;
+}
+
+/* ==================== 文本溢出省略 ==================== */
+.text-ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.text-ellipsis-2 {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+/* ==================== 锁定状态按钮（未认证志愿者） ==================== */
+.btn-locked {
+  background: linear-gradient(135deg, rgba(255, 140, 0, 0.3) 0%, rgba(255, 69, 0, 0.3) 100%);
+  color: rgba(255, 255, 255, 0.7);
+  box-shadow: none;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-locked::after {
+  display: none;
+}
+
+.btn-locked .lock-icon {
+  margin-right: 8rpx;
+}
+
+/* ==================== 点击态类（供 hover-class 使用） ==================== */
+.hover-scale {
+  transition: all 0.2s ease;
+}
+
+.hover-scale:active {
+  transform: scale(0.98);
+  box-shadow: 0 6rpx 24rpx rgba(255, 69, 0, 0.2);
+}

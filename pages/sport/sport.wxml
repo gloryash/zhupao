@@ -1,0 +1,99 @@
+<view class="sport-container">
+  <!-- 运动类型选择 -->
+  <view class="sport-type-section">
+    <view class="type-list">
+      <view class="type-item {{item.key === sportType ? 'active' : ''}}"
+            wx:for="{{sportTypes}}"
+            wx:key="key"
+            bindtap="onSportTypeChange"
+            data-index="{{index}}">
+        <text class="type-icon">{{item.icon}}</text>
+        <text class="type-name">{{item.name}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 地图区域 - 全屏沉浸式 -->
+  <view class="map-section">
+    <map
+      id="sportMap"
+      class="sport-map"
+      latitude="{{latitude}}"
+      longitude="{{longitude}}"
+      markers="{{markers}}"
+      show-location="{{isRecording}}"
+      bindmarkertap="onMarkerTap"
+      wx:if="{{hasLocation}}"
+    ></map>
+    <!-- 无位置时的占位 -->
+    <view class="map-placeholder" wx:else>
+      <view class="placeholder-content">
+        <text class="placeholder-icon">🗺️</text>
+        <text class="placeholder-text">点击下方按钮开始运动</text>
+        <text class="placeholder-hint">将自动获取您的位置并显示地图</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 实时运动数据悬浮卡片 -->
+  <view class="floating-stats" wx:if="{{isRecording}}">
+    <view class="floating-stat-item">
+      <text class="floating-stat-value">{{formatTime(recordingTime)}}</text>
+      <text class="floating-stat-label">时长</text>
+    </view>
+    <view class="floating-stat-divider"></view>
+    <view class="floating-stat-item">
+      <text class="floating-stat-value">{{recordingDistance.toFixed(2)}} km</text>
+      <text class="floating-stat-label">距离</text>
+    </view>
+    <view class="floating-stat-divider"></view>
+    <view class="floating-stat-item">
+      <text class="floating-stat-value">{{recordingCalories.toFixed(0)}} kCal</text>
+      <text class="floating-stat-label">消耗</text>
+    </view>
+  </view>
+
+  <!-- 底部操作区域 - 毛玻璃效果 -->
+  <cover-view class="bottom-panel">
+    <cover-view class="goal-card">
+      <cover-view class="goal-header">
+        <cover-view class="goal-title-row">
+          <cover-view class="goal-icon">🎯</cover-view>
+          <cover-view class="goal-title">今日目标</cover-view>
+        </cover-view>
+        <cover-view class="goal-progress-badge">{{todayProgress}}%</cover-view>
+      </cover-view>
+      <cover-view class="goal-progress-bar">
+        <cover-view class="goal-progress-fill" style="width: {{todayProgress}}%;"></cover-view>
+      </cover-view>
+      <cover-view class="goal-items">
+        <cover-view class="goal-item">
+          <cover-view class="goal-item-value">{{todaySteps}}</cover-view>
+          <cover-view class="goal-item-label">步数</cover-view>
+        </cover-view>
+        <cover-view class="goal-item">
+          <cover-view class="goal-item-value">{{todayDistance}} km</cover-view>
+          <cover-view class="goal-item-label">距离</cover-view>
+        </cover-view>
+        <cover-view class="goal-item">
+          <cover-view class="goal-item-value">{{todayDuration}} min</cover-view>
+          <cover-view class="goal-item-label">时长</cover-view>
+        </cover-view>
+      </cover-view>
+    </cover-view>
+
+    <!-- 开始/结束按钮 -->
+    <cover-view class="action-section">
+      <!-- 盲人用户：点亮位置按钮 -->
+      <cover-view class="gradient-btn {{isRecording ? 'stop' : 'primary'}}" bindtap="handleStart" wx:if="{{userType === 'disabled'}}">
+        <cover-view class="btn-icon-wrapper">{{isRecording ? '⏹️' : '🌟'}}</cover-view>
+        <cover-view class="btn-text">{{isRecording ? '结束运动' : '点亮位置'}}</cover-view>
+      </cover-view>
+      <!-- 志愿者选择陪跑时跳转到接单页面，其他情况开始运动 -->
+      <cover-view class="gradient-btn {{isRecording ? 'stop' : 'primary'}}" bindtap="handleStart" wx:else>
+        <cover-view class="btn-icon-wrapper">{{isRecording ? '⏹️' : (userType === 'volunteer' && sportType === 'companion' ? '📋' : '▶️')}}</cover-view>
+        <cover-view class="btn-text">{{isRecording ? '结束运动' : (userType === 'volunteer' && sportType === 'companion' ? '开始接单' : '开始运动')}}</cover-view>
+      </cover-view>
+    </cover-view>
+  </cover-view>
+</view>

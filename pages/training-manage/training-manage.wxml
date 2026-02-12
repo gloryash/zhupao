@@ -1,0 +1,53 @@
+<view class="container">
+  <!-- 操作按钮区 -->
+  <view class="action-section">
+    <button class="action-btn video-btn" bindtap="uploadCourseVideo">
+      📹 上传教程视频
+    </button>
+    <button class="action-btn doc-btn" bindtap="uploadCourseDoc">
+      📄 上传教程文档
+    </button>
+    <button class="action-btn exam-btn" bindtap="createExam">
+      📝 创建考试
+    </button>
+    <button class="action-btn records-btn" bindtap="viewRecords">
+      📋 查看陪跑记录
+    </button>
+  </view>
+
+  <!-- 教程列表 -->
+  <view class="section">
+    <view class="section-title">教程列表 ({{courses.length}})</view>
+    <view class="course-list" wx:if="{{courses.length > 0}}">
+      <view class="course-item" wx:for="{{courses}}" wx:key="id">
+        <view class="course-icon">{{item.type === 'video' ? '📹' : '📄'}}</view>
+        <view class="course-info">
+          <text class="course-title">{{item.title}}</text>
+          <text class="course-meta">{{item.createTime}}</text>
+        </view>
+        <button class="delete-btn" bindtap="deleteCourse" data-id="{{item.id}}">删除</button>
+      </view>
+    </view>
+    <view class="empty-tip" wx:else>
+      <text>暂无教程，点击上方按钮添加</text>
+    </view>
+  </view>
+
+  <!-- 考试列表 -->
+  <view class="section">
+    <view class="section-title">考试列表 ({{exams.length}})</view>
+    <view class="exam-list" wx:if="{{exams.length > 0}}">
+      <view class="exam-item" wx:for="{{exams}}" wx:key="id">
+        <view class="exam-icon">📝</view>
+        <view class="exam-info">
+          <text class="exam-title">{{item.title}}</text>
+          <text class="exam-meta">{{item.questionCount}}题 · 及格分{{item.passScore}}</text>
+        </view>
+        <button class="delete-btn" bindtap="deleteExam" data-id="{{item.id}}">删除</button>
+      </view>
+    </view>
+    <view class="empty-tip" wx:else>
+      <text>暂无考试，点击上方按钮创建</text>
+    </view>
+  </view>
+</view>

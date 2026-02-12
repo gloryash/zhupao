@@ -1,0 +1,317 @@
+/* 运动页面容器 - 沉浸式深色主题 */
+.sport-container {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #1a1a1a 0%, #2d2d2d 50%, #1a1a1a 100%);
+  padding: 0;
+  position: relative;
+}
+
+/* 运动类型选择 */
+.sport-type-section {
+  position: absolute;
+  top: 20rpx;
+  left: 30rpx;
+  right: 30rpx;
+  z-index: 100;
+}
+
+.type-list {
+  display: flex;
+  justify-content: center;
+  gap: 16rpx;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 40rpx;
+  padding: 12rpx 16rpx;
+}
+
+.type-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16rpx 32rpx;
+  border-radius: 30rpx;
+  transition: all 0.3s;
+}
+
+.type-item.active {
+  background: linear-gradient(135deg, #FF8C00 0%, #FF4500 100%);
+}
+
+.type-icon {
+  font-size: 36rpx;
+  margin-bottom: 4rpx;
+}
+
+.type-name {
+  font-size: 22rpx;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* 地图区域 - 全屏沉浸 */
+.map-section {
+  width: 100%;
+  height: 68vh;
+  position: relative;
+}
+
+.sport-map {
+  width: 100%;
+  height: 100%;
+}
+
+.map-placeholder {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(180deg, #2d2d2d 0%, #1a1a1a 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.placeholder-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.placeholder-icon {
+  font-size: 120rpx;
+  margin-bottom: 30rpx;
+  opacity: 0.6;
+}
+
+.placeholder-text {
+  font-size: 32rpx;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 16rpx;
+}
+
+.placeholder-hint {
+  font-size: 26rpx;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* 实时悬浮统计卡片 */
+.floating-stats {
+  position: absolute;
+  top: auto;
+  bottom: 20rpx;
+  left: 30rpx;
+  right: 30rpx;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 24rpx;
+  padding: 24rpx 32rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.2);
+  z-index: 50;
+}
+
+.floating-stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+}
+
+.floating-stat-value {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 6rpx;
+}
+
+.floating-stat-label {
+  font-size: 22rpx;
+  color: #999;
+}
+
+.floating-stat-divider {
+  width: 1rpx;
+  height: 60rpx;
+  background: #EEE;
+}
+
+/* 底部面板 - 毛玻璃效果 */
+.bottom-panel {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 40rpx 40rpx 0 0;
+  padding: 30rpx 30rpx 50rpx 30rpx;
+  box-shadow: 0 -10rpx 40rpx rgba(0, 0, 0, 0.15);
+}
+
+/* 目标卡片 */
+.goal-card {
+  background: #fff;
+  border-radius: 24rpx;
+  padding: 28rpx;
+  margin-bottom: 24rpx;
+}
+
+.goal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20rpx;
+}
+
+.goal-title-row {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.goal-icon {
+  font-size: 32rpx;
+}
+
+.goal-title {
+  font-size: 28rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+.goal-progress-badge {
+  background: linear-gradient(135deg, #FF8C00 0%, #FF4500 100%);
+  color: #fff;
+  font-size: 22rpx;
+  font-weight: bold;
+  padding: 6rpx 16rpx;
+  border-radius: 20rpx;
+}
+
+.goal-progress-bar {
+  height: 12rpx;
+  background: #F0F0F0;
+  border-radius: 6rpx;
+  overflow: hidden;
+  margin-bottom: 24rpx;
+}
+
+.goal-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #FF8C00 0%, #FFA500 50%, #FF4500 100%);
+  border-radius: 6rpx;
+  transition: width 0.3s ease;
+  box-shadow: 0 0 10rpx rgba(255, 140, 0, 0.4);
+}
+
+.goal-items {
+  display: flex;
+  justify-content: space-around;
+}
+
+.goal-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.goal-item-value {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 6rpx;
+}
+
+.goal-item-label {
+  font-size: 22rpx;
+  color: #999;
+}
+
+/* 渐变按钮 */
+.action-section {
+  display: flex;
+  justify-content: center;
+}
+
+.gradient-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16rpx;
+  padding: 0 60rpx;
+  height: 100rpx;
+  border-radius: 50rpx;
+  box-shadow: 0 8rpx 32rpx rgba(255, 69, 0, 0.3), 0 0 40rpx rgba(255, 140, 0, 0.2);
+  transition: all 0.3s ease;
+  animation: breathe 3s ease-in-out infinite;
+}
+
+.gradient-btn:active {
+  transform: scale(0.95);
+}
+
+.gradient-btn.primary {
+  background: linear-gradient(135deg, #FF8C00 0%, #FF4500 100%);
+}
+
+.gradient-btn.stop {
+  background: linear-gradient(135deg, #FF6B6B 0%, #FF4500 100%);
+}
+
+.btn-icon-wrapper {
+  font-size: 36rpx;
+}
+
+.btn-text {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #fff;
+}
+
+/* 呼吸感动画 */
+@keyframes breathe {
+  0%, 100% {
+    box-shadow: 0 8rpx 32rpx rgba(255, 69, 0, 0.3), 0 0 40rpx rgba(255, 140, 0, 0.2);
+  }
+  50% {
+    box-shadow: 0 8rpx 40rpx rgba(255, 69, 0, 0.4), 0 0 60rpx rgba(255, 140, 0, 0.3);
+  }
+}
+
+/* ==================== 运动统计展示（旧样式保留） ==================== */
+.stats-display {
+  margin-bottom: 30rpx;
+}
+
+.main-stats {
+  display: flex;
+  justify-content: space-around;
+}
+
+.stat-circle {
+  width: 200rpx;
+  height: 200rpx;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 4rpx solid rgba(255, 140, 0, 0.5);
+  box-shadow: 0 0 30rpx rgba(255, 140, 0, 0.2);
+}
+
+.stat-value {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #fff;
+}
+
+.stat-label {
+  font-size: 24rpx;
+  color: rgba(255, 255, 255, 0.7);
+}

@@ -1,0 +1,49 @@
+<view class="container" wx:if="{{exam && !showResult}}">
+  <!-- 考试标题 -->
+  <view class="exam-header">
+    <text class="exam-title">{{exam.title}}</text>
+    <text class="exam-info">共{{questions.length}}题 · 及格分{{exam.passScore}}</text>
+  </view>
+
+  <!-- 题目列表 -->
+  <view class="question-list">
+    <view class="question-item" wx:for="{{questions}}" wx:key="id" wx:for-index="qindex">
+      <view class="question-header">
+        <text class="question-number">{{qindex + 1}}.</text>
+        <text class="question-text">{{item.question}}</text>
+      </view>
+
+      <view class="options-list">
+        <view class="option-item" wx:for="{{item.options}}" wx:key="*this" wx:for-index="oindex" wx:for-item="option">
+          <view class="option-content {{userAnswers[qindex] === oindex ? 'selected' : ''}}" bindtap="selectAnswer" data-qindex="{{qindex}}" data-oindex="{{oindex}}">
+            <view class="option-radio">
+              <view class="radio-inner" wx:if="{{userAnswers[qindex] === oindex}}"></view>
+            </view>
+            <text class="option-label">{{['A', 'B', 'C', 'D'][oindex]}}.</text>
+            <text class="option-text">{{option}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 提交按钮 -->
+  <view class="submit-section">
+    <button class="submit-btn" bindtap="submitExam">提交考试</button>
+  </view>
+</view>
+
+<!-- 考试结果 -->
+<view class="result-container" wx:if="{{showResult}}">
+  <view class="result-card">
+    <view class="result-icon">{{passed ? '🎉' : '😢'}}</view>
+    <text class="result-title">{{passed ? '恭喜通过！' : '未通过考试'}}</text>
+    <text class="result-score">得分：{{score}}分</text>
+    <text class="result-tip">{{passed ? '您已获得志愿者资格' : '及格分：' + exam.passScore + '分'}}</text>
+
+    <view class="result-actions">
+      <button class="action-btn primary-btn" wx:if="{{passed}}" bindtap="goToCertificate">查看证书</button>
+      <button class="action-btn secondary-btn" wx:if="{{!passed}}" bindtap="retakeExam">重新考试</button>
+    </view>
+  </view>
+</view>

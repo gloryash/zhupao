@@ -1,0 +1,9 @@
+{
+  "name": "handleUser",
+  "version": "1.0.0",
+  "description": "用户相关操作：个人信息、紧急联系人",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

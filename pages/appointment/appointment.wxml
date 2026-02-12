@@ -1,0 +1,173 @@
+<view class="appointment-page">
+  <!-- 顶部模式切换 -->
+  <view class="mode-switch">
+    <view class="switch-tab {{orderMode === 'instant' ? 'active' : ''}}" bindtap="switchMode" data-mode="instant">
+      即时点亮
+    </view>
+    <view class="switch-tab {{orderMode === 'appointment' ? 'active' : ''}}" bindtap="switchMode" data-mode="appointment">
+      预约陪跑
+    </view>
+  </view>
+
+  <!-- 预约模式表单 -->
+  <view class="appointment-form" wx:if="{{orderMode === 'appointment'}}">
+    <!-- 地点手动填写 -->
+    <view class="form-section">
+      <view class="section-icon">📍</view>
+      <view class="section-content">
+        <view class="section-title">陪跑地点</view>
+        <input
+          class="address-input"
+          placeholder="请输入详细地址"
+          placeholder-class="placeholder-text"
+          bindinput="onAddressInput"
+          value="{{selectedAddress}}"
+        />
+      </view>
+    </view>
+
+    <!-- 日期选择 -->
+    <view class="form-section">
+      <view class="section-icon">📅</view>
+      <view class="section-content">
+        <view class="section-title">陪跑日期</view>
+        <picker mode="date" value="{{selectedDateIndex}}" start="{{minDate}}" bindchange="onDateChange">
+          <view class="section-value {{selectedDate ? '' : 'placeholder'}}">
+            {{selectedDate || '选择日期'}}
+          </view>
+        </picker>
+      </view>
+      <view class="section-arrow">›</view>
+    </view>
+
+    <!-- 时间选择 -->
+    <view class="form-section">
+      <view class="section-icon">⏰</view>
+      <view class="section-content">
+        <view class="section-title">陪跑时间</view>
+        <picker mode="time" value="{{selectedTime}}" start="06:00" end="22:00" bindchange="onTimeChange">
+          <view class="section-value {{selectedTime ? '' : 'placeholder'}}">
+            {{selectedTime || '选择时间'}}
+          </view>
+        </picker>
+      </view>
+      <view class="section-arrow">›</view>
+    </view>
+
+    <!-- 时长选择 -->
+    <view class="form-section">
+      <view class="section-icon">⏱️</view>
+      <view class="section-content">
+        <view class="section-title">预计时长</view>
+        <picker mode="selector" range="{{durationOptions}}" value="{{durationIndex}}" bindchange="onDurationChange">
+          <view class="section-value">
+            {{durationOptions[durationIndex]}}
+          </view>
+        </picker>
+      </view>
+      <view class="section-arrow">›</view>
+    </view>
+
+    <!-- 备注信息 -->
+    <view class="form-section textarea-section">
+      <view class="section-icon">📝</view>
+      <view class="section-content">
+        <view class="section-title">备注信息</view>
+        <textarea
+          class="notes-input"
+          placeholder="请输入特殊需求或备注（选填）"
+          placeholder-class="placeholder-text"
+          bindinput="onNotesInput"
+          value="{{notes}}"
+          maxlength="200"
+        ></textarea>
+      </view>
+    </view>
+
+    <!-- 查找附近志愿者 -->
+    <view class="form-section volunteer-section" bindtap="findNearbyVolunteers">
+      <view class="section-icon">👥</view>
+      <view class="section-content">
+        <view class="section-title">查找附近志愿者</view>
+        <view class="section-value {{nearbyVolunteers.length > 0 ? '' : 'placeholder'}}">
+          {{nearbyVolunteers.length > 0 ? '已找到 ' + nearbyVolunteers.length + ' 位志愿者' : '点击查找附近1km内的志愿者'}}
+        </view>
+      </view>
+      <view class="section-arrow">›</view>
+    </view>
+
+    <!-- 志愿者列表 -->
+    <view class="volunteer-list" wx:if="{{nearbyVolunteers.length > 0}}">
+      <view class="volunteer-card" wx:for="{{nearbyVolunteers}}" wx:key="phone">
+        <view class="volunteer-avatar">{{item.name[0]}}</view>
+        <view class="volunteer-info">
+          <text class="volunteer-name">{{item.name}}</text>
+          <view class="volunteer-gender {{item.gender}}">
+            <text class="gender-icon">{{item.gender === 'male' ? '♂' : '♀'}}</text>
+            <text class="gender-text">{{item.gender === 'male' ? '男' : '女'}}</text>
+          </view>
+        </view>
+        <view class="volunteer-phone">{{item.phone}}</view>
+      </view>
+    </view>
+
+    <!-- 发布按钮 -->
+    <button class="publish-btn" bindtap="handlePublish" disabled="{{!canPublish}}">
+      {{canPublish ? '发布预约' : '请完善信息'}}
+    </button>
+  </view>
+
+  <!-- 即时模式表单 -->
+  <view class="instant-form" wx:else>
+    <view class="map-fullscreen">
+      <map
+        id="myMap"
+        class="full-map"
+        latitude="{{latitude}}"
+        longitude="{{longitude}}"
+        markers="{{markers}}"
+        scale="16"
+        show-location="true"
+        enable-zoom="true"
+        enable-scroll="true"
+      ></map>
+    </view>
+
+    <!-- 底部操作面板 -->
+    <view class="bottom-panel">
+      <view class="panel-content">
+        <view class="info-section">
+          <text class="title">即时点亮</text>
+          <text class="subtitle">周边志愿者将看到您的位置</text>
+        </view>
+
+        <!-- 目标里程 -->
+        <view class="detail-item">
+          <text class="detail-label">目标里程</text>
+          <picker mode="selector" range="{{distanceOptions}}" value="{{distanceIndex}}" bindchange="onDistanceChange">
+            <view class="picker-view">
+              {{distanceOptions[distanceIndex]}}
+            </view>
+          </picker>
+        </view>
+
+        <!-- 预计时间 -->
+        <view class="detail-item">
+          <text class="detail-label">预计时间</text>
+          <picker mode="selector" range="{{durationOptions}}" value="{{durationIndex}}" bindchange="onDurationChange">
+            <view class="picker-view">
+              {{durationOptions[durationIndex]}}
+            </view>
+          </picker>
+        </view>
+
+        <button
+          class="publish-btn {{isLighted ? 'lighted' : ''}}"
+          bindtap="handlePublish"
+          disabled="{{isLighted}}">
+          {{isLighted ? '已点亮' : '点亮位置'}}
+        </button>
+      </view>
+    </view>
+  </view>
+</view>

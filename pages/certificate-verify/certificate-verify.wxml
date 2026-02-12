@@ -1,0 +1,65 @@
+<view class="container">
+  <!-- 验证表单 -->
+  <view class="verify-form" wx:if="{{!showResult}}">
+    <view class="form-header">
+      <text class="header-icon">🔍</text>
+      <text class="header-title">证书验证</text>
+      <text class="header-desc">请输入证书编号进行验证</text>
+    </view>
+
+    <view class="form-body">
+      <view class="input-group">
+        <text class="input-label">证书编号</text>
+        <input
+          class="input-field"
+          placeholder="请输入证书编号（如：BRC1234567890）"
+          value="{{certificateNo}}"
+          bindinput="onCertificateNoInput"
+        />
+      </view>
+
+      <button class="verify-btn" bindtap="verifyCertificate">验证证书</button>
+    </view>
+  </view>
+
+  <!-- 验证结果 -->
+  <view class="verify-result" wx:if="{{showResult}}">
+    <!-- 验证成功 -->
+    <view class="result-card success" wx:if="{{verifyResult}}">
+      <view class="result-icon">✅</view>
+      <text class="result-title">证书验证成功</text>
+
+      <view class="result-info">
+        <view class="info-row">
+          <text class="info-label">证书编号：</text>
+          <text class="info-value">{{verifyResult.certificateNo}}</text>
+        </view>
+        <view class="info-row">
+          <text class="info-label">姓名：</text>
+          <text class="info-value">{{verifyResult.userName}}</text>
+        </view>
+        <view class="info-row">
+          <text class="info-label">考试成绩：</text>
+          <text class="info-value highlight">{{verifyResult.score}}分</text>
+        </view>
+        <view class="info-row">
+          <text class="info-label">获证日期：</text>
+          <text class="info-value">{{verifyResult.examDate}}</text>
+        </view>
+        <view class="info-row">
+          <text class="info-label">考试名称：</text>
+          <text class="info-value">{{verifyResult.examTitle}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 验证失败 -->
+    <view class="result-card fail" wx:else>
+      <view class="result-icon">❌</view>
+      <text class="result-title">证书不存在</text>
+      <text class="result-desc">未找到该证书编号，请检查后重试</text>
+    </view>
+
+    <button class="reset-btn" bindtap="resetVerify">重新验证</button>
+  </view>
+</view>

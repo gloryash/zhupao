@@ -1,0 +1,9 @@
+{
+  "name": "handleOrder",
+  "version": "1.0.0",
+  "description": "处理订单操作：发布、接单、取消、完成",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

@@ -1,0 +1,157 @@
+<!-- pages/shop/shop.wxml -->
+<view class="shop-container">
+  <!-- 顶部用户积分卡片 -->
+  <view class="points-card">
+    <view class="points-bg">
+      <view class="points-pattern"></view>
+    </view>
+    <view class="points-content">
+      <view class="points-icon">⭐</view>
+      <view class="points-info">
+        <text class="points-label">当前积分</text>
+        <text class="points-value {{userPointsAnim ? 'animating' : ''}}">{{userPoints}}</text>
+      </view>
+      <view class="points-actions">
+        <button class="points-btn" bindtap="goToOrders">
+          <text class="btn-icon">📦</text>
+          <text class="btn-text">我的兑换</text>
+        </button>
+      </view>
+    </view>
+  </view>
+
+  <!-- 滚动公告 -->
+  <view class="notice-bar" wx:if="{{showNotice && notices.length > 0}}">
+    <view class="notice-icon">📢</view>
+    <view class="notice-content">
+      <view class="notice-item {{currentNoticeIndex === index ? 'show' : ''}}" wx:for="{{notices}}" wx:key="index">
+        {{item}}
+      </view>
+    </view>
+  </view>
+
+  <!-- 分类标签 -->
+  <view class="category-bar">
+    <scroll-view scroll-x class="category-scroll" enhanced show-scrollbar="{{false}}">
+      <view class="category-list">
+        <view class="category-item {{currentCategory === item.key ? 'active' : ''}}"
+              wx:for="{{categories}}"
+              wx:key="key"
+              bindtap="onCategoryChange"
+              data-key="{{item.key}}">
+          <text class="category-name">{{item.name}}</text>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+
+  <!-- 商品宫格 -->
+  <view class="product-grid">
+    <view class="product-card"
+          wx:for="{{filteredProducts}}"
+          wx:key="id"
+          bindtap="onProductTap"
+          data-product="{{item}}">
+      <!-- 商品图片区域 -->
+      <view class="product-image">
+        <text class="product-emoji">{{item.image}}</text>
+        <!-- 售罄标签 -->
+        <view class="sold-out-tag" wx:if="{{item.stock <= 0}}">已抢光</view>
+        <!-- 限时标签 -->
+        <view class="limit-tag" wx:if="{{item.limit <= 2 && item.stock > 0}}">限量</view>
+      </view>
+
+      <!-- 商品信息 -->
+      <view class="product-info">
+        <text class="product-name">{{item.name}}</text>
+        <text class="product-desc">{{item.desc}}</text>
+
+        <!-- 价格和销量 -->
+        <view class="product-footer">
+          <view class="product-price">
+            <text class="price-icon">⭐</text>
+            <text class="price-value">{{item.price}}</text>
+          </view>
+          <view class="product-stats">
+            <text class="sold-count">已兑{{item.sold}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 底部提示 -->
+  <view class="shop-tip">
+    <text class="tip-text">积分来源：完成陪跑 +50积分/次 · 获得好评 +20经验</text>
+  </view>
+
+  <!-- 兑换确认弹窗 -->
+  <view class="modal-mask" wx:if="{{showExchangeModal}}" bindtap="closeExchangeModal"></view>
+  <view class="exchange-modal" wx:if="{{showExchangeModal && selectedProduct}}">
+    <view class="modal-header">
+      <text class="modal-title">确认兑换</text>
+      <view class="modal-close" bindtap="closeExchangeModal">✕</view>
+    </view>
+
+    <view class="modal-content">
+      <!-- 商品信息 -->
+      <view class="selected-product">
+        <view class="product-avatar">{{selectedProduct.image}}</view>
+        <view class="product-detail">
+          <text class="product-title">{{selectedProduct.name}}</text>
+          <text class="product-description">{{selectedProduct.desc}}</text>
+        </view>
+      </view>
+
+      <!-- 积分信息 -->
+      <view class="points-detail">
+        <view class="points-row">
+          <text class="points-label">当前积分</text>
+          <text class="points-num">{{userPoints}} 分</text>
+        </view>
+        <view class="points-row">
+          <text class="points-label">兑换消耗</text>
+          <text class="points-num minus">-{{selectedProduct.price}} 分</text>
+        </view>
+        <view class="points-divider"></view>
+        <view class="points-row">
+          <text class="points-label">剩余积分</text>
+          <text class="points-num {{userPoints - selectedProduct.price < 0 ? 'warning' : ''}}">
+            {{userPoints - selectedProduct.price}} 分
+          </text>
+        </view>
+      </view>
+    </view>
+
+    <view class="modal-footer">
+      <button class="cancel-btn" bindtap="closeExchangeModal">再想想</button>
+      <button class="confirm-btn" bindtap="confirmExchange" wx:if="{{userPoints >= selectedProduct.price && selectedProduct.stock > 0}}">
+        确认兑换
+      </button>
+      <button class="disabled-btn" wx:else>
+        {{userPoints < selectedProduct.price ? '积分不足' : '已抢光'}}
+      </button>
+    </view>
+  </view>
+
+  <!-- 兑换成功弹窗 -->
+  <view class="modal-mask" wx:if="{{showCodeModal}}" bindtap="closeCodeModal"></view>
+  <view class="success-modal" wx:if="{{showCodeModal}}">
+    <view class="success-icon">🎉</view>
+    <view class="success-title">兑换成功!</view>
+    <view class="success-content">
+      <view class="code-display">
+        <text class="code-label">兑换码</text>
+        <text class="code-value">{{exchangeCode}}</text>
+      </view>
+      <view class="code-tip">
+        <text>请截图保存此码，</text>
+        <text class="highlight">7天内有效</text>
+      </view>
+    </view>
+    <view class="success-actions">
+      <button class="save-btn" bindtap="saveCodeToAlbum">保存到相册</button>
+      <button class="done-btn" bindtap="closeCodeModal">我知道了</button>
+    </view>
+  </view>
+</view>

@@ -1,0 +1,151 @@
+<!-- 全屏地图容器 -->
+<view class="map-page">
+  <!-- 地图占据全屏 -->
+  <map
+    id="myMap"
+    class="fullscreen-map"
+    longitude="{{longitude}}"
+    latitude="{{latitude}}"
+    markers="{{markers}}"
+    scale="16"
+    show-location="true"
+    show-compass="true"
+    enable-zoom="true"
+    enable-scroll="true"
+    enable-rotate="false"
+    polyline="{{navigationPolyline}}"
+  ></map>
+
+  <!-- 顶部信息栏 -->
+  <view class="top-bar">
+    <!-- 未点亮状态 -->
+    <view class="location-info-bar" wx:if="{{!isLighted}}">
+      <text class="location-icon">📍</text>
+      <text class="location-text">{{statusText}}</text>
+    </view>
+    <!-- 已点亮等待中状态 -->
+    <view class="location-info-bar waiting" wx:elif="{{orderStatus === 'waiting'}}">
+      <text class="location-icon">⏳</text>
+      <text class="location-text">{{statusText}}</text>
+    </view>
+    <!-- 志愿者已接单状态 -->
+    <view class="location-info-bar accepted" wx:elif="{{orderStatus === 'accepted'}}">
+      <view class="accepted-badge">
+        <text class="badge-icon">🤝</text>
+        <text class="badge-text">{{statusText}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 右侧控制按钮 -->
+  <view class="map-controls">
+    <view class="control-btn" bindtap="getUserCurrentLocation">
+      <text class="control-icon">🎯</text>
+      <text class="control-label">重新定位</text>
+    </view>
+  </view>
+
+  <!-- 左侧安全功能按钮（仅在已点亮状态显示） -->
+  <view class="safety-controls" wx:if="{{isLighted}}">
+    <!-- 一键报警按钮 -->
+    <view class="safety-btn emergency" bindtap="handleEmergencyCall">
+      <text class="safety-icon">🚨</text>
+      <text class="safety-label">报警</text>
+    </view>
+    <!-- 紧急联系人 -->
+    <view class="safety-btn contact" bindtap="handleCallEmergencyContact" wx:if="{{emergencyPhone}}">
+      <text class="safety-icon">📞</text>
+      <text class="safety-label">联系人</text>
+    </view>
+    <!-- 投诉按钮 -->
+    <view class="safety-btn complaint" bindtap="handleComplaint">
+      <text class="safety-icon">⚠️</text>
+      <text class="safety-label">投诉</text>
+    </view>
+  </view>
+
+  <!-- 底部浮动操作面板 -->
+  <view class="bottom-panel">
+    <view class="panel-content">
+      <!-- 未点亮状态 -->
+      <view wx:if="{{!isLighted}}">
+        <view class="info-section">
+          <text class="title">发布陪跑需求</text>
+          <text class="subtitle">周边志愿者将看到您的位置</text>
+        </view>
+
+        <!-- 需求详情输入 -->
+        <view class="need-details">
+          <!-- 目标里程 -->
+          <view class="detail-item">
+            <text class="detail-label">目标里程</text>
+            <picker mode="selector" range="{{distanceOptions}}" value="{{distanceIndex}}" bindchange="onDistanceChange">
+              <view class="picker-view">
+                {{distanceOptions[distanceIndex]}}
+              </view>
+            </picker>
+          </view>
+
+          <!-- 预计时间 -->
+          <view class="detail-item">
+            <text class="detail-label">预计时间</text>
+            <picker mode="selector" range="{{durationOptions}}" value="{{durationIndex}}" bindchange="onDurationChange">
+              <view class="picker-view">
+                {{durationOptions[durationIndex]}}
+              </view>
+            </picker>
+          </view>
+        </view>
+
+        <button
+          class="publish-btn {{isLighted ? 'lighted' : ''}}"
+          bindtap="handlePublish"
+          disabled="{{isLighted}}">
+          {{isLighted ? '已点亮' : '点亮位置'}}
+        </button>
+      </view>
+
+      <!-- 已点亮等待中状态 -->
+      <view wx:elif="{{orderStatus === 'waiting'}}">
+        <view class="waiting-info">
+          <view class="waiting-animation">
+            <view class="pulse-ring"></view>
+            <view class="pulse-ring delay-1"></view>
+            <view class="pulse-ring delay-2"></view>
+            <text class="pulse-icon">🌟</text>
+          </view>
+          <text class="waiting-text">等待周边志愿者响应...</text>
+          <text class="waiting-hint">请保持在原地</text>
+        </view>
+      </view>
+
+      <!-- 志愿者已接单状态 -->
+      <view wx:elif="{{orderStatus === 'accepted'}}">
+        <view class="volunteer-info">
+          <view class="volunteer-header">
+            <view class="volunteer-avatar">👤</view>
+            <view class="volunteer-details">
+              <text class="volunteer-name">{{volunteerName}}</text>
+              <text class="volunteer-status">正在赶来与您会合</text>
+            </view>
+            <view class="distance-badge">
+              <text class="distance-value">{{volunteerDistance}}</text>
+              <text class="distance-unit">km</text>
+            </view>
+          </view>
+
+          <view class="volunteer-actions">
+            <button class="call-btn" bindtap="handleCallVolunteer">
+              <text class="btn-icon">📞</text>
+              拨打电话
+            </button>
+            <button class="cancel-btn" bindtap="handleCancelOrder">
+              <text class="btn-icon">✕</text>
+              取消订单
+            </button>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>

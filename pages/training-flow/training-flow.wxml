@@ -1,0 +1,140 @@
+<view class="container">
+  <!-- 步骤指示器 -->
+  <view class="steps-indicator">
+    <view class="step {{currentStep >= 1 ? 'active' : ''}} {{currentStep > 1 ? 'completed' : ''}}">
+      <view class="step-icon">{{currentStep > 1 ? '✓' : '1'}}</view>
+      <text class="step-label">观看视频</text>
+    </view>
+    <view class="step-line {{currentStep > 1 ? 'active' : ''}}"></view>
+    <view class="step {{currentStep >= 2 ? 'active' : ''}} {{currentStep > 2 ? 'completed' : ''}}">
+      <view class="step-icon">{{currentStep > 2 ? '✓' : '2'}}</view>
+      <text class="step-label">在线考试</text>
+    </view>
+    <view class="step-line {{currentStep > 2 ? 'active' : ''}}"></view>
+    <view class="step {{currentStep >= 3 ? 'active' : ''}} {{currentStep > 3 ? 'completed' : ''}}">
+      <view class="step-icon">{{currentStep > 3 ? '✓' : '3'}}</view>
+      <text class="step-label">领取证书</text>
+    </view>
+  </view>
+
+  <!-- 第一步：观看视频 -->
+  <view class="step-content" wx:if="{{currentStep === 1}}">
+    <view class="section-title">📹 助盲跑培训视频</view>
+    <view class="section-desc">请完整观看以下培训视频，了解助盲跑的注意事项和服务规范</view>
+
+    <video
+      class="training-video"
+      src="{{videoUrl}}"
+      controls
+      show-center-play-btn
+      bindended="onVideoEnded"
+      binderror="onVideoError"
+    ></video>
+
+    <view class="video-tips" wx:if="{{!videoCompleted}}">
+      <text class="tip-icon">💡</text>
+      <text class="tip-text">观看完整视频后即可参加考试</text>
+    </view>
+
+    <!-- 观看完成后显示 -->
+    <view class="completed-section" wx:if="{{videoCompleted}}">
+      <view class="completed-icon">✅</view>
+      <view class="completed-text">视频观看完成！</view>
+      <button class="next-btn" bindtap="goToExam">开始考试 →</button>
+      <button class="rewatch-btn" bindtap="rewatchVideo">重新观看视频</button>
+    </view>
+
+    <!-- 开发测试：跳过视频 -->
+    <button class="skip-btn" bindtap="skipVideo" wx:if="{{!videoCompleted}}">开发跳过视频</button>
+  </view>
+
+  <!-- 第二步：在线考试 -->
+  <view class="step-content" wx:if="{{currentStep === 2}}">
+    <view class="section-title">📝 在线考试</view>
+    <view class="section-desc">请回答以下题目，通过考试（正确率≥60%）后即可获得培训证书</view>
+
+    <!-- 考试结果（未通过时显示） -->
+    <view class="exam-result" wx:if="{{showExamResult && !examPassed}}">
+      <view class="result-icon fail">❌</view>
+      <view class="result-title">考试未通过</view>
+      <view class="result-score">得分：{{score}}分（及格线：60分）</view>
+      <view class="result-desc">很遗憾，您未能通过本次考试，请重新学习视频并再次参加考试</view>
+      <button class="retry-btn" bindtap="retryExam">重新考试</button>
+    </view>
+
+    <!-- 题目列表 -->
+    <view class="question-list" wx:if="{{questions.length > 0 && !showExamResult}}">
+      <view class="question-item" wx:for="{{questions}}" wx:key="index">
+        <view class="question-text">{{index + 1}}. {{item.question}}</view>
+        <view class="options">
+          <radio-group bindchange="onAnswerChange" data-index="{{index}}">
+            <label class="option {{item.answered && item.userAnswer === 0 ? (item.correct ? 'correct' : 'wrong') : ''}}">
+              <radio value="0" disabled="{{item.answered}}" checked="{{item.userAnswer === 0}}"/>
+              <text>{{item.optionA}}</text>
+            </label>
+            <label class="option {{item.answered && item.userAnswer === 1 ? (item.correct ? 'correct' : 'wrong') : ''}}">
+              <radio value="1" disabled="{{item.answered}}" checked="{{item.userAnswer === 1}}"/>
+              <text>{{item.optionB}}</text>
+            </label>
+            <label class="option {{item.answered && item.userAnswer === 2 ? (item.correct ? 'correct' : 'wrong') : ''}}">
+              <radio value="2" disabled="{{item.answered}}" checked="{{item.userAnswer === 2}}"/>
+              <text>{{item.optionC}}</text>
+            </label>
+            <label class="option {{item.answered && item.userAnswer === 3 ? (item.correct ? 'correct' : 'wrong') : ''}}">
+              <radio value="3" disabled="{{item.answered}}" checked="{{item.userAnswer === 3}}"/>
+              <text>{{item.optionD}}</text>
+            </label>
+          </radio-group>
+        </view>
+        <!-- 答案解析 -->
+        <view class="explanation" wx:if="{{item.answered && !item.correct}}">
+          <text>正确答案：{{item.correctAnswer === 0 ? item.optionA : (item.correctAnswer === 1 ? item.optionB : (item.correctAnswer === 2 ? item.optionC : item.optionD))}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 无题目提示 -->
+    <view class="no-questions" wx:if="{{questions.length === 0}}">
+      <text>暂无可用考试题目</text>
+    </view>
+  </view>
+
+  <!-- 第三步：领取证书 -->
+  <view class="step-content certificate-step" wx:if="{{currentStep === 3}}">
+    <view class="section-title">🎉 恭喜通过培训！</view>
+    <view class="section-desc">您已完成所有培训内容，现在可以开始接单服务了</view>
+
+    <!-- 证书卡片 -->
+    <view class="certificate-card">
+      <view class="certificate-header">
+        <text class="cert-title">志愿者培训证书</text>
+        <text class="cert-subtitle">VOLUNTEER TRAINING CERTIFICATE</text>
+      </view>
+      <view class="certificate-body">
+        <view class="cert-content">
+          <text class="cert-text">兹证明</text>
+          <text class="cert-name">{{userName}}</text>
+          <text class="cert-text">已完成助盲跑志愿服务培训</text>
+          <text class="cert-text">经考试合格，特发此证</text>
+        </view>
+        <view class="cert-date">
+          <text>发证日期：{{examDate}}</text>
+        </view>
+        <view class="cert-seal">
+          <view class="seal">合格</view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 操作按钮 -->
+    <view class="action-buttons">
+      <button class="primary-btn" bindtap="startService">
+        <text class="btn-icon">🏃</text>
+        开始接单服务
+      </button>
+      <button class="secondary-btn" bindtap="goHome">
+        返回首页
+      </button>
+    </view>
+  </view>
+</view>

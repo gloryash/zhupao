@@ -1,0 +1,235 @@
+<!-- 全屏地图容器 -->
+<view class="map-page">
+  <!-- 位置加载中 -->
+  <view class="location-loading" wx:if="{{!locationReady}}">
+    <view class="loading-icon">📍</view>
+    <text class="loading-text">正在获取您的位置...</text>
+    <text class="loading-hint">请确保位置权限已开启</text>
+  </view>
+
+  <!-- 地图占据全屏 -->
+  <map
+    id="volunteerMap"
+    class="fullscreen-map {{!locationReady ? 'hidden' : ''}}"
+    longitude="{{longitude}}"
+    latitude="{{latitude}}"
+    markers="{{markers}}"
+    scale="16"
+    show-location="true"
+    show-compass="true"
+    enable-zoom="true"
+    enable-scroll="true"
+    polyline="{{orderStatus === 'running' ? runningPolyline : (orderStatus === 'accepted' ? navigationPolyline : '')}}"
+  ></map>
+
+  <!-- 顶部标题栏 -->
+  <view class="top-bar">
+    <view class="title-bar">
+      <text class="page-title">发现周边的光</text>
+      <view class="status-badge" wx:if="{{hasNewOrder}}">
+        <view class="status-dot {{orderStatus === 'waiting' ? 'breathing' : ''}}"></view>
+        <text class="status-text">{{orderStatus === 'waiting' ? '等待接单' : orderStatus === 'accepted' ? '已接单' : orderStatus === 'arrived' ? '已到达' : orderStatus === 'running' ? '陪跑中' : '已完成'}}</text>
+      </view>
+    </view>
+    <!-- 预约广场入口 -->
+    <view class="appointment-entry" bindtap="goToAppointmentSquare">
+      <text class="entry-icon">📅</text>
+      <text class="entry-text">预约广场</text>
+    </view>
+  </view>
+
+  <!-- 底部信息面板 -->
+  <view class="bottom-panel">
+    <!-- 有需求时显示 - 订单卡片 -->
+    <view class="order-card" wx:if="{{hasNewOrder}}">
+      <!-- 卡片头部 -->
+      <view class="card-header">
+        <view class="avatar-wrapper">
+          <image class="user-avatar" wx:if="{{orderInfo.avatarUrl}}" src="{{orderInfo.avatarUrl}}" mode="aspectFill"></image>
+          <view class="user-avatar" wx:else style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center;">
+            <text style="font-size: 40rpx;">👤</text>
+          </view>
+          <view class="avatar-ring"></view>
+        </view>
+        <view class="user-info">
+          <text class="user-name">{{orderInfo.userName || '视障跑者'}}</text>
+          <view class="user-tags">
+            <text class="tag" wx:if="{{orderInfo.experience}}">{{orderInfo.experience}}年跑步</text>
+            <text class="tag" wx:if="{{orderInfo.pace}}">配速{{orderInfo.pace}}</text>
+          </view>
+        </view>
+        <view class="distance-badge">
+          <text class="distance-value">{{distance !== null ? distance : '--'}}</text>
+          <text class="distance-unit">km</text>
+        </view>
+      </view>
+
+      <!-- 订单详情网格 -->
+      <view class="order-details">
+        <view class="detail-grid">
+          <view class="detail-cell">
+            <text class="detail-icon">🎯</text>
+            <view class="detail-text">
+              <text class="detail-label">目标里程</text>
+              <text class="detail-value">{{orderInfo.targetDistance || '5公里'}}</text>
+            </view>
+          </view>
+          <view class="detail-cell">
+            <text class="detail-icon">⏱️</text>
+            <view class="detail-text">
+              <text class="detail-label">预计时间</text>
+              <text class="detail-value">{{orderInfo.estimatedDuration || '1小时'}}</text>
+            </view>
+          </view>
+          <view class="detail-cell">
+            <text class="detail-icon">📍</text>
+            <view class="detail-text">
+              <text class="detail-label">起点</text>
+              <text class="detail-value location-text">{{orderInfo.startLocation || '世纪公园'}}</text>
+            </view>
+          </view>
+          <view class="detail-cell">
+            <text class="detail-icon">🗺️</text>
+            <view class="detail-text">
+              <text class="detail-label">类型</text>
+              <text class="detail-value">{{orderInfo.runType || '跑步'}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 状态机：等待中 -->
+      <view class="status-section waiting" wx:if="{{orderStatus === 'waiting'}}">
+        <view class="breathing-container">
+          <view class="breathing-ring"></view>
+          <view class="breathing-ring delay-1"></view>
+          <view class="breathing-ring delay-2"></view>
+          <view class="pulse-icon">👆</view>
+        </view>
+        <text class="status-hint">对方正在等待您的回应</text>
+        <button class="primary-btn" bindtap="handleAccept">
+          <text class="btn-icon">🤝</text>
+          我要陪跑
+        </button>
+      </view>
+
+      <!-- 状态机：已接单 -->
+      <view class="status-section accepted" wx:if="{{orderStatus === 'accepted'}}">
+        <view class="action-row">
+          <button class="action-btn phone-btn" bindtap="handleCall">
+            <text class="btn-icon">📞</text>
+            拨打电话
+          </button>
+          <button class="action-btn nav-btn" bindtap="handleNavigate">
+            <text class="btn-icon">🧭</text>
+            导航前往
+          </button>
+        </view>
+        <button class="primary-btn" bindtap="handleConfirmArrival">
+          <text class="btn-icon">✅</text>
+          确认到达
+        </button>
+      </view>
+
+      <!-- 状态机：已到达 -->
+      <view class="status-section arrived" wx:if="{{orderStatus === 'arrived'}}">
+        <view class="arrived-info">
+          <text class="arrived-text">已到达会合点</text>
+          <text class="arrived-hint">请确认与视障跑者会合后开始陪跑</text>
+        </view>
+        <button class="primary-btn running-btn" bindtap="handleStartRunning">
+          <text class="btn-icon">🏃</text>
+          开始陪跑
+        </button>
+      </view>
+
+      <!-- 状态机：陪跑中 -->
+      <view class="status-section running" wx:if="{{orderStatus === 'running'}}">
+        <!-- 实时运动统计 -->
+        <view class="running-stats">
+          <view class="stat-item">
+            <view class="stat-value-large">{{runningStats.totalDistance}}</view>
+            <view class="stat-unit">km</view>
+            <text class="stat-label">总里程</text>
+          </view>
+          <view class="stat-item">
+            <view class="stat-value-large">{{runningStats.formattedTime}}</view>
+            <view class="stat-unit">分钟</view>
+            <text class="stat-label">用时</text>
+          </view>
+          <view class="stat-item">
+            <view class="stat-value-large">{{runningStats.avgSpeed}}</view>
+            <view class="stat-unit">km/h</view>
+            <text class="stat-label">配速</text>
+          </view>
+        </view>
+
+        <!-- 轨迹动画指示 -->
+        <view class="tracking-indicator">
+          <view class="pulse-dot"></view>
+          <text class="tracking-text">正在实时记录运动轨迹</text>
+        </view>
+
+        <button class="primary-btn end-btn" bindtap="handleEndRunning">
+          <text class="btn-icon">🛑</text>
+          结束陪跑
+        </button>
+      </view>
+
+      <!-- 状态机：已完成 -->
+      <view class="status-section completed" wx:if="{{orderStatus === 'completed'}}">
+        <view class="completed-icon">🎉</view>
+        <text class="completed-title">陪跑完成</text>
+        <text class="completed-hint">感谢您的爱心陪伴！</text>
+      </view>
+    </view>
+
+    <!-- 无需求时显示 - 呼吸灯动画 -->
+    <view class="no-order-card" wx:else>
+      <view class="searching-animation">
+        <view class="search-ring"></view>
+        <view class="search-ring delay-1"></view>
+        <view class="search-ring delay-2"></view>
+        <view class="search-icon">👀</view>
+      </view>
+      <text class="no-order-title">守望中...</text>
+      <text class="no-order-desc">附近暂无光点</text>
+      <text class="no-order-hint">如有需求，盲友会点亮地图</text>
+    </view>
+  </view>
+
+  <!-- 评价弹窗 -->
+  <view class="rating-popup" wx:if="{{showRatingPopup}}">
+    <view class="rating-mask" bindtap="closeRatingPopup"></view>
+    <view class="rating-content">
+      <view class="rating-header">
+        <text class="rating-title">本次陪跑评价</text>
+        <text class="rating-subtitle">您的评价对盲友非常重要</text>
+      </view>
+
+      <!-- 盲人对志愿者的评价 -->
+      <view class="rating-section">
+        <text class="rating-label">您对盲友的评分</text>
+        <view class="star-row">
+          <view class="star" wx:for="{{[1,2,3,4,5]}}" wx:key="*this" bindtap="setRating" data-type="blindRate" data-score="{{item}}">
+            <text class="star-icon {{item <= rating.blindRate ? 'active' : ''}}">★</text>
+          </view>
+        </view>
+        <input class="comment-input" placeholder="给盲友留句话吧（选填）" bindinput="onCommentInput" data-type="blindComment" value="{{rating.blindComment}}"/>
+      </view>
+
+      <!-- 志愿者对盲人的评价 -->
+      <view class="rating-section">
+        <text class="rating-label">盲人对您的评价</text>
+        <view class="star-row">
+          <view class="star" wx:for="{{[1,2,3,4,5]}}" wx:key="*this" bindtap="setRating" data-type="volunteerRate" data-score="{{item}}">
+            <text class="star-icon {{item <= rating.volunteerRate ? 'active' : ''}}">★</text>
+          </view>
+        </view>
+        <input class="comment-input" placeholder="给盲友留句话吧（选填）" bindinput="onCommentInput" data-type="volunteerComment" value="{{rating.volunteerComment}}"/>
+      </view>
+
+      <button class="submit-rating-btn" bindtap="submitRating">提交评价</button>
+    </view>
+  </view>
+</view>

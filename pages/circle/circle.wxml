@@ -1,0 +1,131 @@
+<view class="circle-container">
+  <!-- 动态列表 -->
+  <scroll-view scroll-y class="posts-list" bindscrolltolower="onLoadMore">
+    <view class="post-card" wx:for="{{posts}}" wx:key="id">
+      <!-- 用户信息 -->
+      <view class="post-header">
+        <view class="user-avatar">
+          <text class="avatar-text">{{item.userName[0]}}</text>
+        </view>
+        <view class="user-info">
+          <view class="user-name-row">
+            <text class="user-name">{{item.userName}}</text>
+            <view class="tier-badge">
+              <text class="tier-icon">{{item.tierIcon}}</text>
+              <text class="tier-name">{{item.tier}}</text>
+            </view>
+          </view>
+          <text class="post-time">{{item.date}}</text>
+        </view>
+      </view>
+
+      <!-- 动态内容 -->
+      <view class="post-content">
+        <text>{{item.content}}</text>
+      </view>
+
+      <!-- 运动数据（打卡） -->
+      <view class="post-stats" wx:if="{{item.isCheckin}}">
+        <view class="stat-item">
+          <text class="stat-icon">🏃</text>
+          <text class="stat-value">{{item.distance || '5.2'}} km</text>
+        </view>
+        <view class="stat-item">
+          <text class="stat-icon">🔥</text>
+          <text class="stat-value">{{item.calories || '320'}} kCal</text>
+        </view>
+        <view class="stat-item">
+          <text class="stat-icon">⏱️</text>
+          <text class="stat-value">{{item.duration || '45'}} min</text>
+        </view>
+      </view>
+
+      <!-- 操作按钮 -->
+      <view class="post-actions">
+        <view class="action-item" bindtap="onLike" data-index="{{index}}">
+          <text class="action-icon">{{item.isLiked ? '❤️' : '🤍'}}</text>
+          <text class="action-count">{{item.likes}}</text>
+        </view>
+        <view class="action-item" bindtap="onViewComments" data-index="{{index}}">
+          <text class="action-icon">💬</text>
+          <text class="action-count">{{item.comments}}</text>
+        </view>
+        <view class="action-item torch" bindtap="onTorch" data-index="{{index}}">
+          <text class="action-icon">🔥</text>
+          <text class="action-text">送火炬</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 加载更多 -->
+    <view class="load-more" wx:if="{{posts.length > 0}}">
+      <text>上拉加载更多</text>
+    </view>
+
+    <!-- 空状态 -->
+    <view class="empty-state" wx:if="{{posts.length === 0}}">
+      <text class="empty-icon">📭</text>
+      <text class="empty-text">暂无动态</text>
+      <text class="empty-hint">成为第一个分享的人吧！</text>
+    </view>
+  </scroll-view>
+
+  <!-- 发布按钮 -->
+  <view class="fab" bindtap="onPublish">
+    <text class="fab-icon">+</text>
+  </view>
+
+  <!-- 评论弹窗 -->
+  <view class="comments-popup" wx:if="{{showCommentsPopup}}">
+    <view class="popup-mask" bindtap="closeCommentsPopup"></view>
+    <view class="popup-content">
+      <!-- 弹窗头部 -->
+      <view class="popup-header">
+        <text class="popup-title">评论 ({{currentPost.comments}})</text>
+        <view class="popup-close" bindtap="closeCommentsPopup">
+          <text class="close-icon">✕</text>
+        </view>
+      </view>
+
+      <!-- 评论列表 -->
+      <scroll-view scroll-y class="comments-list">
+        <view class="no-comments" wx:if="{{!currentPost.commentsList || currentPost.commentsList.length === 0}}">
+          <text class="no-comments-icon">💬</text>
+          <text class="no-comments-text">暂无评论</text>
+          <text class="no-comments-hint">快来抢沙发~</text>
+        </view>
+
+        <view class="comment-item" wx:for="{{currentPost.commentsList}}" wx:key="id">
+          <view class="comment-avatar">
+            <text class="avatar-text">{{item.userName[0]}}</text>
+          </view>
+          <view class="comment-body">
+            <view class="comment-header">
+              <view class="comment-user-row">
+                <text class="comment-user-name">{{item.userName}}</text>
+                <view class="tier-badge-small">
+                  <text class="tier-icon-small">{{item.tierIcon}}</text>
+                  <text class="tier-name-small">{{item.tier}}</text>
+                </view>
+              </view>
+              <text class="comment-time">{{item.date}}</text>
+            </view>
+            <text class="comment-content">{{item.content}}</text>
+          </view>
+          <!-- 删除按钮（自己的评论显示） -->
+          <view class="comment-delete" wx:if="{{item.userType === currentUserType}}" bindtap="deleteComment" data-comment-index="{{index}}">
+            <text class="delete-icon">🗑️</text>
+          </view>
+        </view>
+      </scroll-view>
+
+      <!-- 评论输入框 -->
+      <view class="comment-input-section">
+        <input class="comment-input" placeholder="说点什么..." placeholder-class="placeholder-style" value="{{newCommentText}}" bindinput="onCommentInput" confirm-type="send" bindconfirm="submitComment" />
+        <view class="submit-btn {{newCommentText.trim() ? 'active' : ''}}" bindtap="submitComment">
+          <text class="submit-text">发送</text>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>

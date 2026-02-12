@@ -1,0 +1,45 @@
+<view class="container">
+  <!-- 标题区域 -->
+  <view class="header">
+    <view class="header-content">
+      <text class="title">经常联系的朋友</text>
+      <text class="subtitle">与您一起跑步次数最多的跑友</text>
+    </view>
+  </view>
+
+  <!-- 联系人列表 -->
+  <view class="contact-list" wx:if="{{contacts.length > 0}}">
+    <view class="contact-item" wx:for="{{contacts}}" wx:key="phone" data-phone="{{item.phone}}" bindtap="makeCall">
+      <view class="contact-left">
+        <view class="avatar">
+          <text class="avatar-text">{{item.avatar}}</text>
+        </view>
+        <view class="contact-info">
+          <view class="contact-name">{{item.name}}</view>
+          <view class="contact-phone">{{item.phone}}</view>
+          <view class="contact-stats">
+            <text class="stat">一起跑步 {{item.runCount}} 次</text>
+            <text class="stat-divider">|</text>
+            <text class="stat">总计 {{item.totalDistance.toFixed(1)}} km</text>
+            <text class="stat-divider">|</text>
+            <text class="stat">{{item.totalTime}}小时</text>
+          </view>
+        </view>
+      </view>
+      <view class="contact-right">
+        <view class="last-run" wx:if="{{item.lastRunDate}}">最近 {{item.lastRunDate}}</view>
+        <view class="call-btn">
+          <text class="call-icon">📞</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 空状态 -->
+  <view class="empty-state" wx:if="{{contacts.length === 0}}">
+    <view class="empty-icon">🏃</view>
+    <text class="empty-text">还没有一起跑步的记录</text>
+    <text class="empty-desc">完成跑步后，经常联系的朋友会显示在这里</text>
+    <button class="empty-btn" bindtap="addContact">我知道了</button>
+  </view>
+</view>

@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 81 81" width="81" height="81">
+  <!-- Sport - Running Person -->
+  <defs>
+    <linearGradient id="sportGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FF8C00"/>
+      <stop offset="100%" style="stop-color:#FF4500"/>
+    </linearGradient>
+  </defs>
+  <rect width="81" height="81" fill="white" rx="12"/>
+  <!-- Person running -->
+  <circle cx="52" cy="24" r="7" fill="url(#sportGrad)"/>
+  <path d="M45 31l-8 8-3-3 8-8c-4-2-9-2-13 0l-2 1c-3 1.5-5 4.5-5 8v4c0 2 1 4 3 5l6 10-3 2 2 6 5-3 3 8 3-2-2-6 4-4c2 1 4 1 6 0v-5l-4-2 2-2c2-2 3-5 2-8l1-1" fill="url(#sportGrad)"/>
+</svg>

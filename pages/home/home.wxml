@@ -1,0 +1,346 @@
+<view class="home-container">
+  <!-- 顶部导航栏 -->
+  <view class="top-nav">
+    <view class="home-btn" bindtap="goToLogin">
+      <text class="home-icon">🏠</text>
+      <text class="home-text">首页</text>
+    </view>
+  </view>
+
+  <!-- 1. 顶部：个人名片区 + 段位展示 -->
+  <view class="profile-section">
+    <view class="profile-card">
+      <view class="profile-header">
+        <view class="avatar-wrapper">
+          <view class="avatar" wx:if="{{userInfo.avatarUrl}}">
+            <image class="avatar-img" src="{{userInfo.avatarUrl}}" mode="aspectFill"></image>
+          </view>
+          <view class="avatar-placeholder" wx:else>
+            <text class="avatar-emoji">{{userName ? userName[0] : '我'}}</text>
+          </view>
+          <view class="role-indicator" wx:if="{{userType === 'volunteer'}}">志愿者</view>
+          <view class="role-indicator disabled" wx:else>视障跑者</view>
+        </view>
+        <view class="profile-info">
+          <view class="name-row">
+            <text class="user-name">{{userName}}</text>
+            <!-- 段位徽章 - 胶囊形状 -->
+            <view class="tier-badge" wx:if="{{tier}}">
+              <view class="tier-badge-bg"></view>
+              <text class="tier-icon">{{tier.icon}}</text>
+              <text class="tier-name">{{tier.name}}</text>
+              <view class="tier-sparkle"></view>
+            </view>
+          </view>
+          <text class="user-tag">{{userInfo.city || '上海'}} · 已完成 {{stats.totalRuns}} 次陪跑</text>
+
+          <!-- 段位进度条 -->
+          <view class="tier-progress" wx:if="{{tier}}">
+            <view class="progress-bar">
+              <view class="progress-fill" style="width: {{tier.progress}}%; background: {{tier.color}};"></view>
+            </view>
+            <view class="progress-info">
+              <text class="progress-text">{{tier.progress}}%</text>
+              <text class="next-level" wx:if="{{tier.nextLevelRuns}}">还差 {{tier.nextLevelRuns - tier.currentRuns}} 次升级</text>
+              <text class="max-level" wx:else>已满级</text>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 积分与经验值展示 -->
+  <view class="points-section">
+    <view class="points-card">
+      <!-- 积分展示 -->
+      <view class="points-row">
+        <view class="points-item">
+          <text class="points-icon">⭐</text>
+          <view class="points-info">
+            <text class="points-value">{{userPoints}}</text>
+            <text class="points-label">当前积分</text>
+          </view>
+        </view>
+        <view class="points-divider"></view>
+        <view class="points-item">
+          <text class="points-icon exp">📈</text>
+          <view class="points-info">
+            <text class="points-value">{{userExp}}</text>
+            <text class="points-label">累计经验</text>
+          </view>
+        </view>
+      </view>
+      <!-- 连续打卡提示（仅视障人士） -->
+      <view class="checkin-tip" wx:if="{{userType === 'disabled'}}">
+        <text class="checkin-icon">📅</text>
+        <text class="checkin-text" wx:if="{{todayCheckedIn}}">今日已打卡</text>
+        <text class="checkin-text" wx:else>连续打卡3天可获得额外50经验</text>
+      </view>
+    </view>
+    <!-- 打卡按钮（仅视障人士） -->
+    <button class="checkin-btn" wx:if="{{userType === 'disabled' && !todayCheckedIn}}" bindtap="handleCheckIn">
+      每日打卡 +5经验
+    </button>
+  </view>
+
+  <!-- 志愿者专属：培训教程（未完成时显示） -->
+  <view class="training-section" wx:if="{{userType === 'volunteer' && !examPassed && !trainingCompleted}}">
+    <view class="section-header-row">
+      <text class="section-main-title">📚 培训教程</text>
+    </view>
+    <view class="training-card">
+      <view class="training-steps">
+        <!-- 步骤1：观看视频 -->
+        <view class="step-item {{trainingStep >= 1 ? 'completed' : (trainingStep === 1 ? 'active' : '')}}">
+          <view class="step-icon">
+            <text wx:if="{{trainingStep > 1}}">✓</text>
+            <text wx:else>1</text>
+          </view>
+          <view class="step-content">
+            <text class="step-name">观看培训视频</text>
+            <text class="step-status" wx:if="{{trainingStep > 1}}">已完成</text>
+            <text class="step-status pending" wx:else>待完成</text>
+          </view>
+        </view>
+        <view class="step-line {{trainingStep >= 2 ? 'completed' : ''}}"></view>
+        <!-- 步骤2：在线考试 -->
+        <view class="step-item {{trainingStep >= 2 ? 'completed' : (trainingStep === 2 ? 'active' : '')}}">
+          <view class="step-icon">
+            <text wx:if="{{trainingStep > 2}}">✓</text>
+            <text wx:else>2</text>
+          </view>
+          <view class="step-content">
+            <text class="step-name">在线考试</text>
+            <text class="step-status" wx:if="{{trainingStep > 2}}">已通过</text>
+            <text class="step-status pending" wx:else>待完成</text>
+          </view>
+        </view>
+        <view class="step-line {{trainingStep >= 3 ? 'completed' : ''}}"></view>
+        <!-- 步骤3：领取证书 -->
+        <view class="step-item {{trainingStep >= 3 ? 'completed' : (trainingStep === 3 ? 'active' : '')}}">
+          <view class="step-icon">
+            <text wx:if="{{trainingStep === 4}}">🏆</text>
+            <text wx:else>3</text>
+          </view>
+          <view class="step-content">
+            <text class="step-name">领取志愿者证书</text>
+            <text class="step-status" wx:if="{{trainingStep === 4}}">已获得</text>
+            <text class="step-status pending" wx:else>待完成</text>
+          </view>
+        </view>
+      </view>
+      <button class="training-btn" bindtap="goToTraining">
+        {{trainingStep === 1 ? '开始学习视频' : (trainingStep === 2 ? '继续考试' : '去领证')}}
+      </button>
+    </view>
+  </view>
+
+  <!-- 志愿者已完成培训 -->
+  <view class="training-completed-section" wx:if="{{userType === 'volunteer' && examPassed && trainingCompleted}}">
+    <view class="completed-badge">
+      <text class="completed-icon">🎉</text>
+      <text class="completed-text">您已完成培训，可以开始接单了！</text>
+    </view>
+    <button class="retrain-btn" bindtap="goToTraining">
+      <text class="retrain-icon">📚</text>
+      <text class="retrain-text">复习培训</text>
+    </button>
+  </view>
+
+  <!-- 2. 中间：数据看板 -->
+  <view class="stats-section">
+    <view class="section-header-row">
+      <text class="section-main-title">📊 数据看板</text>
+    </view>
+    <view class="stats-grid">
+      <view class="stat-item" wx:if="{{userType === 'volunteer'}}">
+        <view class="stat-icon-gradient">
+          <text class="stat-icon-text">🏃</text>
+        </view>
+        <view class="stat-content">
+          <text class="stat-number">{{stats.totalRuns}}</text>
+          <text class="stat-label">累计陪跑</text>
+        </view>
+      </view>
+      <view class="stat-item" wx:if="{{userType === 'volunteer'}}">
+        <view class="stat-icon-gradient">
+          <text class="stat-icon-text">👥</text>
+        </view>
+        <view class="stat-content">
+          <text class="stat-number">{{stats.totalRuns}}</text>
+          <text class="stat-label">服务人数</text>
+        </view>
+      </view>
+      <view class="stat-item" wx:if="{{userType === 'volunteer'}}">
+        <view class="stat-icon-gradient">
+          <text class="stat-icon-text">👍</text>
+        </view>
+        <view class="stat-content">
+          <text class="stat-number">{{userInfo.likes || 0}}</text>
+          <text class="stat-label">获得点赞</text>
+        </view>
+      </view>
+      <view class="stat-item" wx:if="{{userType === 'volunteer'}}">
+        <view class="stat-icon-gradient">
+          <text class="stat-icon-text">📏</text>
+        </view>
+        <view class="stat-content">
+          <text class="stat-number">{{stats.totalDistance}}</text>
+          <text class="stat-label">总里程(km)</text>
+        </view>
+      </view>
+
+      <!-- 视障人士数据 -->
+      <view class="stat-item" wx:if="{{userType === 'disabled'}}">
+        <view class="stat-icon-gradient">
+          <text class="stat-icon-text">🏃</text>
+        </view>
+        <view class="stat-content">
+          <text class="stat-number">{{stats.totalDistance}}</text>
+          <text class="stat-label">累计跑量</text>
+        </view>
+      </view>
+      <view class="stat-item" wx:if="{{userType === 'disabled'}}">
+        <view class="stat-icon-gradient">
+          <text class="stat-icon-text">⏱️</text>
+        </view>
+        <view class="stat-content">
+          <text class="stat-number">{{stats.totalTime}}</text>
+          <text class="stat-label">安全时长(h)</text>
+        </view>
+      </view>
+      <view class="stat-item" wx:if="{{userType === 'disabled'}}">
+        <view class="stat-icon-gradient">
+          <text class="stat-icon-text">🏆</text>
+        </view>
+        <view class="stat-content">
+          <text class="stat-number">{{stats.totalRuns}}</text>
+          <text class="stat-label">陪跑次数</text>
+        </view>
+      </view>
+      <view class="stat-item" wx:if="{{userType === 'disabled'}}">
+        <view class="stat-icon-gradient">
+          <text class="stat-icon-text">🛡️</text>
+        </view>
+        <view class="stat-content">
+          <text class="stat-number">{{userInfo.medals || 0}}</text>
+          <text class="stat-label">我的勋章</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 3. 列表：功能操作区 -->
+  <view class="menu-section">
+    <view class="section-header-row">
+      <text class="section-main-title">🎯 功能操作</text>
+    </view>
+    <view class="menu-list">
+      <view class="menu-item" bindtap="goToProfile">
+        <view class="menu-icon-wrap">
+          <text class="menu-icon">👤</text>
+        </view>
+        <view class="menu-content">
+          <text class="menu-title">个人信息</text>
+          <text class="menu-desc">完善您的个人资料</text>
+        </view>
+        <text class="menu-arrow">›</text>
+      </view>
+
+      <!-- 志愿者专属：证书（视障人士不需要证书） -->
+      <view class="menu-item" wx:if="{{userType === 'volunteer'}}" bindtap="goToCertificate">
+        <view class="menu-icon-wrap">
+          <text class="menu-icon">📜</text>
+        </view>
+        <view class="menu-content">
+          <text class="menu-title">我的证书</text>
+          <text class="menu-desc">查看培训合格证</text>
+        </view>
+        <text class="menu-arrow">›</text>
+      </view>
+
+      <!-- 志愿者专属：去接单 -->
+      <view class="menu-item" wx:if="{{userType === 'volunteer'}}" bindtap="goToTakeOrder">
+        <view class="menu-icon-wrap">
+          <text class="menu-icon">🎯</text>
+        </view>
+        <view class="menu-content">
+          <text class="menu-title">去接单</text>
+          <text class="menu-desc">接收盲人的陪跑请求</text>
+        </view>
+        <text class="menu-arrow">›</text>
+      </view>
+
+      <view class="menu-item" bindtap="goToRecords">
+        <view class="menu-icon-wrap">
+          <text class="menu-icon">📋</text>
+        </view>
+        <view class="menu-content">
+          <text class="menu-title">跑步历史</text>
+          <text class="menu-desc">查看过去的陪跑记录</text>
+        </view>
+        <text class="menu-arrow">›</text>
+      </view>
+
+      <view class="menu-item" bindtap="goToSchedule">
+        <view class="menu-icon-wrap">
+          <text class="menu-icon">📅</text>
+        </view>
+        <view class="menu-content">
+          <text class="menu-title">我的日程</text>
+          <text class="menu-desc">查看和管理预约</text>
+        </view>
+        <text class="menu-arrow">›</text>
+      </view>
+
+      <!-- 视障人士专属：紧急联系人 -->
+      <view class="menu-item" wx:if="{{userType === 'disabled'}}" bindtap="goToProfile">
+        <view class="menu-icon-wrap">
+          <text class="menu-icon">🚨</text>
+        </view>
+        <view class="menu-content">
+          <text class="menu-title">紧急联系人</text>
+          <text class="menu-desc">{{userInfo.emergencyPhone || '未设置'}}</text>
+        </view>
+        <text class="menu-arrow">›</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 4. 底部：系统支持 -->
+  <view class="footer-section">
+    <view class="section-header-row">
+      <text class="section-main-title">⚙️ 系统支持</text>
+    </view>
+    <view class="footer-menu">
+      <view class="footer-item" bindtap="goToChangePassword">
+        <text class="footer-icon">🔑</text>
+        <text class="footer-text">修改密码</text>
+      </view>
+      <view class="footer-item" bindtap="goToHelp">
+        <text class="footer-icon">💬</text>
+        <text class="footer-text">客服与帮助</text>
+      </view>
+      <view class="footer-item" bindtap="goToAbout">
+        <text class="footer-icon">ℹ️</text>
+        <text class="footer-text">关于我们</text>
+      </view>
+      <view class="footer-item logout" bindtap="handleLogout">
+        <text class="footer-icon">🚪</text>
+        <text class="footer-text">退出登录</text>
+      </view>
+    </view>
+
+    <!-- 关于我们预览 -->
+    <view class="about-preview" bindtap="goToAbout">
+      <view class="about-logo">👁️</view>
+      <view class="about-text">
+        <text class="about-title">助盲跑 · 平台</text>
+        <text class="about-slogan">用科技连接光明，让每一位视障人士都能享受奔跑的自由</text>
+      </view>
+      <text class="about-arrow">›</text>
+    </view>
+
+  </view>
+</view>

@@ -1,0 +1,106 @@
+<view class="container">
+  <!-- 预约信息头部 -->
+  <view class="booking-info">
+    <view class="info-card">
+      <view class="info-row">
+        <text class="info-icon">📅</text>
+        <text class="info-label">预约日期</text>
+        <text class="info-value">{{bookingDate}}</text>
+      </view>
+      <view class="info-row">
+        <text class="info-icon">🕐</text>
+        <text class="info-label">预约时间</text>
+        <text class="info-value">{{bookingTime}}</text>
+      </view>
+      <view class="info-row" wx:if="{{remark}}">
+        <text class="info-icon">📝</text>
+        <text class="info-label">备注</text>
+        <text class="info-value">{{remark}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 搜索和筛选 -->
+  <view class="search-section">
+    <view class="search-bar">
+      <text class="search-icon">🔍</text>
+      <input class="search-input"
+             placeholder="搜索志愿者姓名或配速..."
+             value="{{searchKeyword}}"
+             bindinput="onSearchInput"/>
+    </view>
+
+    <view class="filter-bar">
+      <view class="filter-item {{filterFirstAid === '' ? 'active' : ''}}" data-value="" bindtap="onFilterFirstAid">
+        <text>全部</text>
+      </view>
+      <view class="filter-item {{filterFirstAid === 'yes' ? 'active' : ''}}" data-value="yes" bindtap="onFilterFirstAid">
+        <text>✅ 有急救证</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 志愿者列表 -->
+  <view class="volunteer-list">
+    <view class="section-title">选择志愿者</view>
+
+    <view class="volunteer-item {{selectedVolunteer && selectedVolunteer.id === item.id ? 'selected' : ''}}"
+          wx:for="{{getFilteredVolunteers()}}"
+          wx:key="id"
+          bindtap="selectVolunteer"
+          data-volunteer="{{item}}">
+      <view class="volunteer-avatar">
+        <text class="avatar-text">{{item.name[0]}}</text>
+      </view>
+
+      <view class="volunteer-info">
+        <view class="info-header">
+          <text class="volunteer-name">{{item.name}}</text>
+          <view class="volunteer-tags">
+            <view class="tag" wx:if="{{item.hasFirstAid === 'yes'}}">急救证</view>
+            <view class="tag" wx:if="{{item.hasMarathon === 'yes'}}">马拉松</view>
+          </view>
+        </view>
+
+        <view class="info-details">
+          <view class="detail-item">
+            <text class="detail-icon">🏃</text>
+            <text class="detail-text">跑龄{{item.runningYears || '1'}}年</text>
+          </view>
+          <view class="detail-item">
+            <text class="detail-icon">⚡</text>
+            <text class="detail-text">{{item.pace || '配速待填写'}}</text>
+          </view>
+          <view class="detail-item">
+            <text class="detail-icon">⭐</text>
+            <text class="detail-text">{{item.rating || '5.0'}} 分</text>
+          </view>
+          <view class="detail-item">
+            <text class="detail-icon">🎯</text>
+            <text class="detail-text">陪跑{{item.totalRuns || 0}}次</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="select-indicator" wx:if="{{selectedVolunteer && selectedVolunteer.id === item.id}}">
+        <text>✓</text>
+      </view>
+    </view>
+
+    <!-- 空状态 -->
+    <view class="empty-state" wx:if="{{getFilteredVolunteers().length === 0}}">
+      <text class="empty-icon">👥</text>
+      <text class="empty-text">暂无可用志愿者</text>
+    </view>
+  </view>
+
+  <!-- 底部操作栏 -->
+  <view class="bottom-bar">
+    <view class="selected-info" wx:if="{{selectedVolunteer}}">
+      <text class="selected-name">已选择：{{selectedVolunteer.name}}</text>
+    </view>
+    <view class="confirm-btn {{selectedVolunteer ? '' : 'disabled'}}" bindtap="confirmBooking">
+      确认预约
+    </view>
+  </view>
+</view>

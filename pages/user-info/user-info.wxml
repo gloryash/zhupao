@@ -1,0 +1,125 @@
+<view class="container">
+  <view class="header">
+    <text class="page-title">个人信息</text>
+  </view>
+
+  <view class="form-section">
+    <!-- 手机号 -->
+    <view class="form-item">
+      <text class="label">手机号</text>
+      <input class="input" type="number" placeholder="请输入手机号" value="{{phone}}" bindinput="onPhoneInput"/>
+    </view>
+
+    <!-- 姓名 -->
+    <view class="form-item">
+      <text class="label">姓名 <text class="required">*</text></text>
+      <input class="input" placeholder="请输入您的姓名" value="{{name}}" bindinput="onNameInput"/>
+    </view>
+
+    <!-- 性别 -->
+    <view class="form-item">
+      <text class="label">性别 <text class="required">*</text></text>
+      <view class="gender-selector">
+        <view class="gender-option {{gender === 'male' ? 'active' : ''}}" data-value="male" bindtap="onGenderChange">
+          <text class="gender-icon">👨</text>
+          <text class="gender-label">男</text>
+        </view>
+        <view class="gender-option {{gender === 'female' ? 'active' : ''}}" data-value="female" bindtap="onGenderChange">
+          <text class="gender-icon">👩</text>
+          <text class="gender-label">女</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 身份证号 -->
+    <view class="form-item">
+      <text class="label">身份证号 <text class="optional">（选填，用于实名认证）</text></text>
+      <input class="input" type="idcard" placeholder="请输入身份证号" value="{{idCard}}" bindinput="onIdCardInput" maxlength="18"/>
+    </view>
+
+    <!-- 视障人士专属信息 -->
+    <view wx:if="{{userType === 'disabled'}}">
+      <!-- 紧急联系人电话 -->
+      <view class="form-item">
+        <text class="label">紧急联系人电话</text>
+        <input class="input" type="number" placeholder="请输入紧急联系人手机号" value="{{emergencyPhone}}" bindinput="onEmergencyPhoneInput" maxlength="11"/>
+      </view>
+
+      <!-- 常用跑步地点 -->
+      <view class="form-item">
+        <text class="label">常用跑步地点</text>
+        <input class="input" placeholder="例如：奥林匹克森林公园" value="{{runningLocation}}" bindinput="onRunningLocationInput"/>
+      </view>
+    </view>
+
+    <!-- 志愿者专属信息 -->
+    <view wx:if="{{userType === 'volunteer'}}">
+      <!-- 跑龄 -->
+      <view class="form-item">
+        <text class="label">跑龄</text>
+        <input class="input" type="digit" placeholder="请输入跑步年限（年）" value="{{runningYears}}" bindinput="onRunningYearsInput"/>
+      </view>
+
+      <!-- 配速 -->
+      <view class="form-item">
+        <text class="label">配速</text>
+        <input class="input" placeholder="例如：5分30秒/公里" value="{{pace}}" bindinput="onPaceInput"/>
+      </view>
+
+      <!-- 马拉松经历 -->
+      <view class="form-item">
+        <text class="label">马拉松经历</text>
+        <radio-group bindchange="onMarathonChange">
+          <label class="radio-item">
+            <radio value="yes" checked="{{hasMarathon === 'yes'}}"/>
+            <text>参加过马拉松</text>
+          </label>
+          <label class="radio-item">
+            <radio value="no" checked="{{hasMarathon === 'no'}}"/>
+            <text>未参加过</text>
+          </label>
+        </radio-group>
+      </view>
+
+      <!-- 急救证 -->
+      <view class="form-item">
+        <text class="label">急救证</text>
+        <radio-group bindchange="onFirstAidChange">
+          <label class="radio-item">
+            <radio value="yes" checked="{{hasFirstAid === 'yes'}}"/>
+            <text>持有急救证</text>
+          </label>
+          <label class="radio-item">
+            <radio value="no" checked="{{hasFirstAid === 'no'}}"/>
+            <text>暂无</text>
+          </label>
+        </radio-group>
+      </view>
+
+      <!-- 陪跑经验 -->
+      <view class="form-item">
+        <text class="label">陪跑经验</text>
+        <radio-group bindchange="onCompanionExpChange">
+          <label class="radio-item">
+            <radio value="yes" checked="{{hasCompanionExp === 'yes'}}"/>
+            <text>有陪跑经验</text>
+          </label>
+          <label class="radio-item">
+            <radio value="no" checked="{{hasCompanionExp === 'no'}}"/>
+            <text>无经验</text>
+          </label>
+        </radio-group>
+      </view>
+
+      <!-- 个人简历 -->
+      <view class="form-item">
+        <text class="label">个人简历（选填）</text>
+        <textarea class="textarea" placeholder="请简单介绍您的陪跑经验、特长等" value="{{resume}}" bindinput="onResumeInput" maxlength="500"/>
+        <text class="char-count">{{resume.length}}/500</text>
+      </view>
+    </view>
+
+    <!-- 提交按钮 -->
+    <button class="submit-btn" bindtap="handleSubmit">保存信息</button>
+  </view>
+</view>

@@ -1,0 +1,9 @@
+{
+  "name": "handleCircle",
+  "version": "1.0.0",
+  "description": "跑友圈相关操作：动态发布、点赞、评论",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

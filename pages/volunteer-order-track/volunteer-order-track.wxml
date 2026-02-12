@@ -1,0 +1,134 @@
+<view class="order-track-page">
+  <!-- 顶部标题栏 -->
+  <view class="header">
+    <view class="header-title">订单跟踪</view>
+    <view class="header-subtitle">{{orderInfo.type === 'appointment' ? '预约陪跑' : '即时陪跑'}}</view>
+  </view>
+
+  <!-- 地图区域 -->
+  <view class="map-section">
+    <map
+      id="trackMap"
+      class="track-map"
+      latitude="{{mapLatitude}}"
+      longitude="{{mapLongitude}}"
+      markers="{{mapMarkers}}"
+      scale="15"
+      show-location="true"
+      enable-zoom="true"
+      enable-scroll="true"
+      polyline="{{polyline}}"
+    ></map>
+  </view>
+
+  <!-- 订单信息卡片 -->
+  <view class="order-card">
+    <!-- 状态进度 -->
+    <view class="status-progress">
+      <view class="progress-steps">
+        <view class="step {{orderStatus !== 'pending' ? 'active' : ''}} {{orderStatus === 'accepted' || orderStatus === 'arrived' || orderStatus === 'running' ? 'current' : ''}}">
+          <view class="step-dot">1</view>
+          <text class="step-label">待接单</text>
+        </view>
+        <view class="step-line {{orderStatus !== 'pending' ? 'active' : ''}}"></view>
+        <view class="step {{orderStatus !== 'pending' && orderStatus !== 'waiting' ? 'active' : ''}} {{orderStatus === 'arrived' || orderStatus === 'running' ? 'current' : ''}}">
+          <view class="step-dot">2</view>
+          <text class="step-label">已接单</text>
+        </view>
+        <view class="step-line {{['arrived', 'running', 'completed'].includes(orderStatus) ? 'active' : ''}}"></view>
+        <view class="step {{['arrived', 'running', 'completed'].includes(orderStatus) ? 'active' : ''}} {{orderStatus === 'arrived' ? 'current' : ''}}">
+          <view class="step-dot">3</view>
+          <text class="step-label">已到达</text>
+        </view>
+        <view class="step-line {{['running', 'completed'].includes(orderStatus) ? 'active' : ''}}"></view>
+        <view class="step {{['running', 'completed'].includes(orderStatus) ? 'active' : ''}} {{orderStatus === 'running' ? 'current' : ''}}">
+          <view class="step-dot">4</view>
+          <text class="step-label">陪跑中</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 盲人信息 -->
+    <view class="blind-info">
+      <view class="blind-avatar">👤</view>
+      <view class="blind-details">
+        <text class="blind-name">{{orderInfo.blindName}}</text>
+        <text class="blind-address">{{orderInfo.blindAddress}}</text>
+      </view>
+      <button class="call-btn" bindtap="makeCall" wx:if="{{orderInfo.blindPhone}}">
+        📞
+      </button>
+    </view>
+
+    <!-- 预约信息（仅预约单显示） -->
+    <view class="appointment-info" wx:if="{{orderInfo.type === 'appointment'}}">
+      <view class="info-row">
+        <text class="info-icon">📅</text>
+        <text class="info-label">预约日期</text>
+        <text class="info-value">{{orderInfo.appointmentDate}}</text>
+      </view>
+      <view class="info-row">
+        <text class="info-icon">⏰</text>
+        <text class="info-label">预约时间</text>
+        <text class="info-value">{{orderInfo.appointmentTime}}</text>
+      </view>
+    </view>
+
+    <!-- 实时统计（陪跑中显示） -->
+    <view class="running-stats" wx:if="{{orderStatus === 'running'}}">
+      <view class="stat-item">
+        <text class="stat-value">{{runningStats.totalDistance}}</text>
+        <text class="stat-unit">km</text>
+        <text class="stat-label">已跑里程</text>
+      </view>
+      <view class="stat-divider"></view>
+      <view class="stat-item">
+        <text class="stat-value">{{runningStats.formattedTime}}</text>
+        <text class="stat-unit">分钟</text>
+        <text class="stat-label">用时</text>
+      </view>
+      <view class="stat-divider"></view>
+      <view class="stat-item">
+        <text class="stat-value">{{runningStats.avgSpeed}}</text>
+        <text class="stat-unit">km/h</text>
+        <text class="stat-label">配速</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 操作按钮区域 -->
+  <view class="action-area">
+    <!-- 待接单状态 -->
+    <button class="action-btn accept-btn" bindtap="handleAccept" wx:if="{{orderStatus === 'waiting' || orderStatus === 'pending'}}">
+      接单
+    </button>
+
+    <!-- 已接单状态 -->
+    <view class="action-group" wx:if="{{orderStatus === 'accepted'}}">
+      <button class="action-btn secondary-btn" bindtap="makeCall">
+        联系盲人
+      </button>
+      <button class="action-btn primary-btn" bindtap="handleNavigate">
+        导航前往
+      </button>
+    </view>
+    <button class="action-btn full-btn" bindtap="handleConfirmArrival" wx:if="{{orderStatus === 'accepted'}}">
+      确认到达
+    </button>
+
+    <!-- 已到达状态 -->
+    <button class="action-btn running-btn" bindtap="handleStartRunning" wx:if="{{orderStatus === 'arrived'}}">
+      开始陪跑
+    </button>
+
+    <!-- 陪跑中状态 -->
+    <button class="action-btn end-btn" bindtap="handleEndRunning" wx:if="{{orderStatus === 'running'}}">
+      结束陪跑
+    </button>
+
+    <!-- 取消订单 -->
+    <button class="cancel-btn" bindtap="handleCancel" wx:if="{{['waiting', 'pending', 'accepted', 'arrived'].includes(orderStatus)}}">
+      取消订单
+    </button>
+  </view>
+</view>

@@ -1,0 +1,319 @@
+/* 紧急联系人页面 */
+.emergency-contact-container {
+  min-height: 100vh;
+  background: #f5f7fa;
+  padding: 30rpx;
+  padding-bottom: 60rpx;
+}
+
+/* 标题区域 */
+.header-section {
+  margin-bottom: 40rpx;
+}
+
+.header-title {
+  font-size: 40rpx;
+  font-weight: bold;
+  color: #1e293b;
+  display: block;
+  margin-bottom: 8rpx;
+}
+
+.header-desc {
+  font-size: 26rpx;
+  color: #64748b;
+}
+
+/* 已有紧急联系人 */
+.existing-contact {
+  margin-bottom: 40rpx;
+}
+
+.contact-card {
+  display: flex;
+  align-items: center;
+  background: #fff;
+  border-radius: 20rpx;
+  padding: 30rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.05);
+}
+
+.contact-avatar {
+  width: 100rpx;
+  height: 100rpx;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 24rpx;
+}
+
+.avatar-icon {
+  font-size: 48rpx;
+}
+
+.contact-info {
+  flex: 1;
+}
+
+.contact-name-row {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  margin-bottom: 8rpx;
+}
+
+.contact-name {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #1e293b;
+}
+
+.contact-relation {
+  font-size: 22rpx;
+  color: #fff;
+  background: #94a3b8;
+  padding: 4rpx 12rpx;
+  border-radius: 12rpx;
+}
+
+.contact-phone {
+  font-size: 28rpx;
+  color: #64748b;
+}
+
+.contact-actions {
+  margin-left: 20rpx;
+}
+
+.call-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16rpx 24rpx;
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+  border-radius: 16rpx;
+}
+
+.call-icon {
+  font-size: 32rpx;
+  margin-bottom: 4rpx;
+}
+
+.call-text {
+  font-size: 22rpx;
+  color: #fff;
+}
+
+.action-btns {
+  display: flex;
+  gap: 20rpx;
+  margin-top: 20rpx;
+}
+
+.edit-btn {
+  flex: 1;
+  height: 80rpx;
+  background: #fff;
+  border: 2rpx solid #ef4444;
+  border-radius: 16rpx;
+  color: #ef4444;
+  font-size: 28rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.edit-btn::after {
+  border: none;
+}
+
+/* 表单区域 */
+.form-section {
+  margin-bottom: 40rpx;
+}
+
+.form-card {
+  background: #fff;
+  border-radius: 20rpx;
+  padding: 30rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.05);
+}
+
+.form-item {
+  padding: 24rpx 0;
+  border-bottom: 1rpx solid #f1f5f9;
+}
+
+.form-item:last-child {
+  border-bottom: none;
+}
+
+.form-label {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16rpx;
+}
+
+.label-icon {
+  font-size: 32rpx;
+  margin-right: 12rpx;
+}
+
+.label-text {
+  font-size: 28rpx;
+  font-weight: bold;
+  color: #334155;
+}
+
+.required {
+  color: #ef4444;
+  margin-left: 8rpx;
+}
+
+.form-input {
+  width: 100%;
+  height: 80rpx;
+  background: #f8fafc;
+  border-radius: 12rpx;
+  padding: 0 20rpx;
+  font-size: 28rpx;
+  color: #1e293b;
+}
+
+.picker-value {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  height: 80rpx;
+  background: #f8fafc;
+  border-radius: 12rpx;
+  padding: 0 20rpx;
+  font-size: 28rpx;
+  color: #1e293b;
+}
+
+.picker-arrow {
+  color: #94a3b8;
+  font-size: 28rpx;
+}
+
+.notes-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-textarea {
+  width: 100%;
+  height: 160rpx;
+  background: #f8fafc;
+  border-radius: 12rpx;
+  padding: 16rpx 20rpx;
+  font-size: 28rpx;
+  color: #1e293b;
+  box-sizing: border-box;
+}
+
+/* 安全提示 */
+.safety-tip {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  padding: 20rpx;
+  background: #f0fdf4;
+  border-radius: 12rpx;
+  margin-top: 20rpx;
+  border: 1rpx solid #bbf7d0;
+}
+
+.tip-icon {
+  font-size: 28rpx;
+}
+
+.tip-text {
+  font-size: 24rpx;
+  color: #15803d;
+}
+
+/* 保存按钮 */
+.save-btn {
+  width: 100%;
+  height: 96rpx;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  border-radius: 48rpx;
+  color: #fff;
+  font-size: 32rpx;
+  font-weight: bold;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 40rpx;
+  box-shadow: 0 8rpx 24rpx rgba(59, 130, 246, 0.3);
+}
+
+.save-btn::after {
+  border: none;
+}
+
+/* 紧急求助说明 */
+.help-section {
+  margin-top: 40rpx;
+}
+
+.help-card {
+  background: #fff;
+  border-radius: 20rpx;
+  padding: 30rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.05);
+}
+
+.help-header {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  margin-bottom: 24rpx;
+  padding-bottom: 16rpx;
+  border-bottom: 1rpx solid #f1f5f9;
+}
+
+.help-icon {
+  font-size: 32rpx;
+}
+
+.help-title {
+  font-size: 30rpx;
+  font-weight: bold;
+  color: #1e293b;
+}
+
+.help-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.help-item {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.help-num {
+  width: 36rpx;
+  height: 36rpx;
+  background: #ef4444;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 22rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.help-text {
+  font-size: 26rpx;
+  color: #64748b;
+}

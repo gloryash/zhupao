@@ -1,0 +1,49 @@
+<view class="container">
+  <!-- 标题 -->
+  <view class="header">
+    <text class="title">正在接单的志愿者</text>
+    <text class="subtitle">点击志愿者即可下单邀请</text>
+  </view>
+
+  <!-- 加载中 -->
+  <view class="loading" wx:if="{{loading}}">
+    <text>加载中...</text>
+  </view>
+
+  <!-- 志愿者列表 -->
+  <view class="volunteer-list" wx:if="{{!loading && volunteers.length > 0}}">
+    <view class="volunteer-item" wx:for="{{volunteers}}" wx:key="phone">
+      <view class="volunteer-left">
+        <view class="avatar">
+          <text class="avatar-text">{{item.name ? item.name[0] : '志'}}</text>
+        </view>
+        <view class="volunteer-info">
+          <view class="volunteer-name">{{item.name}}</view>
+          <view class="volunteer-tags">
+            <text class="tag" wx:if="{{item.runningYears}}">{{item.runningYears}}年跑龄</text>
+            <text class="tag" wx:if="{{item.pace}}">配速{{item.pace}}</text>
+          </view>
+          <view class="volunteer-meta">
+            <text class="distance" wx:if="{{item.distance !== null}}">距离您 {{item.distance}} km</text>
+            <text class="distance" wx:else>位置未知</text>
+          </view>
+        </view>
+      </view>
+      <view class="volunteer-right">
+        <button class="call-btn" bindtap="makeCall" data-phone="{{item.phone}}">
+          📞
+        </button>
+        <button class="order-btn" bindtap="placeOrder" data-volunteer="{{item}}">
+          一起跑步
+        </button>
+      </view>
+    </view>
+  </view>
+
+  <!-- 空状态 -->
+  <view class="empty-state" wx:if="{{!loading && volunteers.length === 0}}">
+    <view class="empty-icon">🔍</view>
+    <text class="empty-text">暂无接单的志愿者</text>
+    <text class="empty-desc">暂时没有志愿者在接单中</text>
+  </view>
+</view>

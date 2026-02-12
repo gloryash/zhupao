@@ -1,0 +1,100 @@
+<!-- pages/shop-orders/shop-orders.wxml -->
+<view class="orders-container">
+  <!-- 订单列表 -->
+  <view class="orders-list" wx:if="{{orders.length > 0}}">
+    <view class="order-card"
+          wx:for="{{orders}}"
+          wx:key="id"
+          bindtap="onOrderTap"
+          data-order="{{item}}">
+      <!-- 商品信息 -->
+      <view class="order-header">
+        <view class="order-product">
+          <view class="product-avatar">{{item.product.image}}</view>
+          <view class="product-info">
+            <text class="product-name">{{item.product.name}}</text>
+            <text class="product-desc">{{item.product.desc}}</text>
+          </view>
+        </view>
+        <view class="order-status" style="color: {{getStatusColor(item)}}">
+          {{getStatusText(item)}}
+        </view>
+      </view>
+
+      <!-- 订单详情 -->
+      <view class="order-body">
+        <view class="order-row">
+          <text class="row-label">兑换时间</text>
+          <text class="row-value">{{item.exchangeTime}}</text>
+        </view>
+        <view class="order-row" wx:if="{{item.code}}">
+          <text class="row-label">兑换码</text>
+          <text class="row-value code">{{item.code}}</text>
+        </view>
+        <view class="order-row" wx:if="{{item.status === 'pending'}}">
+          <text class="row-label">有效期至</text>
+          <text class="row-value">{{item.expiredTime}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 空状态 -->
+  <view class="empty-state" wx:else>
+    <view class="empty-icon">📦</view>
+    <text class="empty-text">{{emptyTip}}</text>
+    <text class="empty-hint">去积分商城兑换喜欢的奖品吧</text>
+  </view>
+
+  <!-- 订单详情弹窗 -->
+  <view class="modal-mask" wx:if="{{showOrderModal}}" bindtap="closeOrderModal"></view>
+  <view class="order-modal" wx:if="{{showOrderModal && selectedOrder}}">
+    <view class="modal-header">
+      <text class="modal-title">兑换详情</text>
+      <view class="modal-close" bindtap="closeOrderModal">✕</view>
+    </view>
+
+    <view class="modal-content">
+      <!-- 商品信息 -->
+      <view class="product-section">
+        <view class="product-avatar large">{{selectedOrder.product.image}}</view>
+        <text class="product-name">{{selectedOrder.product.name}}</text>
+        <text class="product-desc">{{selectedOrder.product.desc}}</text>
+      </view>
+
+      <!-- 兑换码 -->
+      <view class="code-section" wx:if="{{selectedOrder.code && selectedOrder.status === 'pending'}}">
+        <text class="section-label">兑换码</text>
+        <view class="code-box">
+          <text class="code-text">{{selectedOrder.code}}</text>
+        </view>
+        <text class="code-hint">出示给店员扫码核销</text>
+      </view>
+
+      <!-- 订单信息 -->
+      <view class="info-section">
+        <view class="info-row">
+          <text class="info-label">兑换时间</text>
+          <text class="info-value">{{selectedOrder.exchangeTime}}</text>
+        </view>
+        <view class="info-row" wx:if="{{selectedOrder.status === 'pending'}}">
+          <text class="info-label">有效期至</text>
+          <text class="info-value">{{selectedOrder.expiredTime}}</text>
+        </view>
+        <view class="info-row">
+          <text class="info-label">状态</text>
+          <text class="info-value" style="color: {{getStatusColor(selectedOrder)}}">
+            {{getStatusText(selectedOrder)}}
+          </text>
+        </view>
+      </view>
+    </view>
+
+    <view class="modal-footer" wx:if="{{selectedOrder.status === 'pending'}}">
+      <button class="verify-btn" bindtap="verifyOrder">出示核销</button>
+    </view>
+    <view class="modal-footer" wx:else>
+      <button class="delete-btn" bindtap="deleteOrder" data-index="{{index}}">删除记录</button>
+    </view>
+  </view>
+</view>

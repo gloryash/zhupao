@@ -1,0 +1,7 @@
+{
+  "navigationBarTitleText": "志愿者考试",
+  "navigationBarBackgroundColor": "#1890ff",
+  "navigationBarTextStyle": "white",
+  "enablePullDownRefresh": false,
+  "usingComponents": {}
+}

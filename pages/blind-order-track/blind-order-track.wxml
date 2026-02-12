@@ -1,0 +1,199 @@
+<view class="container">
+  <!-- 有订单时显示 -->
+  <view class="order-container" wx:if="{{hasOrder}}">
+
+    <!-- 志愿者位置地图（已接单后显示） -->
+    <view class="map-section" wx:if="{{['accepted','arrived','running'].includes(orderStatus)}}">
+      <map
+        class="order-map"
+        latitude="{{mapLatitude}}"
+        longitude="{{mapLongitude}}"
+        markers="{{mapMarkers}}"
+        scale="15"
+        show-location="true"
+        enable-zoom="true"
+        enable-scroll="true"
+      ></map>
+    </view>
+
+    <!-- 顶部状态卡片 -->
+    <view class="status-card">
+      <!-- 预约标识 -->
+      <view class="order-type-badge" wx:if="{{orderInfo.type === 'appointment'}}">
+        <text class="type-icon">📅</text>
+        <text class="type-text">预约陪跑</text>
+      </view>
+
+      <!-- 状态标签 -->
+      <view class="status-badge {{orderStatus}}">
+        <text class="status-badge-icon" wx:if="{{orderStatus === 'pending'}}">⏳</text>
+        <text class="status-badge-icon" wx:elif="{{orderStatus === 'accepted'}}">✅</text>
+        <text class="status-badge-icon" wx:elif="{{orderStatus === 'arrived'}}">📍</text>
+        <text class="status-badge-icon" wx:elif="{{orderStatus === 'running'}}">🏃</text>
+        <text class="status-badge-icon" wx:elif="{{orderStatus === 'completed'}}">🎉</text>
+        <text class="status-badge-text">{{statusText}}</text>
+      </view>
+
+      <!-- 状态说明 -->
+      <view class="status-tips">
+        <text class="tip-text" wx:if="{{orderStatus === 'pending'}}">等待志愿者接单，请耐心等候...</text>
+        <text class="tip-text" wx:elif="{{orderStatus === 'accepted'}}">志愿者已接单，正在赶来与您会合</text>
+        <text class="tip-text" wx:elif="{{orderStatus === 'arrived'}}">志愿者已到达，请确认开始陪跑</text>
+        <text class="tip-text" wx:elif="{{orderStatus === 'running'}}">正在陪跑中，享受运动的乐趣！</text>
+        <text class="tip-text" wx:elif="{{orderStatus === 'completed'}}">陪跑已完成，感谢您的参与！</text>
+      </view>
+
+      <!-- 预约信息（预约单显示） -->
+      <view class="appointment-info" wx:if="{{orderInfo.type === 'appointment'}}">
+        <view class="info-row">
+          <text class="info-icon">📅</text>
+          <text class="info-label">预约日期</text>
+          <text class="info-value">{{orderInfo.appointmentDate}}</text>
+        </view>
+        <view class="info-row">
+          <text class="info-icon">⏰</text>
+          <text class="info-label">预约时间</text>
+          <text class="info-value">{{orderInfo.appointmentTime}}</text>
+        </view>
+      </view>
+
+      <!-- 进度条 -->
+      <view class="progress-bar">
+        <view class="progress-step {{orderStatus !== 'pending' ? 'active' : ''}}">
+          <view class="step-dot"></view>
+          <text class="step-label">待接单</text>
+        </view>
+        <view class="progress-line {{orderStatus !== 'pending' ? 'active' : ''}}"></view>
+        <view class="progress-step {{orderStatus !== 'pending' && orderStatus !== 'accepted' ? 'active' : ''}}">
+          <view class="step-dot"></view>
+          <text class="step-label">前往中</text>
+        </view>
+        <view class="progress-line {{['arrived','running','completed'].includes(orderStatus) ? 'active' : ''}}"></view>
+        <view class="progress-step {{['arrived','running','completed'].includes(orderStatus) ? 'active' : ''}}">
+          <view class="step-dot"></view>
+          <text class="step-label">已到达</text>
+        </view>
+        <view class="progress-line {{['running','completed'].includes(orderStatus) ? 'active' : ''}}"></view>
+        <view class="progress-step {{['running','completed'].includes(orderStatus) ? 'active' : ''}}">
+          <view class="step-dot"></view>
+          <text class="step-label">陪跑中</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 志愿者信息 -->
+    <view class="volunteer-card" wx:if="{{orderStatus !== 'pending'}}">
+      <view class="card-title">志愿者信息</view>
+      <view class="volunteer-info">
+        <view class="volunteer-avatar">
+          <text>{{volunteerInfo.name ? volunteerInfo.name[0] : '志'}}</text>
+        </view>
+        <view class="volunteer-details">
+          <text class="volunteer-name">{{volunteerInfo.name || '志愿者'}}</text>
+          <text class="volunteer-meta" wx:if="{{volunteerInfo.pace}}">配速：{{volunteerInfo.pace}}</text>
+          <text class="volunteer-meta" wx:if="{{volunteerInfo.runningYears}}">跑龄：{{volunteerInfo.runningYears}}年</text>
+        </view>
+        <button class="call-btn" bindtap="makeCall" wx:if="{{volunteerInfo.phone}}">
+          📞
+        </button>
+      </view>
+    </view>
+
+    <!-- 陪跑统计（陪跑中显示） -->
+    <view class="stats-card" wx:if="{{orderStatus === 'running'}}">
+      <view class="card-title">实时陪跑统计</view>
+      <view class="running-stats">
+        <view class="stat-item">
+          <text class="stat-value">{{runningStats.totalDistance}}</text>
+          <text class="stat-unit">km</text>
+          <text class="stat-label">已跑里程</text>
+        </view>
+        <view class="stat-item">
+          <text class="stat-value">{{runningStats.formattedTime}}</text>
+          <text class="stat-unit">分钟</text>
+          <text class="stat-label">用时</text>
+        </view>
+        <view class="stat-item">
+          <text class="stat-value">{{runningStats.avgSpeed}}</text>
+          <text class="stat-unit">km/h</text>
+          <text class="stat-label">配速</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 陪跑记录（完成后显示） -->
+    <view class="record-card" wx:if="{{orderStatus === 'completed'}}">
+      <view class="card-title">本次陪跑记录</view>
+      <view class="record-stats">
+        <view class="record-item">
+          <text class="record-icon">📏</text>
+          <text class="record-value">{{finalStats.totalDistance}}</text>
+          <text class="record-unit">km</text>
+        </view>
+        <view class="record-item">
+          <text class="record-icon">⏱️</text>
+          <text class="record-value">{{finalStats.formattedTime}}</text>
+          <text class="record-unit">分钟</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 操作按钮 -->
+    <view class="action-buttons">
+      <!-- 待接单状态：取消订单 -->
+      <button class="cancel-btn" bindtap="cancelOrder" wx:if="{{orderStatus === 'pending'}}">
+        取消订单
+      </button>
+
+      <!-- 陪跑中：结束陪跑 -->
+      <button class="end-btn" bindtap="endRun" wx:if="{{orderStatus === 'running'}}">
+        结束陪跑
+      </button>
+
+      <!-- 完成后：返回首页 -->
+      <button class="home-btn" bindtap="goHome" wx:if="{{orderStatus === 'completed'}}">
+        返回首页
+      </button>
+    </view>
+
+  </view>
+
+  <!-- 无订单时显示 -->
+  <view class="no-order" wx:else>
+    <view class="no-order-icon">📭</view>
+    <text class="no-order-title">暂无订单</text>
+    <text class="no-order-desc">您还没有发起陪跑请求</text>
+    <button class="create-btn" bindtap="createOrder">
+      发起陪跑请求
+    </button>
+  </view>
+
+  <!-- 评价弹窗 -->
+  <view class="rating-popup" wx:if="{{showRatingPopup}}">
+    <view class="rating-mask" bindtap="closeRatingPopup"></view>
+    <view class="rating-content">
+      <view class="rating-header">
+        <text class="rating-title">本次陪跑评价</text>
+        <text class="rating-subtitle">请对本次陪跑服务进行评价</text>
+      </view>
+
+      <!-- 评分 -->
+      <view class="rating-section">
+        <text class="rating-label">您对志愿者的评分</text>
+        <view class="star-row">
+          <view class="star" wx:for="{{[1,2,3,4,5]}}" wx:key="*this" bindtap="setRating" data-score="{{item}}">
+            <text class="star-icon {{item <= rating ? 'active' : ''}}">★</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 评论 -->
+      <view class="rating-section">
+        <text class="rating-label">给志愿者留句话（选填）</text>
+        <textarea class="comment-textarea" placeholder="分享您的跑步体验..." bindinput="onCommentInput" value="{{comment}}"/>
+      </view>
+
+      <button class="submit-btn" bindtap="submitRating">提交评价</button>
+    </view>
+  </view>
+</view>

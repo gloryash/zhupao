@@ -1,0 +1,9 @@
+{
+  "name": "handleTraining",
+  "version": "1.0.0",
+  "description": "培训相关操作：考试题目、提交考试、证书管理",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

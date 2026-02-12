@@ -1,0 +1,107 @@
+<view class="container">
+  <!-- 视障人士提示 -->
+  <view class="disabled-tip" wx:if="{{!isVolunteer}}">
+    <view class="tip-icon">ℹ️</view>
+    <view class="tip-content">
+      <text class="tip-title">无需证书</text>
+      <text class="tip-desc">视障跑者不需要志愿者培训证书。</text>
+      <text class="tip-desc">您可以直接发布陪跑需求，等待周边志愿者响应。</text>
+    </view>
+    <button class="tip-btn" bindtap="goToHome">我知道了</button>
+  </view>
+
+  <!-- 志愿者证书（无证书时显示提示） -->
+  <view class="no-certificate" wx:elif="{{isVolunteer && !hasCertificate}}">
+    <view class="no-cert-icon">📜</view>
+    <text class="no-cert-title">暂未获得证书</text>
+    <text class="no-cert-desc">您需要完成志愿者培训并通过考试，才能获得证书。</text>
+    <button class="no-cert-btn" bindtap="goToHome">进入主页</button>
+  </view>
+
+  <!-- 志愿者证书 -->
+  <view class="certificate-card" wx:elif="{{hasCertificate}}">
+    <!-- 证书头部 -->
+    <view class="certificate-header">
+      <text class="header-icon">🏆</text>
+      <text class="header-title">志愿者资格证书</text>
+      <text class="header-subtitle">Volunteer Certificate</text>
+    </view>
+
+    <!-- 证书内容 -->
+    <view class="certificate-content">
+      <view class="content-row">
+        <text class="label">姓名：</text>
+        <text class="value">{{userName}}</text>
+      </view>
+      <view class="content-row">
+        <text class="label">考试成绩：</text>
+        <text class="value highlight">{{score}}分</text>
+      </view>
+      <view class="content-row">
+        <text class="label">获证日期：</text>
+        <text class="value">{{examDate}}</text>
+      </view>
+      <view class="content-row">
+        <text class="label">证书编号：</text>
+        <text class="value">{{certificateNo}}</text>
+      </view>
+    </view>
+
+    <!-- 证书说明 -->
+    <view class="certificate-desc">
+      <text class="desc-text">该志愿者已完成盲人陪跑志愿者培训课程，并通过考核，特此颁发此证书。</text>
+    </view>
+
+    <!-- 证书底部 -->
+    <view class="certificate-footer">
+      <text class="footer-text">盲人陪跑志愿者平台</text>
+    </view>
+  </view>
+
+  <!-- 数字身份牌区域（有证书的志愿者可见） -->
+  <view class="id-card-section" wx:if="{{isVolunteer && hasCertificate}}">
+    <view class="id-card-header">
+      <text class="id-icon">💳</text>
+      <text class="id-title">数字身份牌</text>
+    </view>
+
+    <view class="id-card-content">
+      <text class="id-desc">领取您的专属数字身份牌，出示给视障跑者扫描即可快速建立陪跑关系</text>
+
+      <!-- 数字身份牌预览 -->
+      <view class="id-card-preview">
+        <view class="id-card-front">
+          <view class="id-card-logo">
+            <text class="logo-icon">🏃</text>
+            <text class="logo-text">助盲跑</text>
+          </view>
+          <view class="id-card-info">
+            <text class="id-name">{{userName}}</text>
+            <text class="id-role">志愿者</text>
+          </view>
+          <view class="id-token">
+            <text class="token-label">登录码</text>
+            <text class="token-value">{{userToken}}</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 领取/查看按钮 -->
+      <view class="id-card-actions">
+        <button class="claim-btn" bindtap="claimIdCard" wx:if="{{!hasIdCard}}">
+          <text class="btn-icon">🎁</text>
+          <text class="btn-text">领取数字身份牌</text>
+        </button>
+        <button class="view-btn" bindtap="viewIdCard" wx:else>
+          <text class="btn-icon">👀</text>
+          <text class="btn-text">查看我的身份牌</text>
+        </button>
+      </view>
+    </view>
+  </view>
+
+  <!-- 操作按钮（仅志愿者有证书时显示） -->
+  <view class="action-section" wx:if="{{isVolunteer && hasCertificate}}">
+    <button class="home-btn" bindtap="goToHome">进入主页</button>
+  </view>
+</view>

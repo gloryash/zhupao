@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 81 81" width="81" height="81">
+  <!-- Circle Active -->
+  <rect width="81" height="81" fill="url(#circleGradActive)" rx="12"/>
+  <defs>
+    <linearGradient id="circleGradActive" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FF8C00"/>
+      <stop offset="100%" style="stop-color:#FF4500"/>
+    </linearGradient>
+  </defs>
+  <circle cx="32" cy="35" r="10" fill="white" fill-opacity="0.3" stroke="white" stroke-width="2"/>
+  <circle cx="56" cy="35" r="10" fill="white" fill-opacity="0.3" stroke="white" stroke-width="2"/>
+  <circle cx="56" cy="35" r="5" fill="white"/>
+  <path d="M42 42c-5 0-10 3-12 8" fill="none" stroke="white" stroke-width="2"/>
+  <path d="M42 48l4 6 4-6" fill="none" stroke="white" stroke-width="2"/>
+</svg>

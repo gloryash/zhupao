@@ -1,0 +1,9 @@
+{
+  "name": "handleRecord",
+  "version": "1.0.0",
+  "description": "运动记录相关操作：保存/获取运动记录和陪跑记录",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

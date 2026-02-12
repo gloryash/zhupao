@@ -1,0 +1,527 @@
+/* 日历页面样式 */
+.container {
+  min-height: 100vh;
+  background: #F8F8F8;
+  padding: 20rpx;
+  padding-bottom: 120rpx;
+}
+
+/* 月份切换头部 */
+.calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16rpx 10rpx 24rpx;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+}
+
+.month-title {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.nav-btn {
+  width: 56rpx;
+  height: 56rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  border-radius: 12rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.05);
+}
+
+.nav-icon {
+  font-size: 36rpx;
+  color: #FF6B00;
+  font-weight: bold;
+}
+
+.today-btn {
+  padding: 12rpx 20rpx;
+  background: linear-gradient(135deg, #FF8C00 0%, #FF4500 100%);
+  color: #fff;
+  font-size: 24rpx;
+  font-weight: bold;
+  border-radius: 12rpx;
+}
+
+/* 星期标题 */
+.weekdays {
+  display: flex;
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 16rpx 0;
+  margin-bottom: 8rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.03);
+}
+
+.weekday {
+  flex: 1;
+  text-align: center;
+  font-size: 24rpx;
+  color: #666;
+  font-weight: 500;
+}
+
+/* 日历网格 */
+.calendar-grid {
+  display: flex;
+  flex-wrap: wrap;
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 8rpx 0;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.03);
+}
+
+.calendar-day {
+  width: 14.28%;
+  min-height: 100rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 8rpx 0;
+  border-radius: 8rpx;
+  transition: all 0.2s ease;
+}
+
+.calendar-day.today .day-number {
+  background: linear-gradient(135deg, #FF8C00 0%, #FF4500 100%);
+  color: #fff;
+}
+
+.calendar-day.today.selected .day-number {
+  background: #FF6B00;
+  color: #fff;
+}
+
+.calendar-day.selected {
+  background: #FFF5E6;
+}
+
+.calendar-day.empty {
+  pointer-events: none;
+}
+
+.day-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.day-number {
+  font-size: 26rpx;
+  color: #333;
+  font-weight: 500;
+  margin-bottom: 4rpx;
+}
+
+.calendar-day.selected .day-number {
+  color: #FF6B00;
+}
+
+/* 日期下面的预约显示 */
+.day-appointments {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-height: 60rpx;
+  overflow: hidden;
+}
+
+.apt-mini {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  max-width: 70rpx;
+  padding: 2rpx 4rpx;
+  margin-bottom: 2rpx;
+  background: #FFF5E6;
+  border-radius: 4rpx;
+  overflow: hidden;
+}
+
+.apt-time-mini {
+  font-size: 16rpx;
+  color: #FF6B00;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+.apt-name-mini {
+  font-size: 16rpx;
+  color: #FF6B00;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-left: 2rpx;
+}
+
+.apt-more {
+  font-size: 18rpx;
+  color: #999;
+  font-weight: 500;
+}
+
+/* 选中日期区域 */
+.selected-date-section {
+  margin-top: 24rpx;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16rpx;
+}
+
+.section-title {
+  font-size: 30rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+.add-appointment-btn {
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+  padding: 12rpx 20rpx;
+  background: linear-gradient(135deg, #FF8C00 0%, #FF4500 100%);
+  color: #fff;
+  font-size: 24rpx;
+  font-weight: bold;
+  border-radius: 24rpx;
+}
+
+.add-icon {
+  font-size: 28rpx;
+}
+
+/* 预约列表 */
+.appointment-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.appointment-item {
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 20rpx;
+  box-shadow: 0 2rpx 12rpx rgba(255, 69, 0, 0.06);
+}
+
+.apt-time {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  margin-bottom: 12rpx;
+  padding-bottom: 12rpx;
+  border-bottom: 1rpx solid #F5F5F5;
+}
+
+.time-icon {
+  font-size: 28rpx;
+}
+
+.time-text {
+  font-size: 26rpx;
+  font-weight: bold;
+  color: #FF6B00;
+}
+
+.apt-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12rpx;
+}
+
+.apt-user {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.user-icon {
+  font-size: 28rpx;
+}
+
+.user-name {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #333;
+}
+
+.apt-status {
+  padding: 6rpx 12rpx;
+  border-radius: 10rpx;
+  font-size: 22rpx;
+}
+
+.apt-status.pending {
+  background: #FFF5E6;
+  color: #FF6B00;
+}
+
+.apt-status.confirmed {
+  background: #E8F5E9;
+  color: #4CAF50;
+}
+
+.apt-status.completed {
+  background: #E3F2FD;
+  color: #2196F3;
+}
+
+.apt-actions {
+  display: flex;
+  gap: 12rpx;
+}
+
+.action-btn {
+  flex: 1;
+  max-width: 80rpx;
+  height: 60rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12rpx;
+}
+
+.call-btn {
+  background: #F0F7FF;
+  color: #2196F3;
+}
+
+.complete-btn {
+  background: #E8F5E9;
+  color: #4CAF50;
+}
+
+.cancel-btn {
+  background: #FFEBEE;
+  color: #F44336;
+}
+
+.btn-icon {
+  font-size: 28rpx;
+}
+
+/* 空状态 */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 60rpx 40rpx;
+  background: #fff;
+  border-radius: 16rpx;
+}
+
+.empty-icon {
+  font-size: 60rpx;
+  margin-bottom: 16rpx;
+}
+
+.empty-text {
+  font-size: 26rpx;
+  color: #999;
+}
+
+/* 预约弹窗 */
+.modal-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 100;
+}
+
+.booking-modal {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #fff;
+  border-radius: 32rpx 32rpx 0 0;
+  padding: 32rpx;
+  padding-bottom: calc(32rpx + env(safe-area-inset-bottom));
+  z-index: 101;
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 32rpx;
+}
+
+.modal-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+.modal-close {
+  width: 48rpx;
+  height: 48rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #F5F5F5;
+  border-radius: 50%;
+  font-size: 28rpx;
+  color: #999;
+}
+
+.modal-body {
+  max-height: 50vh;
+  overflow-y: auto;
+}
+
+.booking-date {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20rpx 0;
+  border-bottom: 1rpx solid #F0F0F0;
+  margin-bottom: 24rpx;
+}
+
+.booking-date .label {
+  font-size: 26rpx;
+  color: #666;
+}
+
+.booking-date .value {
+  font-size: 28rpx;
+  font-weight: bold;
+  color: #FF6B00;
+}
+
+.time-slots-section {
+  margin-bottom: 24rpx;
+}
+
+.time-slots-section .label {
+  font-size: 26rpx;
+  color: #666;
+  margin-bottom: 16rpx;
+  display: block;
+}
+
+.time-slots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+}
+
+.time-slot {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  padding: 20rpx 24rpx;
+  background: #F8F8F8;
+  border-radius: 12rpx;
+  border: 2rpx solid #EEE;
+  transition: all 0.2s ease;
+}
+
+.time-slot.active {
+  background: #FFF5E6;
+  border-color: #FF6B00;
+}
+
+.slot-icon {
+  font-size: 24rpx;
+}
+
+.slot-text {
+  font-size: 26rpx;
+  color: #333;
+  font-weight: 500;
+}
+
+.time-slot.active .slot-text {
+  color: #FF6B00;
+}
+
+.remark-section {
+  margin-bottom: 24rpx;
+}
+
+.remark-section .label {
+  font-size: 26rpx;
+  color: #666;
+  margin-bottom: 12rpx;
+  display: block;
+}
+
+.remark-input {
+  width: 100%;
+  min-height: 120rpx;
+  background: #F8F8F8;
+  border-radius: 12rpx;
+  padding: 16rpx;
+  font-size: 26rpx;
+  color: #333;
+  box-sizing: border-box;
+  border: 1rpx solid #EEE;
+}
+
+.modal-footer {
+  display: flex;
+  gap: 20rpx;
+  margin-top: 32rpx;
+}
+
+.modal-footer .cancel-btn {
+  flex: 1;
+  height: 88rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #F5F5F5;
+  border-radius: 44rpx;
+  font-size: 30rpx;
+  color: #666;
+}
+
+.modal-footer .confirm-btn {
+  flex: 2;
+  height: 88rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #FF8C00 0%, #FF4500 100%);
+  border-radius: 44rpx;
+  font-size: 30rpx;
+  font-weight: bold;
+  color: #fff;
+}

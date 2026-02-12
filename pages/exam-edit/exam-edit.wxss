@@ -1,0 +1,173 @@
+/* 页面容器 */
+.container {
+  min-height: 100vh;
+  background-color: #f5f5f5;
+  padding: 30rpx;
+  padding-bottom: 150rpx;
+}
+
+/* 区块 */
+.section {
+  background-color: #fff;
+  border-radius: 20rpx;
+  padding: 30rpx;
+  margin-bottom: 30rpx;
+  box-shadow: 0 2rpx 10rpx rgba(0,0,0,0.05);
+}
+
+.section-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 20rpx;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20rpx;
+}
+
+/* 表单项 */
+.form-item {
+  margin-bottom: 30rpx;
+}
+
+.label {
+  display: block;
+  font-size: 28rpx;
+  color: #666;
+  margin-bottom: 15rpx;
+}
+
+.input {
+  width: 100%;
+  height: 80rpx;
+  background-color: #f8f9fa;
+  border-radius: 10rpx;
+  padding: 0 20rpx;
+  font-size: 28rpx;
+}
+
+.textarea {
+  width: 100%;
+  min-height: 150rpx;
+  background-color: #f8f9fa;
+  border-radius: 10rpx;
+  padding: 20rpx;
+  font-size: 28rpx;
+}
+
+/* 添加按钮 */
+.add-btn {
+  height: 60rpx;
+  line-height: 60rpx;
+  padding: 0 30rpx;
+  background: linear-gradient(135deg, #1890ff 0%, #0066cc 100%);
+  color: #fff;
+  font-size: 24rpx;
+  border-radius: 30rpx;
+  border: none;
+}
+
+.add-btn::after {
+  border: none;
+}
+
+/* 题目列表 */
+.question-list {
+  display: flex;
+  flex-direction: column;
+  gap: 30rpx;
+}
+
+.question-item {
+  background-color: #f8f9fa;
+  border-radius: 15rpx;
+  padding: 30rpx;
+}
+
+.question-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20rpx;
+}
+
+.question-number {
+  font-size: 28rpx;
+  font-weight: bold;
+  color: #1890ff;
+}
+
+.delete-btn {
+  width: 100rpx;
+  height: 50rpx;
+  line-height: 50rpx;
+  background-color: #ff6b6b;
+  color: #fff;
+  font-size: 24rpx;
+  border-radius: 10rpx;
+  border: none;
+  padding: 0;
+}
+
+.delete-btn::after {
+  border: none;
+}
+
+/* 选项区域 */
+.options-section {
+  margin-top: 20rpx;
+}
+
+.option-item {
+  margin-bottom: 20rpx;
+}
+
+.option-header {
+  display: flex;
+  align-items: center;
+  gap: 15rpx;
+  margin-bottom: 10rpx;
+}
+
+.option-label {
+  width: 50rpx;
+  height: 50rpx;
+  line-height: 50rpx;
+  text-align: center;
+  background-color: #1890ff;
+  color: #fff;
+  font-size: 24rpx;
+  font-weight: bold;
+  border-radius: 50%;
+}
+
+/* 底部区域 */
+.bottom-section {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 30rpx;
+  background-color: #fff;
+  box-shadow: 0 -2rpx 10rpx rgba(0,0,0,0.05);
+}
+
+.save-btn {
+  width: 100%;
+  height: 100rpx;
+  background: linear-gradient(135deg, #07c160 0%, #05a850 100%);
+  color: #fff;
+  font-size: 36rpx;
+  font-weight: bold;
+  border-radius: 50rpx;
+  border: none;
+  box-shadow: 0 8rpx 20rpx rgba(7, 193, 96, 0.3);
+}
+
+.save-btn::after {
+  border: none;
+}

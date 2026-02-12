@@ -1,0 +1,521 @@
+/* 页面容器 */
+.container {
+  min-height: 100vh;
+  background-color: #f5f5f5;
+  padding: 20rpx;
+}
+
+/* 视频区域 */
+.video-section {
+  background-color: #fff;
+  border-radius: 20rpx;
+  padding: 40rpx;
+  box-shadow: 0 2rpx 10rpx rgba(0,0,0,0.05);
+}
+
+.section-title {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 15rpx;
+  text-align: center;
+}
+
+.section-desc {
+  font-size: 26rpx;
+  color: #666;
+  text-align: center;
+  margin-bottom: 30rpx;
+}
+
+.training-video {
+  width: 100%;
+  height: 400rpx;
+  border-radius: 15rpx;
+  margin-bottom: 30rpx;
+}
+
+.video-tips {
+  display: flex;
+  align-items: center;
+  background-color: #fff7e6;
+  border-left: 4rpx solid #faad14;
+  padding: 20rpx;
+  border-radius: 10rpx;
+  margin-bottom: 30rpx;
+}
+
+.tip-icon {
+  font-size: 32rpx;
+  margin-right: 15rpx;
+}
+
+.tip-text {
+  font-size: 26rpx;
+  color: #d48806;
+  flex: 1;
+}
+
+/* 观看完成提示 */
+.completed-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40rpx;
+  margin-bottom: 30rpx;
+}
+
+.completed-icon {
+  font-size: 80rpx;
+  margin-bottom: 20rpx;
+}
+
+.completed-text {
+  font-size: 32rpx;
+  color: #52c41a;
+  font-weight: bold;
+}
+
+/* 操作按钮 */
+.action-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+
+.next-btn {
+  width: 100%;
+  height: 100rpx;
+  background: linear-gradient(135deg, #FF8C00 0%, #FF4500 100%);
+  color: #fff;
+  font-size: 32rpx;
+  font-weight: bold;
+  border-radius: 50rpx;
+  border: none;
+  box-shadow: 0 8rpx 20rpx rgba(255, 69, 0, 0.3);
+}
+
+.next-btn.disabled {
+  background: linear-gradient(135deg, #ccc 0%, #999 100%);
+  box-shadow: none;
+}
+
+.next-btn::after {
+  border: none;
+}
+
+.rewatch-btn {
+  width: 100%;
+  height: 100rpx;
+  background: #fff;
+  color: #FF6B00;
+  font-size: 32rpx;
+  font-weight: bold;
+  border-radius: 50rpx;
+  border: 2rpx solid #FF6B00;
+}
+
+.rewatch-btn::after {
+  border: none;
+}
+
+/* 开发测试跳过按钮 */
+.skip-btn {
+  width: 100%;
+  height: 80rpx;
+  background: #999;
+  color: #fff;
+  font-size: 26rpx;
+  border-radius: 40rpx;
+  border: none;
+  margin-top: 20rpx;
+}
+
+.skip-btn::after {
+  border: none;
+}
+
+/* 考试区域 */
+.exam-section {
+  background-color: #fff;
+  border-radius: 20rpx;
+  padding: 40rpx;
+  box-shadow: 0 2rpx 10rpx rgba(0,0,0,0.05);
+}
+
+.question-list {
+  margin-top: 30rpx;
+}
+
+.question-item {
+  background-color: #f9f9f9;
+  border-radius: 15rpx;
+  padding: 30rpx;
+  margin-bottom: 20rpx;
+}
+
+.question-text {
+  font-size: 28rpx;
+  color: #333;
+  font-weight: bold;
+  margin-bottom: 20rpx;
+}
+
+.options {
+  display: flex;
+  flex-direction: column;
+  gap: 15rpx;
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  padding: 20rpx;
+  background-color: #fff;
+  border-radius: 10rpx;
+  border: 2rpx solid #e0e0e0;
+  transition: all 0.3s;
+}
+
+.option radio {
+  margin-right: 15rpx;
+}
+
+.option text {
+  font-size: 26rpx;
+  color: #333;
+  flex: 1;
+}
+
+.option.correct {
+  background-color: #f6ffed;
+  border-color: #52c41a;
+}
+
+.option.correct text {
+  color: #52c41a;
+}
+
+.option.wrong {
+  background-color: #fff1f0;
+  border-color: #ff4d4f;
+}
+
+.option.wrong text {
+  color: #ff4d4f;
+}
+
+.explanation {
+  margin-top: 15rpx;
+  padding: 15rpx;
+  background-color: #fffbe6;
+  border-radius: 10rpx;
+  font-size: 24rpx;
+  color: #d48806;
+}
+
+.no-questions {
+  text-align: center;
+  padding: 60rpx;
+  color: #999;
+  font-size: 28rpx;
+}
+
+/* 步骤指示器 */
+.steps-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40rpx 20rpx;
+  background-color: #fff;
+  border-radius: 20rpx;
+  margin-bottom: 20rpx;
+}
+
+.step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+}
+
+.step-icon {
+  width: 60rpx;
+  height: 60rpx;
+  border-radius: 50%;
+  background-color: #e0e0e0;
+  color: #999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28rpx;
+  font-weight: bold;
+  margin-bottom: 10rpx;
+  transition: all 0.3s;
+}
+
+.step.active .step-icon {
+  background: linear-gradient(135deg, #FF8C00 0%, #FF4500 100%);
+  color: #fff;
+}
+
+.step.completed .step-icon {
+  background: linear-gradient(135deg, #52c41a 0%, #389e0d 100%);
+  color: #fff;
+}
+
+.step-label {
+  font-size: 24rpx;
+  color: #999;
+  text-align: center;
+}
+
+.step.active .step-label {
+  color: #FF6B00;
+  font-weight: bold;
+}
+
+.step.completed .step-label {
+  color: #52c41a;
+}
+
+.step-line {
+  width: 60rpx;
+  height: 4rpx;
+  background-color: #e0e0e0;
+  margin: 0 10rpx;
+  margin-bottom: 50rpx;
+  transition: all 0.3s;
+}
+
+.step-line.active {
+  background-color: #52c41a;
+}
+
+/* 步骤内容区域 */
+.step-content {
+  background-color: #fff;
+  border-radius: 20rpx;
+  padding: 40rpx;
+  box-shadow: 0 2rpx 10rpx rgba(0,0,0,0.05);
+}
+
+/* 主按钮样式 */
+.primary-btn {
+  width: 100%;
+  height: 100rpx;
+  background: linear-gradient(135deg, #FF8C00 0%, #FF4500 100%);
+  color: #fff;
+  font-size: 32rpx;
+  font-weight: bold;
+  border-radius: 50rpx;
+  border: none;
+  box-shadow: 0 8rpx 20rpx rgba(255, 69, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.primary-btn::after {
+  border: none;
+}
+
+.btn-icon {
+  font-size: 36rpx;
+  margin-right: 10rpx;
+}
+
+/* 次要按钮样式 */
+.secondary-btn {
+  width: 100%;
+  height: 100rpx;
+  background: #fff;
+  color: #666;
+  font-size: 32rpx;
+  border-radius: 50rpx;
+  border: 2rpx solid #e0e0e0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 20rpx;
+}
+
+.secondary-btn::after {
+  border: none;
+}
+
+/* 考试结果样式 */
+.exam-result {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 60rpx 40rpx;
+  text-align: center;
+}
+
+.result-icon {
+  font-size: 100rpx;
+  margin-bottom: 30rpx;
+}
+
+.result-icon.fail {
+  color: #ff4d4f;
+}
+
+.result-title {
+  font-size: 40rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 20rpx;
+}
+
+.result-score {
+  font-size: 32rpx;
+  color: #666;
+  margin-bottom: 20rpx;
+}
+
+.result-desc {
+  font-size: 26rpx;
+  color: #999;
+  margin-bottom: 40rpx;
+  line-height: 1.6;
+}
+
+.retry-btn {
+  width: 80%;
+  height: 90rpx;
+  background: linear-gradient(135deg, #FF8C00 0%, #FF4500 100%);
+  color: #fff;
+  font-size: 30rpx;
+  font-weight: bold;
+  border-radius: 45rpx;
+  border: none;
+}
+
+.retry-btn::after {
+  border: none;
+}
+
+/* 证书卡片样式 */
+.certificate-step {
+  padding: 30rpx;
+}
+
+.certificate-card {
+  background: linear-gradient(135deg, #fff9e6 0%, #fff 50%, #f0fff0 100%);
+  border: 4rpx solid #FF8C00;
+  border-radius: 20rpx;
+  padding: 40rpx;
+  margin: 30rpx 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.certificate-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 10rpx;
+  background: linear-gradient(90deg, #FF8C00, #FF4500, #FF8C00);
+}
+
+.certificate-header {
+  text-align: center;
+  border-bottom: 2rpx solid #e0e0e0;
+  padding-bottom: 30rpx;
+  margin-bottom: 30rpx;
+}
+
+.cert-title {
+  display: block;
+  font-size: 44rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 10rpx;
+  letter-spacing: 8rpx;
+}
+
+.cert-subtitle {
+  font-size: 20rpx;
+  color: #999;
+  letter-spacing: 4rpx;
+}
+
+.certificate-body {
+  padding: 20rpx 0;
+}
+
+.cert-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 40rpx;
+}
+
+.cert-text {
+  font-size: 28rpx;
+  color: #666;
+  line-height: 2;
+}
+
+.cert-name {
+  font-size: 48rpx;
+  font-weight: bold;
+  color: #FF8C00;
+  margin: 20rpx 0;
+  padding: 0 40rpx;
+  border-bottom: 2rpx dashed #FF8C00;
+}
+
+.cert-date {
+  text-align: right;
+  margin-bottom: 30rpx;
+}
+
+.cert-date text {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.cert-seal {
+  display: flex;
+  justify-content: center;
+}
+
+.seal {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ff4d4f 0%, #cf1322 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 32rpx;
+  font-weight: bold;
+  letter-spacing: 4rpx;
+  box-shadow: 0 4rpx 15rpx rgba(207, 19, 34, 0.4);
+  transform: rotate(-15deg);
+}
+
+/* 响应式调整 */
+@media (min-width: 750rpx) {
+  .training-video {
+    height: 500rpx;
+  }
+
+  .certificate-card {
+    padding: 60rpx;
+  }
+
+  .cert-title {
+    font-size: 52rpx;
+  }
+
+  .cert-name {
+    font-size: 56rpx;
+  }
+}

@@ -1,0 +1,277 @@
+/* 志愿者列表页面样式 */
+.container {
+  min-height: 100vh;
+  background: #F8F8F8;
+  padding: 30rpx;
+  padding-bottom: 160rpx;
+}
+
+/* 预约信息卡片 */
+.booking-info {
+  margin-bottom: 30rpx;
+}
+
+.info-card {
+  background: linear-gradient(135deg, #FF8C00 0%, #FF4500 100%);
+  border-radius: 24rpx;
+  padding: 30rpx;
+  box-shadow: 0 8rpx 24rpx rgba(255, 69, 0, 0.25);
+}
+
+.info-row {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  padding: 12rpx 0;
+}
+
+.info-row:not(:last-child) {
+  border-bottom: 1rpx solid rgba(255, 255, 255, 0.2);
+}
+
+.info-icon {
+  font-size: 32rpx;
+}
+
+.info-label {
+  font-size: 28rpx;
+  color: rgba(255, 255, 255, 0.8);
+  width: 140rpx;
+}
+
+.info-value {
+  flex: 1;
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #fff;
+}
+
+/* 搜索区域 */
+.search-section {
+  margin-bottom: 30rpx;
+}
+
+.search-bar {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  background: #fff;
+  border-radius: 20rpx;
+  padding: 20rpx 24rpx;
+  margin-bottom: 20rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.05);
+}
+
+.search-icon {
+  font-size: 32rpx;
+}
+
+.search-input {
+  flex: 1;
+  font-size: 28rpx;
+  color: #333;
+}
+
+.filter-bar {
+  display: flex;
+  gap: 16rpx;
+}
+
+.filter-item {
+  padding: 16rpx 24rpx;
+  background: #fff;
+  border-radius: 16rpx;
+  font-size: 26rpx;
+  color: #666;
+  border: 2rpx solid #EEE;
+}
+
+.filter-item.active {
+  background: #FFF5E6;
+  border-color: #FF6B00;
+  color: #FF6B00;
+}
+
+/* 志愿者列表 */
+.section-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 24rpx;
+}
+
+.volunteer-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+
+.volunteer-item {
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+  background: #fff;
+  border-radius: 20rpx;
+  padding: 30rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.05);
+  border: 2rpx solid transparent;
+  transition: all 0.2s ease;
+}
+
+.volunteer-item.selected {
+  border-color: #FF6B00;
+  background: #FFF9F5;
+}
+
+.volunteer-avatar {
+  width: 96rpx;
+  height: 96rpx;
+  background: linear-gradient(135deg, #FF8C00 0%, #FF4500 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.avatar-text {
+  font-size: 40rpx;
+  font-weight: bold;
+  color: #fff;
+}
+
+.volunteer-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.info-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16rpx;
+}
+
+.volunteer-name {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+.volunteer-tags {
+  display: flex;
+  gap: 8rpx;
+}
+
+.tag {
+  padding: 6rpx 12rpx;
+  background: #E8F5E9;
+  color: #4CAF50;
+  font-size: 20rpx;
+  border-radius: 8rpx;
+}
+
+.tag:nth-child(2) {
+  background: #E3F2FD;
+  color: #2196F3;
+}
+
+.info-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20rpx;
+}
+
+.detail-item {
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+}
+
+.detail-icon {
+  font-size: 24rpx;
+}
+
+.detail-text {
+  font-size: 24rpx;
+  color: #666;
+}
+
+.select-indicator {
+  width: 56rpx;
+  height: 56rpx;
+  background: #FF6B00;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.select-indicator text {
+  font-size: 32rpx;
+  color: #fff;
+}
+
+/* 空状态 */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 80rpx 40rpx;
+}
+
+.empty-icon {
+  font-size: 80rpx;
+  margin-bottom: 24rpx;
+}
+
+.empty-text {
+  font-size: 28rpx;
+  color: #999;
+}
+
+/* 底部操作栏 */
+.bottom-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #fff;
+  padding: 20rpx 30rpx;
+  padding-bottom: calc(20rpx + env(safe-area-inset-bottom));
+  box-shadow: 0 -4rpx 20rpx rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.selected-info {
+  text-align: center;
+}
+
+.selected-name {
+  font-size: 26rpx;
+  color: #FF6B00;
+  font-weight: 500;
+}
+
+.confirm-btn {
+  width: 100%;
+  height: 100rpx;
+  background: linear-gradient(135deg, #FF8C00 0%, #FF4500 100%);
+  color: #fff;
+  font-size: 36rpx;
+  font-weight: bold;
+  border-radius: 50rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8rpx 24rpx rgba(255, 69, 0, 0.3);
+}
+
+.confirm-btn.disabled {
+  background: #EEE;
+  color: #999;
+  box-shadow: none;
+}

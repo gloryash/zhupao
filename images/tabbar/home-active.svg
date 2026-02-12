@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 81 81" width="81" height="81">
+  <!-- Home Active - Filled -->
+  <rect width="81" height="81" fill="url(#homeGradActive)" rx="12"/>
+  <defs>
+    <linearGradient id="homeGradActive" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FF8C00"/>
+      <stop offset="100%" style="stop-color:#FF4500"/>
+    </linearGradient>
+  </defs>
+  <path d="M40.5 20L20 38v30h15v-18h11v18h15V38L40.5 20z" fill="white"/>
+</svg>
