@@ -202,20 +202,29 @@ async function cancelOrder({ openid, event }) {
   }
 
   // 更新订单状态
-  await db.collection('orders').doc(orderId).update({
-    data: {
-      status: 'cancelled',
-      cancelTime: new Date().toLocaleString(),
-      cancelBy: orderRes.data.openid === openid ? 'blind' : 'volunteer'
-    }
-  })
+  const cancelRes = await db.collection('orders')
+    .where({
+      _id: orderId,
+      status: _.nin(['completed', 'cancelled'])
+    })
+    .update({
+      data: {
+        status: 'cancelled',
+        cancelTime: new Date().toLocaleString(),
+        cancelBy: orderRes.data.openid === openid ? 'blind' : 'volunteer'
+      }
+    })
+
+  if (!cancelRes.stats || cancelRes.stats.updated !== 1) {
+    return fail('INVALID_ORDER_STATUS', '该订单无法取消')
+  }
 
   return { success: true }
 }
 
 // 完成订单
 async function completeOrder({ openid, user, event }) {
-  const { orderId, actualDistance, duration, rating, comment } = event
+  const { orderId, actualDistance, duration } = event
 
   if (!orderId) {
     return fail('VALIDATION_ERROR', '缺少订单ID')
@@ -249,8 +258,8 @@ async function completeOrder({ openid, user, event }) {
       return fail('INVALID_ORDER_STATUS', '该订单无法完成')
     }
 
-    if (!['accepted', 'arrived', 'running'].includes(order.status)) {
-      return fail('INVALID_ORDER_STATUS', '当前订单状态无法完成')
+    if (order.status !== 'running') {
+      return fail('INVALID_ORDER_STATUS', '订单开始陪跑后才能完成')
     }
 
     if (!order.userId || !order.volunteerId) {
@@ -264,8 +273,6 @@ async function completeOrder({ openid, user, event }) {
         endTime: new Date().toLocaleString(),
         actualDistance: actualDistance || '',
         duration: duration || 0,
-        rating: rating || 0,
-        comment: comment || '',
         completedAt,
         rewardApplied: true,
         rewardAppliedAt: completedAt
@@ -274,12 +281,9 @@ async function completeOrder({ openid, user, event }) {
 
     const volunteerUpdate = {
       points: _.inc(10),
-      exp: _.inc(Number(rating) >= 3 ? 70 : 50),
+      exp: _.inc(50),
       totalRuns: _.inc(1),
       updatedAt: db.serverDate()
-    }
-    if (Number(rating) >= 3) {
-      volunteerUpdate.likes = _.inc(1)
     }
 
     await transaction.collection('users').doc(order.volunteerId).update({
@@ -334,8 +338,16 @@ async function getMyOrders({ openid, user, event }) {
 }
 
 // 获取等待中的订单（志愿者浏览可接单列表）
-async function getWaitingOrders({ event }) {
+async function getWaitingOrders({ user, event }) {
   const { page = 1, pageSize = 20, latitude, longitude } = event
+
+  if (user.userType !== 'volunteer') {
+    return fail('FORBIDDEN', '只有志愿者可以查看待接订单')
+  }
+
+  if (!user.videoWatched || !user.examPassed || !hasValue(user.certificateNo)) {
+    return fail('TRAINING_REQUIRED', '请先完成培训、考试并获得证书')
+  }
 
   const res = await db.collection('orders')
     .where({ status: 'waiting' })
@@ -360,9 +372,11 @@ async function getWaitingOrders({ event }) {
     .where({ status: 'waiting' })
     .count()
 
+  const safeOrders = orders.map(publicWaitingOrder)
+
   return {
     success: true,
-    orders: orders,
+    orders: safeOrders,
     total: countRes.total,
     page: page,
     pageSize: pageSize
@@ -393,6 +407,10 @@ async function getOrderDetail({ openid, event }) {
   const orderRes = await db.collection('orders').doc(orderId).get()
   if (!orderRes.data) {
     return fail('ORDER_NOT_FOUND', '订单不存在')
+  }
+
+  if (orderRes.data.openid !== openid && orderRes.data.volunteerOpenid !== openid) {
+    return fail('FORBIDDEN', '无权查看此订单')
   }
 
   return { success: true, order: orderRes.data }
@@ -491,4 +509,24 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
 
 function hasValue(value) {
   return value !== undefined && value !== null && String(value).trim() !== ''
+}
+
+function publicWaitingOrder(order) {
+  const result = {
+    _id: order._id,
+    userName: order.userName || '',
+    targetDistance: order.targetDistance || '',
+    estimatedDuration: order.estimatedDuration || '',
+    latitude: order.latitude,
+    longitude: order.longitude,
+    address: order.address || '',
+    publishTime: order.publishTime || '',
+    status: order.status || 'waiting'
+  }
+
+  if (typeof order.distance === 'number') {
+    result.distance = Math.round(order.distance)
+  }
+
+  return result
 }

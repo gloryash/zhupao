@@ -841,6 +841,8 @@ rewardApplied: true,
 rewardAppliedAt: db.serverDate()
 ```
 
+Completion must require the order to be in `running` status. Do not award good-review/likes bonuses from a volunteer-submitted completion payload; requester-controlled rating can be added as a separate flow later.
+
 - [ ] **Step 5: Use a transaction for completion**
 
 Replace the separate order and user updates with one `db.runTransaction` that:
@@ -863,6 +865,8 @@ FORBIDDEN
 TRAINING_REQUIRED
 VALIDATION_ERROR
 ```
+
+`getOrderDetail` must only return an order to its publisher or accepted volunteer. `getWaitingOrders` must be restricted to trained volunteers and should return a sanitized waiting-order view without publisher `openid` / internal user id.
 
 - [ ] **Step 7: Run syntax check**
 
