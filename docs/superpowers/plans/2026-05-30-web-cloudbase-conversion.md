@@ -23,7 +23,7 @@ Create or modify these files:
 - Create: `cloudfunctions/_shared/auth.js`, `cloudfunctions/_shared/responses.js`, and `cloudfunctions/_shared/user.js` as canonical shared helpers.
 - Create: `scripts/cloudbase/sync-shared.js` to copy shared helpers into each deployable function folder.
 - Modify: `cloudfunctions/initDB/index.js` to initialize new auth collections and stay idempotent.
-- Modify: `cloudfunctions/syncUserInfo/index.js` to support phone-based cross-platform user merge.
+- Modify: `cloudfunctions/syncUserInfo/index.js` to protect cross-platform identity and require verified phone linking.
 - Modify: `cloudfunctions/handleUser/index.js` to use shared identity resolution and stable response codes.
 - Modify: `cloudfunctions/handleTraining/index.js` to use shared identity resolution and preserve public certificate verification.
 - Modify: `cloudfunctions/handleVolunteer/index.js` to use shared identity resolution and protect availability changes.
@@ -667,11 +667,11 @@ node -c cloudfunctions/syncUserInfo/index.js
 
 Expected: no syntax errors.
 
-- [ ] **Step 5: Commit user merge update**
+- [ ] **Step 5: Commit user identity safety update**
 
 ```bash
 git add cloudfunctions/syncUserInfo/index.js cloudfunctions/syncUserInfo/shared
-git commit -m "feat: merge users by phone across clients"
+git commit -m "fix: require verified phone linking in sync user"
 ```
 
 ---
