@@ -44,11 +44,19 @@ async function resolveIdentity(db, event, options = {}) {
 
   const wxContext = cloud.getWXContext()
   if (wxContext && wxContext.OPENID) {
-    const userRes = await db.collection('users').where({ openid: wxContext.OPENID }).limit(1).get()
+    const _ = db.command
+    const userRes = await db.collection('users')
+      .where(_.or([
+        { openid: wxContext.OPENID },
+        { miniOpenid: wxContext.OPENID }
+      ]))
+      .limit(1)
+      .get()
+    const user = userRes.data[0] || null
     return {
-      user: userRes.data[0] || null,
-      userId: userRes.data[0] ? userRes.data[0]._id : '',
-      openid: wxContext.OPENID,
+      user,
+      userId: user ? user._id : '',
+      openid: user ? (user.openid || wxContext.OPENID) : wxContext.OPENID,
       source: 'miniapp'
     }
   }
