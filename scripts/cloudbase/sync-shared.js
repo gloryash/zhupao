@@ -12,8 +12,11 @@ const targets = [
   'handleSchedule',
   'handleTraining',
   'handleRecord',
+  'handleCircle',
+  'handleShop',
   'updatePoints',
   'initDB',
+  'testAll',
   'webAuth'
 ]
 
