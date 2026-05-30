@@ -3,7 +3,6 @@ const crypto = require('crypto')
 const { ok, fail } = require('./shared/responses')
 const {
   normalizeIdentifier,
-  normalizePhone,
   createWebOpenid,
   publicUser
 } = require('./shared/user')
@@ -249,13 +248,13 @@ async function findOrCreateUser(identifier, profile) {
   const userData = {
     openid: webOpenid,
     webOpenid,
-    miniOpenid: profile.miniOpenid || '',
+    miniOpenid: '',
     userType,
     role: profile.role || userType,
     nickName: profile.nickName || profile.name || 'Web用户',
     avatarUrl: profile.avatarUrl || '',
-    phone: identifier.type === 'phone' ? identifier.value : normalizePhone(profile.phone),
-    email: identifier.type === 'email' ? identifier.value : (profile.email || ''),
+    phone: identifier.type === 'phone' ? identifier.value : '',
+    email: identifier.type === 'email' ? identifier.value : '',
     name: profile.name || '',
     gender: profile.gender || '',
     resume: profile.resume || '',
@@ -396,12 +395,28 @@ function createAuthToken() {
 }
 
 function sanitizeProfile(profile) {
-  const clean = { ...(profile || {}) }
-  delete clean.password
-  delete clean.passwordHash
-  delete clean.passwordSalt
-  delete clean.tokenHash
-  delete clean.authToken
-  delete clean._authToken
-  return clean
+  const source = profile || {}
+  const userType = source.userType === 'volunteer' ? 'volunteer' : 'disabled'
+  return {
+    userType,
+    role: userType,
+    nickName: cleanString(source.nickName, 40),
+    avatarUrl: cleanString(source.avatarUrl, 500),
+    name: cleanString(source.name, 40),
+    gender: cleanString(source.gender, 20),
+    resume: cleanString(source.resume, 500),
+    emergencyPhone: cleanString(source.emergencyPhone, 20),
+    emergencyName: cleanString(source.emergencyName, 40),
+    emergencyRelation: cleanString(source.emergencyRelation, 40),
+    runningLocation: cleanString(source.runningLocation, 120),
+    runningYears: cleanString(source.runningYears, 20),
+    pace: cleanString(source.pace, 30),
+    hasMarathon: source.hasMarathon === 'yes' ? 'yes' : 'no',
+    hasFirstAid: source.hasFirstAid === 'yes' ? 'yes' : 'no',
+    hasCompanionExp: source.hasCompanionExp === 'yes' ? 'yes' : 'no'
+  }
+}
+
+function cleanString(value, maxLength) {
+  return String(value || '').trim().slice(0, maxLength)
 }
