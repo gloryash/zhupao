@@ -238,6 +238,11 @@ async function completeOrder({ openid, user, event }) {
     return fail('VALIDATION_ERROR', '当前云开发环境不支持事务，无法安全完成订单')
   }
 
+  const actualDistanceValue = parsePositiveNumber(actualDistance, '实际距离')
+  if (actualDistanceValue.error) return actualDistanceValue.error
+  const durationValue = parsePositiveNumber(duration, '陪跑时长')
+  if (durationValue.error) return durationValue.error
+
   return await db.runTransaction(async transaction => {
     const orderRes = await transaction.collection('orders').doc(orderId).get()
     const order = orderRes.data
@@ -271,8 +276,8 @@ async function completeOrder({ openid, user, event }) {
       data: {
         status: 'completed',
         endTime: new Date().toLocaleString(),
-        actualDistance: actualDistance || '',
-        duration: duration || 0,
+        actualDistance: actualDistanceValue.value,
+        duration: durationValue.value,
         completedAt,
         rewardApplied: true,
         rewardAppliedAt: completedAt
@@ -488,9 +493,19 @@ async function updateOrderStatus({ openid, event }) {
     updateData.startTime = new Date().toLocaleString()
   }
 
-  await db.collection('orders').doc(orderId).update({
-    data: updateData
-  })
+  const updateRes = await db.collection('orders')
+    .where({
+      _id: orderId,
+      volunteerOpenid: openid,
+      status: _.in(validTransitions[status])
+    })
+    .update({
+      data: updateData
+    })
+
+  if (!updateRes.stats || updateRes.stats.updated !== 1) {
+    return fail('INVALID_ORDER_STATUS', `当前状态 ${orderRes.data.status} 不能转为 ${status}`)
+  }
 
   return { success: true }
 }
@@ -509,6 +524,19 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
 
 function hasValue(value) {
   return value !== undefined && value !== null && String(value).trim() !== ''
+}
+
+function parsePositiveNumber(value, label) {
+  if (!hasValue(value)) {
+    return { error: fail('VALIDATION_ERROR', `请填写${label}`) }
+  }
+
+  const number = Number(value)
+  if (!Number.isFinite(number) || number <= 0) {
+    return { error: fail('VALIDATION_ERROR', `${label}必须为正数`) }
+  }
+
+  return { value: number }
 }
 
 function publicWaitingOrder(order) {
