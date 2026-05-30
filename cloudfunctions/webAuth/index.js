@@ -100,10 +100,10 @@ async function register(event) {
     throw err
   }
 
-  const userResult = await createNewUser(identifier, profile)
-  const user = userResult.user
-
+  let user = null
   try {
+    const userResult = await createNewUser(identifier, profile)
+    user = userResult.user
     await db.collection('web_accounts').doc(accountId).update({
       data: {
         userId: user._id,
@@ -114,7 +114,9 @@ async function register(event) {
       }
     })
   } catch (err) {
-    await cleanupCreatedUser(user._id)
+    if (user && user._id) {
+      await cleanupCreatedUser(user._id)
+    }
     await cleanupProvisioningAccount(accountId)
     throw err
   }
