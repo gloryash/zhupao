@@ -108,6 +108,8 @@ exports.main = async (event, context) => {
       'comments', 'web_accounts', 'web_sessions'
     ]
 
+    const collectionErrors = []
+
     // 创建集合
     for (const name of collections) {
       try {
@@ -116,9 +118,22 @@ exports.main = async (event, context) => {
       } catch (err) {
         if (err.errCode !== -501) { // -501 表示集合已存在
           console.error(`创建集合 ${name} 失败:`, err)
+          collectionErrors.push({
+            name,
+            error: err.message || err.errMsg || String(err)
+          })
         } else {
           console.log(`集合 ${name} 已存在，跳过`)
         }
+      }
+    }
+
+    if (collectionErrors.length > 0) {
+      return {
+        success: false,
+        action: 'initDB',
+        error: '部分集合创建失败',
+        collectionErrors
       }
     }
 
