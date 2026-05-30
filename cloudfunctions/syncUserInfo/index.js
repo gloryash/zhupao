@@ -89,8 +89,10 @@ exports.main = async (event, context) => {
         lastLoginTime: new Date().toLocaleString(),
         updatedAt: db.serverDate()
       }
-      if (normalizedPhone && (!existingUser.phone || existingUser.phone === normalizedPhone)) {
+      if (normalizedPhone && existingUser.phone === normalizedPhone) {
         updateData.phone = normalizedPhone
+      } else if (normalizedPhone && !existingUser.phone) {
+        updateData.pendingPhone = normalizedPhone
       }
 
       await db.collection('users').doc(existingUser._id).update({
@@ -121,7 +123,8 @@ exports.main = async (event, context) => {
         userType: userType, // 'disabled' 或 'volunteer'
         nickName: userInfo.nickName || '用户',
         avatarUrl: userInfo.avatarUrl || '',
-        phone: normalizedPhone || '',
+        phone: '',
+        pendingPhone: normalizedPhone || '',
         name: userInfo.name || '',
         gender: userInfo.gender || '',
         idCard: userInfo.idCard || '',

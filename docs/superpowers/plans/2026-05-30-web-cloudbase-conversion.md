@@ -648,7 +648,19 @@ if (phoneOwner && phoneOwner._id !== existingUser._id) {
 
 This keeps Web-created users protected until a real verified phone-linking flow exists.
 
-- [ ] **Step 3: New user includes authSources**
+- [ ] **Step 3: Store unverified mini program phone as non-authoritative data**
+
+For mini program profile submissions without a server-side phone verification proof, do not write a new value into `users.phone`. Preserve an already matching `users.phone`, otherwise store the submitted value as `pendingPhone` only:
+
+```js
+if (phone && existingUser.phone === phone) {
+  updateData.phone = phone
+} else if (phone && !existingUser.phone) {
+  updateData.pendingPhone = phone
+}
+```
+
+- [ ] **Step 4: New user includes authSources**
 
 When creating a new mini program user, include:
 
@@ -657,7 +669,9 @@ authSources: ['miniapp'],
 miniOpenid: openid
 ```
 
-- [ ] **Step 4: Run local syntax check**
+New mini program users should initialize authoritative `phone` as an empty string and put the submitted phone, if any, in `pendingPhone`.
+
+- [ ] **Step 5: Run local syntax check**
 
 Run:
 
@@ -667,7 +681,7 @@ node -c cloudfunctions/syncUserInfo/index.js
 
 Expected: no syntax errors.
 
-- [ ] **Step 5: Commit user identity safety update**
+- [ ] **Step 6: Commit user identity safety update**
 
 ```bash
 git add cloudfunctions/syncUserInfo/index.js cloudfunctions/syncUserInfo/shared
