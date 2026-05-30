@@ -152,42 +152,56 @@ async function completeOrderAddPoints(openid, event) {
 
 // 兑换商品（使用事务）
 async function exchangeProduct(openid, event) {
-  const { productId, productName, productPrice } = event
+  const { productId } = event
 
-  // 获取用户
-  const userRes = await db.collection('users').where({ openid: openid }).get()
-  if (userRes.data.length === 0) {
-    return { success: false, error: '用户不存在' }
-  }
-  const user = userRes.data[0]
-
-  if (user.points < productPrice) {
-    return {
-      success: false,
-      error: '积分不足',
-      currentPoints: user.points,
-      needPoints: productPrice
-    }
+  if (!productId) {
+    return fail('VALIDATION_ERROR', '缺少商品ID')
   }
 
-  // 获取商品
-  const productRes = await db.collection('products').doc(productId).get()
-  if (!productRes.data) {
-    return { success: false, error: '商品不存在' }
-  }
-  const product = productRes.data
-
-  if (product.stock <= 0) {
-    return { success: false, error: '商品已售罄' }
+  if (typeof db.runTransaction !== 'function') {
+    return fail('VALIDATION_ERROR', '当前云开发环境不支持事务，无法安全兑换')
   }
 
   // 生成兑换码
   const exchangeCode = 'EX' + Date.now().toString(36).toUpperCase() +
     Math.random().toString(36).substr(2, 4).toUpperCase()
 
-  // 使用事务
   try {
-    await db.runTransaction(async transaction => {
+    const result = await db.runTransaction(async transaction => {
+      // 获取用户
+      const userRes = await transaction.collection('users').where({ openid: openid }).limit(1).get()
+      if (userRes.data.length === 0) {
+        return fail('USER_NOT_FOUND', '用户不存在')
+      }
+      const user = userRes.data[0]
+
+      // 获取商品
+      const productRes = await transaction.collection('products').doc(productId).get()
+      if (!productRes.data) {
+        return fail('PRODUCT_NOT_FOUND', '商品不存在')
+      }
+      const product = productRes.data
+      const productPrice = Number(product.price)
+
+      if (!Number.isFinite(productPrice) || productPrice <= 0) {
+        return fail('VALIDATION_ERROR', '商品积分价格异常')
+      }
+
+      if ((product.stock || 0) <= 0) {
+        return fail('OUT_OF_STOCK', '商品已售罄')
+      }
+
+      const currentPoints = Number(user.points || 0)
+      if (currentPoints < productPrice) {
+        return {
+          success: false,
+          code: 'INSUFFICIENT_POINTS',
+          error: '积分不足',
+          currentPoints: currentPoints,
+          needPoints: productPrice
+        }
+      }
+
       // 扣除积分
       await transaction.collection('users').doc(user._id).update({
         data: {
@@ -210,7 +224,7 @@ async function exchangeProduct(openid, event) {
           openid: openid,
           userId: user._id,
           productId: productId,
-          productName: productName,
+          productName: product.name || '',
           price: productPrice,
           code: exchangeCode,
           status: 'pending',
@@ -218,13 +232,15 @@ async function exchangeProduct(openid, event) {
           createdAt: db.serverDate()
         }
       })
+
+      return {
+        success: true,
+        exchangeCode: exchangeCode,
+        remainingPoints: currentPoints - productPrice
+      }
     })
 
-    return {
-      success: true,
-      exchangeCode: exchangeCode,
-      remainingPoints: user.points - productPrice
-    }
+    return result
   } catch (err) {
     return { success: false, error: '兑换失败，请重试' }
   }
@@ -262,14 +278,23 @@ async function handleCheckIn(openid, event) {
     checkInDays = 0
   }
 
-  await db.collection('users').doc(user._id).update({
-    data: {
-      exp: _.inc(earnedExp),
-      checkInDays: checkInDays,
-      lastCheckInDate: today,
-      updatedAt: db.serverDate()
-    }
-  })
+  const checkInRes = await db.collection('users')
+    .where({
+      _id: user._id,
+      lastCheckInDate: _.neq(today)
+    })
+    .update({
+      data: {
+        exp: _.inc(earnedExp),
+        checkInDays: checkInDays,
+        lastCheckInDate: today,
+        updatedAt: db.serverDate()
+      }
+    })
+
+  if (!checkInRes.stats || checkInRes.stats.updated !== 1) {
+    return { success: false, error: '今日已打卡', alreadyCheckedIn: true }
+  }
 
   return {
     success: true,

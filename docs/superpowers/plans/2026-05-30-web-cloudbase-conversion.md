@@ -848,6 +848,8 @@ Any existing feedback reward path must verify the caller is the completed order 
 
 Disable or harden any legacy `updatePoints.completeOrder` reward path so it cannot be called directly with an `orderId` to bypass `handleOrder.complete` transaction and `rewardApplied` checks.
 
+Because `updatePoints` remains deployed for shop and check-in features, it must not trust client-supplied product price/name for exchanges, and daily check-in must use an atomic guard so concurrent calls cannot double-award experience.
+
 - [ ] **Step 5: Use a transaction for completion**
 
 Replace the separate order and user updates with one `db.runTransaction` that:
