@@ -655,7 +655,7 @@ For mini program profile submissions without a server-side phone verification pr
 ```js
 if (phone && existingUser.phone === phone) {
   updateData.phone = phone
-} else if (phone && !existingUser.phone) {
+} else if (phone) {
   updateData.pendingPhone = phone
 }
 ```
