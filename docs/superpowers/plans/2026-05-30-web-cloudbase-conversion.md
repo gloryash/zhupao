@@ -718,6 +718,8 @@ const openid = identity.openid
 
 Return `fail('VALIDATION_ERROR', '未知操作')` for unknown actions.
 
+`updateProfile` must not write a new client-submitted phone directly into `users.phone`. Preserve an already matching phone value; otherwise store the submitted value as `pendingPhone` and return `PHONE_LINK_REQUIRED` when the phone belongs to another user.
+
 - [ ] **Step 2: Update handleTraining entry**
 
 Use optional identity for public actions:
@@ -733,7 +735,7 @@ if (action === 'getExamQuestions' || action === 'verifyCertificate') {
 }
 ```
 
-Do not expose answers in `getExamQuestions` for the Web exam screen. Return `answer` only in `submitExam` results:
+Do not expose answers in `getExamQuestions` for the Web exam screen:
 
 ```js
 const questions = res.data.map(q => ({
@@ -744,13 +746,17 @@ const questions = res.data.map(q => ({
 }))
 ```
 
+Private training and certificate actions are volunteer-only. `submitExam` should return correctness and score, but must not return `answer`, `correctAnswer`, or explanations that can be reused as an answer key.
+
 - [ ] **Step 3: Update handleVolunteer entry**
 
-Allow `getVolunteers` and `getVolunteerDetail` without auth. Require auth for `getAvailableVolunteers`, `updateAvailability`, and `getFrequentContacts`. Use `fail('FORBIDDEN', '只有志愿者可以切换接单状态')` when a non-volunteer calls `updateAvailability`.
+Allow `getVolunteers` and `getVolunteerDetail` without auth. Public volunteer responses must use a whitelist and must not expose phone, real name, openid, email, id card, emergency contacts, or exact coordinates. Require auth for `getAvailableVolunteers`, `updateAvailability`, and `getFrequentContacts`. `getAvailableVolunteers` is disabled-user-only and should return sanitized volunteers plus distance, not raw coordinates or phone. Use `fail('FORBIDDEN', '只有志愿者可以切换接单状态')` when a non-volunteer calls `updateAvailability`.
 
 - [ ] **Step 4: Update handleRecord entry**
 
 Use the shared resolver for all first-phase record and today-stat actions. Return `AUTH_REQUIRED` instead of silently using an empty openid.
+
+Validate numeric sport metrics before storing records or using `_.inc()`. Reject non-numeric or negative `distance`, `duration`, `calories`, and companion-record rating values with `VALIDATION_ERROR`.
 
 - [ ] **Step 5: Run syntax checks**
 

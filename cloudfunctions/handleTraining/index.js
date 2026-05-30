@@ -3,11 +3,10 @@
 
 const cloud = require('wx-server-sdk')
 const { resolveIdentity, requireUser } = require('./shared/auth')
-const { ok, fail } = require('./shared/responses')
+const { fail } = require('./shared/responses')
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 
 const db = cloud.database()
-const _ = db.command
 
 exports.main = async (event, context) => {
   event = event || {}
@@ -15,11 +14,15 @@ exports.main = async (event, context) => {
 
   try {
     let openid = ''
+    let identity = null
     if (action !== 'getExamQuestions' && action !== 'verifyCertificate') {
-      const identity = await resolveIdentity(db, event)
+      identity = await resolveIdentity(db, event)
       const authError = requireUser(identity)
       if (authError) return authError
       openid = identity.openid
+      if (identity.user.userType !== 'volunteer') {
+        return fail('FORBIDDEN', '只有志愿者可以访问培训认证')
+      }
     }
 
     switch (action) {
@@ -95,9 +98,7 @@ async function submitExam(openid, event) {
       if (isCorrect) correctCount++
       results.push({
         questionId: answer.questionId,
-        isCorrect: isCorrect,
-        correctAnswer: question.answer,
-        explanation: question.explanation
+        isCorrect: isCorrect
       })
     }
   }

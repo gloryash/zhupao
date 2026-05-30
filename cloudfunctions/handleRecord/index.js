@@ -3,7 +3,7 @@
 
 const cloud = require('wx-server-sdk')
 const { resolveIdentity, requireUser } = require('./shared/auth')
-const { ok, fail } = require('./shared/responses')
+const { fail } = require('./shared/responses')
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 
 const db = cloud.database()
@@ -44,13 +44,19 @@ exports.main = async (event, context) => {
 // 保存运动记录
 async function saveSportRecord(openid, event) {
   const { distance, duration, calories, pace, trajectory, startTime, endTime } = event
+  const distanceValue = parseNonNegativeNumber(distance, '运动距离')
+  if (distanceValue.error) return distanceValue.error
+  const durationValue = parseNonNegativeNumber(duration, '运动时长')
+  if (durationValue.error) return durationValue.error
+  const caloriesValue = parseNonNegativeNumber(calories, '热量')
+  if (caloriesValue.error) return caloriesValue.error
 
   const record = {
     openid: openid,
     type: 'sport',
-    distance: distance || 0,
-    duration: duration || 0,
-    calories: calories || 0,
+    distance: distanceValue.value,
+    duration: durationValue.value,
+    calories: caloriesValue.value,
     pace: pace || '',
     trajectory: trajectory || [],
     startTime: startTime || '',
@@ -64,8 +70,8 @@ async function saveSportRecord(openid, event) {
   // 更新用户累计数据
   await db.collection('users').where({ openid: openid }).update({
     data: {
-      totalDistance: _.inc(distance || 0),
-      totalTime: _.inc(duration || 0),
+      totalDistance: _.inc(distanceValue.value),
+      totalTime: _.inc(durationValue.value),
       updatedAt: db.serverDate()
     }
   })
@@ -112,6 +118,15 @@ async function saveCompanionRecord(openid, event) {
     orderId, partnerName, partnerType, distance, duration,
     rating, comment, startTime, endTime
   } = event
+  const distanceValue = parseNonNegativeNumber(distance, '陪跑距离')
+  if (distanceValue.error) return distanceValue.error
+  const durationValue = parseNonNegativeNumber(duration, '陪跑时长')
+  if (durationValue.error) return durationValue.error
+  const ratingValue = parseNonNegativeNumber(rating, '评分')
+  if (ratingValue.error) return ratingValue.error
+  if (ratingValue.value > 5) {
+    return fail('VALIDATION_ERROR', '评分不能超过5分')
+  }
 
   // 获取用户信息
   const userRes = await db.collection('users').where({ openid: openid }).get()
@@ -128,9 +143,9 @@ async function saveCompanionRecord(openid, event) {
     userType: user.userType,
     partnerName: partnerName || '',
     partnerType: partnerType || '',
-    distance: distance || 0,
-    duration: duration || 0,
-    rating: rating || 0,
+    distance: distanceValue.value,
+    duration: durationValue.value,
+    rating: ratingValue.value,
     comment: comment || '',
     startTime: startTime || '',
     endTime: endTime || '',
@@ -200,6 +215,19 @@ async function deleteRecords(openid, event) {
   }
 
   return { success: false, error: '请指定要删除的记录' }
+}
+
+function parseNonNegativeNumber(value, label) {
+  if (value === undefined || value === null || value === '') {
+    return { value: 0 }
+  }
+
+  const number = Number(value)
+  if (!Number.isFinite(number) || number < 0) {
+    return { error: fail('VALIDATION_ERROR', `${label}必须为非负数字`) }
+  }
+
+  return { value: number }
 }
 
 // 获取今日统计

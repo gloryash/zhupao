@@ -3,11 +3,10 @@
 
 const cloud = require('wx-server-sdk')
 const { resolveIdentity, requireUser } = require('./shared/auth')
-const { ok, fail } = require('./shared/responses')
+const { fail } = require('./shared/responses')
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 
 const db = cloud.database()
-const _ = db.command
 
 exports.main = async (event, context) => {
   event = event || {}
@@ -27,7 +26,10 @@ exports.main = async (event, context) => {
       case 'getVolunteers':
         return await getVolunteers(event)
       case 'getAvailableVolunteers':
-        return await getAvailableVolunteers(openid, event)
+        if (identity.user.userType !== 'disabled') {
+          return fail('FORBIDDEN', '只有视障用户可以查找可用志愿者')
+        }
+        return await getAvailableVolunteers(event)
       case 'updateAvailability':
         if (identity.user.userType !== 'volunteer') {
           return fail('FORBIDDEN', '只有志愿者可以切换接单状态')
@@ -48,7 +50,7 @@ exports.main = async (event, context) => {
 
 // 获取志愿者列表
 async function getVolunteers(event) {
-  const { page = 1, pageSize = 20, keyword } = event
+  const { page = 1, pageSize = 20 } = event
 
   let whereCondition = {
     userType: 'volunteer',
@@ -87,7 +89,7 @@ async function getVolunteers(event) {
 }
 
 // 获取可用志愿者（正在接单的）
-async function getAvailableVolunteers(openid, event) {
+async function getAvailableVolunteers(event) {
   const { latitude, longitude, radius = 5000 } = event
 
   // 获取所有正在接单的志愿者
@@ -99,17 +101,14 @@ async function getAvailableVolunteers(openid, event) {
     })
     .field({
       _id: true,
-      openid: true,
       nickName: true,
-      name: true,
       avatarUrl: true,
       tierLevel: true,
       tierName: true,
       totalRuns: true,
       likes: true,
       latitude: true,
-      longitude: true,
-      phone: true
+      longitude: true
     })
     .get()
 
@@ -129,10 +128,12 @@ async function getAvailableVolunteers(openid, event) {
       .sort((a, b) => a.distance - b.distance)
   }
 
+  const safeVolunteers = volunteers.map(publicAvailableVolunteer)
+
   return {
     success: true,
-    volunteers: volunteers,
-    total: volunteers.length
+    volunteers: safeVolunteers,
+    total: safeVolunteers.length
   }
 }
 
@@ -288,6 +289,14 @@ function publicVolunteer(volunteer) {
     hasFirstAid: volunteer.hasFirstAid || 'no',
     hasCompanionExp: volunteer.hasCompanionExp || 'no'
   }
+}
+
+function publicAvailableVolunteer(volunteer) {
+  const result = publicVolunteer(volunteer)
+  if (typeof volunteer.distance === 'number') {
+    result.distance = Math.round(volunteer.distance)
+  }
+  return result
 }
 
 // Haversine 公式计算两点距离（米）

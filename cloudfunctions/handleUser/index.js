@@ -3,11 +3,11 @@
 
 const cloud = require('wx-server-sdk')
 const { resolveIdentity, requireUser } = require('./shared/auth')
-const { ok, fail } = require('./shared/responses')
+const { fail } = require('./shared/responses')
+const { normalizePhone } = require('./shared/user')
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 
 const db = cloud.database()
-const _ = db.command
 
 exports.main = async (event, context) => {
   event = event || {}
@@ -65,7 +65,31 @@ async function updateProfile(openid, event) {
   if (nickName !== undefined) updateData.nickName = nickName
   if (avatarUrl !== undefined) updateData.avatarUrl = avatarUrl
   if (name !== undefined) updateData.name = name
-  if (phone !== undefined) updateData.phone = phone
+
+  if (phone !== undefined) {
+    const userRes = await db.collection('users').where({ openid: openid }).limit(1).get()
+    if (userRes.data.length === 0) {
+      return fail('USER_NOT_FOUND', '用户不存在')
+    }
+
+    const user = userRes.data[0]
+    const normalizedPhone = normalizePhone(phone)
+    if (normalizedPhone) {
+      const phoneOwnerRes = await db.collection('users').where({ phone: normalizedPhone }).limit(1).get()
+      const phoneOwner = phoneOwnerRes.data[0]
+      if (phoneOwner && phoneOwner._id !== user._id) {
+        return fail('PHONE_LINK_REQUIRED', '该手机号已有关联用户，请先完成手机号验证后再绑定')
+      }
+
+      if (user.phone === normalizedPhone) {
+        updateData.phone = normalizedPhone
+      } else {
+        updateData.pendingPhone = normalizedPhone
+      }
+    } else {
+      updateData.pendingPhone = ''
+    }
+  }
 
   await db.collection('users').where({ openid: openid }).update({
     data: updateData
