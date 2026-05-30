@@ -66,18 +66,14 @@ async function getVolunteers(event) {
     .limit(pageSize)
     .field({
       _id: true,
-      openid: true,
       nickName: true,
-      name: true,
       avatarUrl: true,
       tierLevel: true,
       tierName: true,
       totalRuns: true,
       totalDistance: true,
       likes: true,
-      isAvailable: true,
-      latitude: true,
-      longitude: true
+      isAvailable: true
     })
     .get()
 
@@ -269,14 +265,28 @@ async function getVolunteerDetail(event) {
     return { success: false, error: '志愿者不存在' }
   }
 
-  // 不返回敏感信息
-  delete volunteer.idCard
-  delete volunteer.phone
-  delete volunteer.emergencyPhone
-
   return {
     success: true,
-    volunteer: volunteer
+    volunteer: publicVolunteer(volunteer)
+  }
+}
+
+function publicVolunteer(volunteer) {
+  return {
+    _id: volunteer._id,
+    nickName: volunteer.nickName || '志愿者',
+    avatarUrl: volunteer.avatarUrl || '',
+    tierLevel: volunteer.tierLevel || 1,
+    tierName: volunteer.tierName || '',
+    totalRuns: volunteer.totalRuns || 0,
+    totalDistance: volunteer.totalDistance || 0,
+    likes: volunteer.likes || 0,
+    isAvailable: volunteer.isAvailable === true,
+    runningYears: volunteer.runningYears || '',
+    pace: volunteer.pace || '',
+    hasMarathon: volunteer.hasMarathon || 'no',
+    hasFirstAid: volunteer.hasFirstAid || 'no',
+    hasCompanionExp: volunteer.hasCompanionExp || 'no'
   }
 }
 
