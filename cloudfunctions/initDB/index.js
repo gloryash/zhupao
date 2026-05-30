@@ -105,7 +105,7 @@ exports.main = async (event, context) => {
     const collections = [
       'users', 'orders', 'products', 'exchange_orders', 'moments',
       'sport_records', 'appointments', 'certificates', 'exams',
-      'comments'
+      'comments', 'web_accounts', 'web_sessions'
     ]
 
     // 创建集合
@@ -154,6 +154,7 @@ exports.main = async (event, context) => {
 
     return {
       success: true,
+      action: 'initDB',
       message: '数据库初始化成功',
       collections: collections
     }
