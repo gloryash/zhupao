@@ -6,30 +6,76 @@ cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 
 const db = cloud.database()
 const _ = db.command
+const { normalizePhone } = require('./shared/user')
+
+async function findExistingUser(openid, phone) {
+  const openidRes = await db.collection('users').where({ openid }).limit(1).get()
+  if (openidRes.data.length > 0) {
+    return { user: openidRes.data[0], matchedBy: 'openid' }
+  }
+
+  const miniOpenidRes = await db.collection('users').where({ miniOpenid: openid }).limit(1).get()
+  if (miniOpenidRes.data.length > 0) {
+    return { user: miniOpenidRes.data[0], matchedBy: 'miniOpenid' }
+  }
+
+  if (phone) {
+    const phoneRes = await db.collection('users').where({ phone }).limit(1).get()
+    if (phoneRes.data.length > 0) {
+      return { user: phoneRes.data[0], matchedBy: 'phone' }
+    }
+  }
+
+  return { user: null, matchedBy: '' }
+}
+
+function mergeAuthSources(existingUser) {
+  const authSources = Array.isArray(existingUser.authSources) ? existingUser.authSources : []
+  return authSources.includes('miniapp') ? authSources : authSources.concat('miniapp')
+}
+
+function optionalValue(value, fallback) {
+  return value || fallback || ''
+}
 
 exports.main = async (event, context) => {
   const wxContext = cloud.getWXContext()
   const openid = wxContext.OPENID
 
   // 获取前端传递的用户信息
-  const { userInfo, userType } = event
+  const { userInfo = {}, userType } = event
+  const normalizedPhone = normalizePhone(userInfo.phone)
 
   try {
-    // 查询是否已存在该用户
-    const userRes = await db.collection('users').where({
-      openid: openid
-    }).get()
+    // 查询是否已存在该用户：小程序 openid、历史 miniOpenid、手机号跨端合并
+    const { user: existingUser, matchedBy } = await findExistingUser(openid, normalizedPhone)
 
-    if (userRes.data.length > 0) {
+    if (existingUser) {
       // 用户已存在，返回现有信息
-      const existingUser = userRes.data[0]
-
       // 更新用户信息（保持积分、经验值等数据）
       const updateData = {
-        avatarUrl: userInfo.avatarUrl || existingUser.avatarUrl,
-        nickName: userInfo.nickName || existingUser.nickName,
+        authSources: mergeAuthSources(existingUser),
+        miniOpenid: matchedBy === 'phone' ? openid : (existingUser.miniOpenid || openid),
+        openid: existingUser.openid || openid,
+        userType: userType || existingUser.userType,
+        avatarUrl: optionalValue(userInfo.avatarUrl, existingUser.avatarUrl),
+        nickName: optionalValue(userInfo.nickName, existingUser.nickName),
+        name: optionalValue(userInfo.name, existingUser.name),
+        gender: optionalValue(userInfo.gender, existingUser.gender),
+        idCard: optionalValue(userInfo.idCard, existingUser.idCard),
+        resume: optionalValue(userInfo.resume, existingUser.resume),
+        emergencyPhone: optionalValue(userInfo.emergencyPhone, existingUser.emergencyPhone),
+        runningLocation: optionalValue(userInfo.runningLocation, existingUser.runningLocation),
+        runningYears: optionalValue(userInfo.runningYears, existingUser.runningYears),
+        pace: optionalValue(userInfo.pace, existingUser.pace),
+        hasMarathon: optionalValue(userInfo.hasMarathon, existingUser.hasMarathon),
+        hasFirstAid: optionalValue(userInfo.hasFirstAid, existingUser.hasFirstAid),
+        hasCompanionExp: optionalValue(userInfo.hasCompanionExp, existingUser.hasCompanionExp),
         lastLoginTime: new Date().toLocaleString(),
         updatedAt: db.serverDate()
+      }
+      if (normalizedPhone) {
+        updateData.phone = normalizedPhone
       }
 
       await db.collection('users').doc(existingUser._id).update({
@@ -39,6 +85,7 @@ exports.main = async (event, context) => {
       return {
         success: true,
         isNewUser: false,
+        matchedBy,
         user: {
           ...existingUser,
           ...updateData
@@ -49,10 +96,12 @@ exports.main = async (event, context) => {
       const now = new Date()
       const newUser = {
         openid: openid,
+        miniOpenid: openid,
+        authSources: ['miniapp'],
         userType: userType, // 'disabled' 或 'volunteer'
         nickName: userInfo.nickName || '用户',
         avatarUrl: userInfo.avatarUrl || '',
-        phone: userInfo.phone || '',
+        phone: normalizedPhone || '',
         name: userInfo.name || '',
         // 积分和经验值
         points: 0,
