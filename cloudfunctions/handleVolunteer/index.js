@@ -241,17 +241,36 @@ async function getFrequentContacts(openid, event) {
   }
 }
 
-// 获取志愿者详情
+// 获取志愿者详情（支持 _id 或 openid 查询）
 async function getVolunteerDetail(event) {
   const { volunteerId } = event
 
-  const res = await db.collection('users').doc(volunteerId).get()
-  if (!res.data) {
+  let volunteer = null
+
+  // 先尝试用 _id 查询
+  try {
+    const res = await db.collection('users').doc(volunteerId).get()
+    if (res.data) {
+      volunteer = res.data
+    }
+  } catch (e) {
+    // _id 查询失败，尝试用 openid 查询
+  }
+
+  // 用 openid 查询
+  if (!volunteer) {
+    const res = await db.collection('users').where({ openid: volunteerId }).get()
+    if (res.data.length > 0) {
+      volunteer = res.data[0]
+    }
+  }
+
+  if (!volunteer) {
     return { success: false, error: '志愿者不存在' }
   }
 
-  const volunteer = res.data
   // 不返回敏感信息
+  delete volunteer.idCard
   delete volunteer.phone
   delete volunteer.emergencyPhone
 
