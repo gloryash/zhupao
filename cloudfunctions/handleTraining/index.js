@@ -73,7 +73,7 @@ async function getExamQuestions() {
 async function submitExam(openid, event) {
   const { answers } = event // answers: [{questionId, selectedIndex}]
 
-  if (!answers || answers.length === 0) {
+  if (!Array.isArray(answers) || answers.length === 0) {
     return { success: false, error: '请完成所有题目' }
   }
 
@@ -83,7 +83,39 @@ async function submitExam(openid, event) {
     .get()
 
   const questions = questionsRes.data
-  if (answers.length < questions.length) {
+  if (answers.length !== questions.length) {
+    return { success: false, error: '请完成所有题目' }
+  }
+
+  const questionMap = {}
+  questions.forEach(question => {
+    questionMap[question._id] = question
+  })
+
+  const answerMap = {}
+  for (const answer of answers) {
+    if (!answer || !answer.questionId) {
+      return fail('VALIDATION_ERROR', '存在无效题目')
+    }
+    if (answerMap[answer.questionId] !== undefined) {
+      return fail('VALIDATION_ERROR', '请勿重复提交同一道题')
+    }
+
+    const question = questionMap[answer.questionId]
+    if (!question) {
+      return fail('VALIDATION_ERROR', '存在无效题目')
+    }
+
+    const selectedIndex = Number(answer.selectedIndex)
+    const optionCount = Array.isArray(question.options) ? question.options.length : 0
+    if (!Number.isInteger(selectedIndex) || selectedIndex < 0 || selectedIndex >= optionCount) {
+      return fail('VALIDATION_ERROR', '存在无效选项')
+    }
+
+    answerMap[answer.questionId] = selectedIndex
+  }
+
+  if (Object.keys(answerMap).length !== questions.length) {
     return { success: false, error: '请完成所有题目' }
   }
 
@@ -91,16 +123,14 @@ async function submitExam(openid, event) {
   let correctCount = 0
   const results = []
 
-  for (const answer of answers) {
-    const question = questions.find(q => q._id === answer.questionId)
-    if (question) {
-      const isCorrect = question.answer === answer.selectedIndex
-      if (isCorrect) correctCount++
-      results.push({
-        questionId: answer.questionId,
-        isCorrect: isCorrect
-      })
-    }
+  for (const question of questions) {
+    const selectedIndex = answerMap[question._id]
+    const isCorrect = question.answer === selectedIndex
+    if (isCorrect) correctCount++
+    results.push({
+      questionId: question._id,
+      isCorrect: isCorrect
+    })
   }
 
   const score = Math.round((correctCount / questions.length) * 100)

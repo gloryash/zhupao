@@ -748,6 +748,8 @@ const questions = res.data.map(q => ({
 
 Private training and certificate actions are volunteer-only. `submitExam` should return correctness and score, but must not return `answer`, `correctAnswer`, or explanations that can be reused as an answer key.
 
+`submitExam` must validate that `answers` is an array containing exactly one valid answer per exam question. Reject duplicate question IDs, missing questions, unknown questions, and invalid option indexes with `VALIDATION_ERROR`.
+
 - [ ] **Step 3: Update handleVolunteer entry**
 
 Allow `getVolunteers` and `getVolunteerDetail` without auth. Public volunteer responses must use a whitelist and must not expose phone, real name, openid, email, id card, emergency contacts, or exact coordinates. Require auth for `getAvailableVolunteers`, `updateAvailability`, and `getFrequentContacts`. `getAvailableVolunteers` is disabled-user-only and should return sanitized volunteers plus distance, not raw coordinates or phone. Use `fail('FORBIDDEN', '只有志愿者可以切换接单状态')` when a non-volunteer calls `updateAvailability`.
