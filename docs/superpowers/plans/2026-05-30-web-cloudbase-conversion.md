@@ -846,6 +846,8 @@ Completion must require the order to be in `running` status and must validate po
 
 Any existing feedback reward path must verify the caller is the completed order publisher, require an `orderId`, and mark feedback reward application idempotently so volunteers cannot self-award good-review rewards.
 
+Disable or harden any legacy `updatePoints.completeOrder` reward path so it cannot be called directly with an `orderId` to bypass `handleOrder.complete` transaction and `rewardApplied` checks.
+
 - [ ] **Step 5: Use a transaction for completion**
 
 Replace the separate order and user updates with one `db.runTransaction` that:

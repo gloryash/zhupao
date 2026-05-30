@@ -45,7 +45,7 @@ exports.main = async (event, context) => {
   try {
     switch (action) {
       case 'completeOrder':
-        return await completeOrderAddPoints(openid, event)
+        return fail('FORBIDDEN', '订单完成奖励由订单流程自动发放')
       case 'exchange':
         return await exchangeProduct(openid, event)
       case 'checkIn':
