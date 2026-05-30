@@ -786,6 +786,7 @@ git commit -m "feat: support web auth in core cloud functions"
 
 **Files:**
 - Modify: `cloudfunctions/handleOrder/index.js`
+- Modify: `cloudfunctions/updatePoints/index.js` if needed to prevent alternate reward paths from bypassing order completion rules.
 
 - [ ] **Step 1: Use shared identity resolver**
 
@@ -842,6 +843,8 @@ rewardAppliedAt: db.serverDate()
 ```
 
 Completion must require the order to be in `running` status and must validate positive `actualDistance` and `duration` before rewards are applied. Do not award good-review/likes bonuses from a volunteer-submitted completion payload; requester-controlled rating can be added as a separate flow later.
+
+Any existing feedback reward path must verify the caller is the completed order publisher, require an `orderId`, and mark feedback reward application idempotently so volunteers cannot self-award good-review rewards.
 
 - [ ] **Step 5: Use a transaction for completion**
 

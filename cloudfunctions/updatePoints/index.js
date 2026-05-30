@@ -3,6 +3,7 @@
 // 支持：完成订单增加积分、兑换商品扣除积分
 
 const cloud = require('wx-server-sdk')
+const { fail } = require('./shared/responses')
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 
 const db = cloud.database()
@@ -71,16 +72,16 @@ async function completeOrderAddPoints(openid, event) {
   }
   const order = orderRes.data
 
-  // 获取盲人和志愿者信息
-  const blindRes = await db.collection('users').doc(order.userId).get()
-  const volRes = await db.collection('users').doc(order.volunteerId).get()
+  // 通过 openid 查找用户（server-to-server 调用时 _id 查找可能不可靠）
+  const blindRes = await db.collection('users').where({ openid: order.openid }).get()
+  const volRes = await db.collection('users').where({ openid: order.volunteerOpenid }).get()
 
-  if (!blindRes.data || !volRes.data) {
+  if (blindRes.data.length === 0 || volRes.data.length === 0) {
     return { success: false, error: '用户不存在' }
   }
 
-  const blindUser = blindRes.data
-  const volUser = volRes.data
+  const blindUser = blindRes.data[0]
+  const volUser = volRes.data[0]
 
   // 计算增加积分
   const volRules = POINTS_RULES.volunteer
@@ -243,13 +244,13 @@ async function handleCheckIn(openid, event) {
   let earnedExp = 5
   let message = '打卡成功！+5经验'
 
-  if (user.lastCheckInDate === yesterday) {
-    checkInDays = 2
-  } else if (user.lastCheckInDate === today) {
+  if (user.lastCheckInDate === today) {
     return { success: false, error: '今日已打卡', alreadyCheckedIn: true }
-  } else if (user.lastCheckInDate !== yesterday && user.lastCheckInDate) {
-    checkInDays = 1
+  } else if (user.lastCheckInDate === yesterday) {
+    // 连续打卡，在之前的基础上 +1
+    checkInDays = checkInDays + 1
   } else {
+    // 中断或首次打卡，重置为1
     checkInDays = 1
   }
 
@@ -280,24 +281,73 @@ async function handleCheckIn(openid, event) {
 
 // 获得好评
 async function handleFeedback(openid, event) {
-  const { rating } = event
+  const { orderId, rating } = event
+  const ratingValue = Number(rating)
 
-  // 只有好评才奖励
-  if (rating >= 3) {
-    const earnedExp = POINTS_RULES.volunteer.perFeedback.exp
+  if (!orderId) {
+    return fail('VALIDATION_ERROR', '缺少订单ID')
+  }
 
-    await db.collection('users').where({ openid: openid }).update({
-      data: {
-        exp: _.inc(earnedExp),
-        likes: _.inc(1),
-        updatedAt: db.serverDate()
+  if (!Number.isFinite(ratingValue) || ratingValue < 1 || ratingValue > 5) {
+    return fail('VALIDATION_ERROR', '评分必须为1到5分')
+  }
+
+  if (typeof db.runTransaction !== 'function') {
+    return fail('VALIDATION_ERROR', '当前云开发环境不支持事务，无法安全记录评价')
+  }
+
+  return await db.runTransaction(async transaction => {
+    const orderRes = await transaction.collection('orders').doc(orderId).get()
+    const order = orderRes.data
+
+    if (!order) {
+      return fail('ORDER_NOT_FOUND', '订单不存在')
+    }
+
+    if (order.openid !== openid) {
+      return fail('FORBIDDEN', '只有订单发布者可以评价')
+    }
+
+    if (order.status !== 'completed') {
+      return fail('INVALID_ORDER_STATUS', '订单完成后才能评价')
+    }
+
+    if (order.feedbackSubmitted || order.feedbackRewardApplied) {
+      return fail('INVALID_ORDER_STATUS', '该订单已评价')
+    }
+
+    const feedbackData = {
+      rating: ratingValue,
+      feedbackSubmitted: true,
+      feedbackAt: db.serverDate(),
+      feedbackBy: openid
+    }
+
+    let earnedExp = 0
+    if (ratingValue >= 3) {
+      if (!order.volunteerId) {
+        return fail('VALIDATION_ERROR', '订单志愿者信息不完整')
       }
+
+      earnedExp = POINTS_RULES.volunteer.perFeedback.exp
+      feedbackData.feedbackRewardApplied = true
+      feedbackData.feedbackRewardAppliedAt = db.serverDate()
+
+      await transaction.collection('users').doc(order.volunteerId).update({
+        data: {
+          exp: _.inc(earnedExp),
+          likes: _.inc(1),
+          updatedAt: db.serverDate()
+        }
+      })
+    }
+
+    await transaction.collection('orders').doc(orderId).update({
+      data: feedbackData
     })
 
     return { success: true, earnedExp: earnedExp }
-  }
-
-  return { success: true, earnedExp: 0 }
+  })
 }
 
 // 计算段位
