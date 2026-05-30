@@ -6,7 +6,7 @@
 
 **Architecture:** Keep WeChat CloudBase as the only backend. Add Web password authentication and a shared identity resolver, then retrofit core business cloud functions to accept either mini program `OPENID` or Web session tokens. Add a React/Vite/TypeScript mobile Web app under `web/`, with desktop-only phone preview frame and real browser verification through `agent-browser`.
 
-**Tech Stack:** WeChat CloudBase cloud functions (`wx-server-sdk ~2.6.3`), CloudBase CLI, CloudBase Node SDK, React, Vite, TypeScript, CloudBase JS SDK, Claude Code for frontend implementation, agent-browser for verification.
+**Tech Stack:** WeChat CloudBase cloud functions (`wx-server-sdk ~2.6.3`), CloudBase CLI, React, Vite, TypeScript, CloudBase JS SDK, Claude Code for frontend implementation, agent-browser for verification.
 
 ---
 
@@ -68,15 +68,12 @@ Create a root `package.json` with local CloudBase tooling so agents do not depen
   "private": true,
   "scripts": {
     "tcb": "tcb",
-    "cloudbase:env": "tcb env detail -e cloud1-d8gbfzr7t6c5dc8bc --json",
-    "cloudbase:functions": "tcb fn list -e cloud1-d8gbfzr7t6c5dc8bc --json",
-    "cloudbase:sync-shared": "node scripts/cloudbase/sync-shared.js",
-    "cloudbase:verify-auth": "node scripts/cloudbase/verify-web-auth.js",
-    "cloudbase:verify-core": "node scripts/cloudbase/verify-core-flow.js"
+    "cloudbase:env": "CLOUDBASE_ENV=${CLOUDBASE_ENV:-cloud1-d8gbfzr7t6c5dc8bc}; tcb env detail -e \"$CLOUDBASE_ENV\" --json",
+    "cloudbase:functions": "CLOUDBASE_ENV=${CLOUDBASE_ENV:-cloud1-d8gbfzr7t6c5dc8bc}; tcb fn list -e \"$CLOUDBASE_ENV\" --json",
+    "cloudbase:sync-shared": "node scripts/cloudbase/sync-shared.js"
   },
   "devDependencies": {
-    "@cloudbase/cli": "^3.5.3",
-    "@cloudbase/node-sdk": "^3.18.1"
+    "@cloudbase/cli": "^3.5.3"
   }
 }
 ```
@@ -89,7 +86,7 @@ Run:
 npm install
 ```
 
-Expected: `node_modules/` and `package-lock.json` are created. `node_modules/` remains ignored.
+Expected: `node_modules/` and `package-lock.json` are created. `node_modules/` remains ignored. `npm audit --package-lock-only` reports no vulnerabilities for the root tooling lockfile.
 
 - [ ] **Step 4: Log in to CloudBase without committing secrets**
 
@@ -119,7 +116,7 @@ Expected: CLI prints a version, then environment details for `cloud1-d8gbfzr7t6c
 - [ ] **Step 6: Commit tooling**
 
 ```bash
-git add .gitignore package.json package-lock.json
+git add .gitignore package.json package-lock.json scripts/cloudbase/sync-shared.js
 git commit -m "chore: add cloudbase tooling"
 ```
 
@@ -131,7 +128,7 @@ git commit -m "chore: add cloudbase tooling"
 - Create: `cloudfunctions/_shared/responses.js`
 - Create: `cloudfunctions/_shared/auth.js`
 - Create: `cloudfunctions/_shared/user.js`
-- Create: `scripts/cloudbase/sync-shared.js`
+- Modify: `scripts/cloudbase/sync-shared.js`
 
 - [ ] **Step 1: Add response helpers**
 
@@ -271,9 +268,9 @@ function requireUser(identity) {
 module.exports = { resolveIdentity, requireUser, hashToken }
 ```
 
-- [ ] **Step 4: Add helper sync script**
+- [ ] **Step 4: Verify helper sync script**
 
-Create `scripts/cloudbase/sync-shared.js`:
+Ensure `scripts/cloudbase/sync-shared.js` contains this implementation:
 
 ```js
 const fs = require('fs')
@@ -295,15 +292,23 @@ const targets = [
   'webAuth'
 ]
 
+if (!fs.existsSync(sharedDir)) {
+  console.log('No shared helpers found yet. Skipping sync.')
+  process.exit(0)
+}
+
 for (const fn of targets) {
-  const targetDir = path.join(root, `cloudfunctions/${fn}/shared`)
+  const functionDir = path.join(root, `cloudfunctions/${fn}`)
+  if (!fs.existsSync(functionDir)) continue
+
+  const targetDir = path.join(functionDir, 'shared')
   fs.mkdirSync(targetDir, { recursive: true })
   for (const file of fs.readdirSync(sharedDir)) {
     fs.copyFileSync(path.join(sharedDir, file), path.join(targetDir, file))
   }
 }
 
-console.log(`Synced shared helpers into ${targets.length} cloud functions.`)
+console.log(`Synced shared helpers into ${targets.length} cloud function slots.`)
 ```
 
 - [ ] **Step 5: Run helper sync**
@@ -925,14 +930,28 @@ git commit -m "fix: audit appointment flow"
 Create `scripts/cloudbase/verify-web-auth.js`:
 
 ```js
-const cloudbase = require('@cloudbase/node-sdk')
+const { execFileSync } = require('child_process')
+const path = require('path')
 
 const env = process.env.CLOUDBASE_ENV || 'cloud1-d8gbfzr7t6c5dc8bc'
-const app = cloudbase.init({ env })
+const root = path.resolve(__dirname, '../..')
+const tcb = path.join(root, 'node_modules/.bin/tcb')
+
+function parseJsonOutput(output) {
+  const start = output.lastIndexOf('\n{')
+  const json = start >= 0 ? output.slice(start + 1) : output
+  return JSON.parse(json)
+}
 
 async function call(name, data) {
-  const res = await app.callFunction({ name, data })
-  return res.result
+  const output = execFileSync(tcb, [
+    'fn', 'invoke', name,
+    '--params', JSON.stringify(data),
+    '-e', env,
+    '--json'
+  ], { encoding: 'utf8' })
+  const parsed = parseJsonOutput(output)
+  return parsed.result || parsed.data || parsed
 }
 
 async function main() {
@@ -971,14 +990,28 @@ main().catch(err => {
 Create `scripts/cloudbase/verify-core-flow.js`:
 
 ```js
-const cloudbase = require('@cloudbase/node-sdk')
+const { execFileSync } = require('child_process')
+const path = require('path')
 
 const env = process.env.CLOUDBASE_ENV || 'cloud1-d8gbfzr7t6c5dc8bc'
-const app = cloudbase.init({ env })
+const root = path.resolve(__dirname, '../..')
+const tcb = path.join(root, 'node_modules/.bin/tcb')
+
+function parseJsonOutput(output) {
+  const start = output.lastIndexOf('\n{')
+  const json = start >= 0 ? output.slice(start + 1) : output
+  return JSON.parse(json)
+}
 
 async function call(name, data) {
-  const res = await app.callFunction({ name, data })
-  return res.result
+  const output = execFileSync(tcb, [
+    'fn', 'invoke', name,
+    '--params', JSON.stringify(data),
+    '-e', env,
+    '--json'
+  ], { encoding: 'utf8' })
+  const parsed = parseJsonOutput(output)
+  return parsed.result || parsed.data || parsed
 }
 
 async function register(identifier, userType, nickName) {
