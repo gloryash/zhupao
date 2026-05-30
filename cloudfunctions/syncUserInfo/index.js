@@ -91,7 +91,7 @@ exports.main = async (event, context) => {
       }
       if (normalizedPhone && existingUser.phone === normalizedPhone) {
         updateData.phone = normalizedPhone
-      } else if (normalizedPhone && !existingUser.phone) {
+      } else if (normalizedPhone) {
         updateData.pendingPhone = normalizedPhone
       }
 
