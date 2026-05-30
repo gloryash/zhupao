@@ -615,12 +615,12 @@ git commit -m "feat: initialize web auth collections"
 
 ---
 
-### Task 5: Cross-Platform User Merge
+### Task 5: Cross-Platform User Identity Safety
 
 **Files:**
 - Modify: `cloudfunctions/syncUserInfo/index.js`
 
-- [ ] **Step 1: Use phone as merge key**
+- [ ] **Step 1: Do not trust mini program client phone as a merge key**
 
 In `syncUserInfo`, after reading `userInfo` and `userType`, compute:
 
@@ -629,32 +629,24 @@ const { normalizePhone } = require('./shared/user')
 const phone = normalizePhone(userInfo.phone)
 ```
 
-When no user exists for `openid`, check `users.phone` before creating a new user:
+Only use CloudBase `OPENID` / existing `miniOpenid` to find the current mini program user. Do not merge an existing `users.phone` match from a client-provided mini program profile, because the current mini program login flow has no server-side SMS verification in this repository.
 
 ```js
-let userRes = await db.collection('users').where({ openid }).get()
-if (userRes.data.length === 0 && phone) {
-  userRes = await db.collection('users').where({ phone }).limit(1).get()
+const { user: existingUser, matchedBy } = await findExistingUser(openid)
+```
+
+- [ ] **Step 2: Return link-required on phone conflicts**
+
+If a submitted phone already belongs to another user, return a stable error instead of binding or merging:
+
+```js
+const phoneOwner = await findUserByPhone(phone)
+if (phoneOwner && phoneOwner._id !== existingUser._id) {
+  return fail('PHONE_LINK_REQUIRED', '该手机号已有关联用户，请先完成手机号验证后再绑定')
 }
 ```
 
-- [ ] **Step 2: Preserve existing Web-created user identity**
-
-If a phone-matched user exists, update it with mini program metadata but keep its existing `_id`, points, exp, stats, and Web auth source:
-
-```js
-const authSources = Array.from(new Set([...(existingUser.authSources || []), 'miniapp']))
-const updateData = {
-  openid: existingUser.openid || openid,
-  miniOpenid: openid,
-  authSources,
-  avatarUrl: userInfo.avatarUrl || existingUser.avatarUrl,
-  nickName: userInfo.nickName || existingUser.nickName,
-  phone: phone || existingUser.phone || '',
-  lastLoginTime: new Date().toLocaleString(),
-  updatedAt: db.serverDate()
-}
-```
+This keeps Web-created users protected until a real verified phone-linking flow exists.
 
 - [ ] **Step 3: New user includes authSources**
 

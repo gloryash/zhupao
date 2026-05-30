@@ -5,10 +5,10 @@ const cloud = require('wx-server-sdk')
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 
 const db = cloud.database()
-const _ = db.command
 const { normalizePhone } = require('./shared/user')
+const { fail } = require('./shared/responses')
 
-async function findExistingUser(openid, phone) {
+async function findExistingUser(openid) {
   const openidRes = await db.collection('users').where({ openid }).limit(1).get()
   if (openidRes.data.length > 0) {
     return { user: openidRes.data[0], matchedBy: 'openid' }
@@ -19,14 +19,18 @@ async function findExistingUser(openid, phone) {
     return { user: miniOpenidRes.data[0], matchedBy: 'miniOpenid' }
   }
 
+  return { user: null, matchedBy: '' }
+}
+
+async function findUserByPhone(phone) {
   if (phone) {
     const phoneRes = await db.collection('users').where({ phone }).limit(1).get()
     if (phoneRes.data.length > 0) {
-      return { user: phoneRes.data[0], matchedBy: 'phone' }
+      return phoneRes.data[0]
     }
   }
 
-  return { user: null, matchedBy: '' }
+  return null
 }
 
 function mergeAuthSources(existingUser) {
@@ -47,17 +51,28 @@ exports.main = async (event, context) => {
   const normalizedPhone = normalizePhone(userInfo.phone)
 
   try {
-    // 查询是否已存在该用户：小程序 openid、历史 miniOpenid、手机号跨端合并
-    const { user: existingUser, matchedBy } = await findExistingUser(openid, normalizedPhone)
+    if (!openid) {
+      return fail('AUTH_REQUIRED', '请先在微信小程序内登录')
+    }
+
+    // 查询是否已存在该用户：只信任云端 openid / miniOpenid，手机号需要验证后才能绑定
+    const { user: existingUser, matchedBy } = await findExistingUser(openid)
 
     if (existingUser) {
+      if (normalizedPhone && normalizedPhone !== (existingUser.phone || '')) {
+        const phoneOwner = await findUserByPhone(normalizedPhone)
+        if (phoneOwner && phoneOwner._id !== existingUser._id) {
+          return fail('PHONE_LINK_REQUIRED', '该手机号已有关联用户，请先完成手机号验证后再绑定')
+        }
+      }
+
       // 用户已存在，返回现有信息
       // 更新用户信息（保持积分、经验值等数据）
       const updateData = {
         authSources: mergeAuthSources(existingUser),
-        miniOpenid: matchedBy === 'phone' ? openid : (existingUser.miniOpenid || openid),
+        miniOpenid: existingUser.miniOpenid || openid,
         openid: existingUser.openid || openid,
-        userType: userType || existingUser.userType,
+        userType: existingUser.userType || userType,
         avatarUrl: optionalValue(userInfo.avatarUrl, existingUser.avatarUrl),
         nickName: optionalValue(userInfo.nickName, existingUser.nickName),
         name: optionalValue(userInfo.name, existingUser.name),
@@ -74,7 +89,7 @@ exports.main = async (event, context) => {
         lastLoginTime: new Date().toLocaleString(),
         updatedAt: db.serverDate()
       }
-      if (normalizedPhone) {
+      if (normalizedPhone && (!existingUser.phone || existingUser.phone === normalizedPhone)) {
         updateData.phone = normalizedPhone
       }
 
@@ -92,6 +107,11 @@ exports.main = async (event, context) => {
         }
       }
     } else {
+      const phoneOwner = await findUserByPhone(normalizedPhone)
+      if (phoneOwner) {
+        return fail('PHONE_LINK_REQUIRED', '该手机号已有关联用户，请先完成手机号验证后再绑定')
+      }
+
       // 新用户，创建记录
       const now = new Date()
       const newUser = {
