@@ -102,7 +102,7 @@ npm run tcb -- login --apiKeyId "$TENCENTCLOUD_SECRETID" --apiKey "$TENCENTCLOUD
 unset TENCENTCLOUD_SECRETID TENCENTCLOUD_SECRETKEY
 ```
 
-Expected: CloudBase CLI reports a successful login. If non-interactive credential login fails, use `npm run tcb -- login` and complete the browser/device flow with the provided subaccount manually. Do not write the password or SecretKey into files.
+Expected: CloudBase CLI reports a successful login and stores a local CLI login state on this machine. Later `tcb` deploy, invoke, and environment inspection commands use that local login state plus `cloud1-d8gbfzr7t6c5dc8bc`; they do not need the raw SecretKey to be written into the repo. If non-interactive credential login fails, use `npm run tcb -- login` and complete the browser/device flow with the provided subaccount manually. Do not write the password or SecretKey into files.
 
 - [ ] **Step 5: Verify CloudBase CLI**
 
