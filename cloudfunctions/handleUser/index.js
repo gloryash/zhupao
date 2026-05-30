@@ -2,17 +2,23 @@
 // 功能：获取用户信息、更新紧急联系人、更新个人资料
 
 const cloud = require('wx-server-sdk')
+const { resolveIdentity, requireUser } = require('./shared/auth')
+const { ok, fail } = require('./shared/responses')
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 
 const db = cloud.database()
 const _ = db.command
 
 exports.main = async (event, context) => {
-  const wxContext = cloud.getWXContext()
-  const openid = wxContext.OPENID
+  event = event || {}
   const action = event.action
 
   try {
+    const identity = await resolveIdentity(db, event)
+    const authError = requireUser(identity)
+    if (authError) return authError
+    const openid = identity.openid
+
     switch (action) {
       case 'getUserProfile':
         return await getUserProfile(openid)
@@ -27,11 +33,11 @@ exports.main = async (event, context) => {
       case 'updateLocation':
         return await updateLocation(openid, event)
       default:
-        return { success: false, error: '未知操作' }
+        return fail('VALIDATION_ERROR', '未知操作')
     }
   } catch (err) {
     console.error('handleUser error:', err)
-    return { success: false, error: err.message }
+    return fail('INTERNAL_ERROR', err.message)
   }
 }
 

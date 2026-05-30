@@ -2,17 +2,26 @@
 // 功能：获取考试题目、提交考试、证书管理、视频观看记录
 
 const cloud = require('wx-server-sdk')
+const { resolveIdentity, requireUser } = require('./shared/auth')
+const { ok, fail } = require('./shared/responses')
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 
 const db = cloud.database()
 const _ = db.command
 
 exports.main = async (event, context) => {
-  const wxContext = cloud.getWXContext()
-  const openid = wxContext.OPENID
+  event = event || {}
   const action = event.action
 
   try {
+    let openid = ''
+    if (action !== 'getExamQuestions' && action !== 'verifyCertificate') {
+      const identity = await resolveIdentity(db, event)
+      const authError = requireUser(identity)
+      if (authError) return authError
+      openid = identity.openid
+    }
+
     switch (action) {
       case 'getExamQuestions':
         return await getExamQuestions()
@@ -27,11 +36,11 @@ exports.main = async (event, context) => {
       case 'getTrainingStatus':
         return await getTrainingStatus(openid)
       default:
-        return { success: false, error: '未知操作' }
+        return fail('VALIDATION_ERROR', '未知操作')
     }
   } catch (err) {
     console.error('handleTraining error:', err)
-    return { success: false, error: err.message }
+    return fail('INTERNAL_ERROR', err.message)
   }
 }
 

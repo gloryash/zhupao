@@ -2,34 +2,47 @@
 // 功能：获取志愿者列表、可用性管理、常联系人
 
 const cloud = require('wx-server-sdk')
+const { resolveIdentity, requireUser } = require('./shared/auth')
+const { ok, fail } = require('./shared/responses')
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 
 const db = cloud.database()
 const _ = db.command
 
 exports.main = async (event, context) => {
-  const wxContext = cloud.getWXContext()
-  const openid = wxContext.OPENID
+  event = event || {}
   const action = event.action
 
   try {
+    let openid = ''
+    let identity = null
+    if (action !== 'getVolunteers' && action !== 'getVolunteerDetail') {
+      identity = await resolveIdentity(db, event)
+      const authError = requireUser(identity)
+      if (authError) return authError
+      openid = identity.openid
+    }
+
     switch (action) {
       case 'getVolunteers':
         return await getVolunteers(event)
       case 'getAvailableVolunteers':
         return await getAvailableVolunteers(openid, event)
       case 'updateAvailability':
+        if (identity.user.userType !== 'volunteer') {
+          return fail('FORBIDDEN', '只有志愿者可以切换接单状态')
+        }
         return await updateAvailability(openid, event)
       case 'getFrequentContacts':
         return await getFrequentContacts(openid, event)
       case 'getVolunteerDetail':
         return await getVolunteerDetail(event)
       default:
-        return { success: false, error: '未知操作' }
+        return fail('VALIDATION_ERROR', '未知操作')
     }
   } catch (err) {
     console.error('handleVolunteer error:', err)
-    return { success: false, error: err.message }
+    return fail('INTERNAL_ERROR', err.message)
   }
 }
 
