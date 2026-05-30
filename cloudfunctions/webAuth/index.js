@@ -14,7 +14,10 @@ cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 const db = cloud.database()
 const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000
 const PASSWORD_MIN_LENGTH = 8
+const PASSWORD_MAX_LENGTH = 128
 const SCRYPT_KEY_LENGTH = 64
+const MAX_FAILED_LOGINS = 5
+const LOCKOUT_MS = 15 * 60 * 1000
 
 exports.main = async (event = {}) => {
   try {
@@ -45,8 +48,16 @@ async function register(event) {
     return fail('IDENTIFIER_REQUIRED', '请输入手机号或邮箱')
   }
 
+  if (!isValidIdentifier(identifier)) {
+    return fail('INVALID_IDENTIFIER', '请输入有效的手机号或邮箱')
+  }
+
   if (password.length < PASSWORD_MIN_LENGTH) {
     return fail('PASSWORD_TOO_SHORT', '密码至少需要8位')
+  }
+
+  if (password.length > PASSWORD_MAX_LENGTH) {
+    return fail('PASSWORD_TOO_LONG', '密码不能超过128位')
   }
 
   const existingAccount = await findWebAccount(identifier)
@@ -54,23 +65,40 @@ async function register(event) {
     return fail('ACCOUNT_EXISTS', '账号已存在')
   }
 
-  const user = await findOrCreateUser(identifier, profile)
+  const userResult = await findOrCreateUser(identifier, profile)
+  if (userResult.error) {
+    return userResult.error
+  }
+
+  const accountId = getAccountId(identifier)
+  const user = userResult.user
   const passwordRecord = hashPassword(password)
 
-  await db.collection('web_accounts').add({
-    data: {
-      identifierType: identifier.type,
-      identifier: identifier.value,
-      userId: user._id,
-      openid: user.openid,
-      passwordHash: passwordRecord.hash,
-      passwordSalt: passwordRecord.salt,
-      passwordAlgorithm: 'scrypt',
-      active: true,
-      createdAt: db.serverDate(),
-      updatedAt: db.serverDate()
+  try {
+    await db.collection('web_accounts').add({
+      data: {
+        _id: accountId,
+        accountId,
+        identifierType: identifier.type,
+        identifier: identifier.value,
+        userId: user._id,
+        openid: user.openid,
+        passwordHash: passwordRecord.hash,
+        passwordSalt: passwordRecord.salt,
+        passwordAlgorithm: 'scrypt',
+        failedLoginCount: 0,
+        lockUntil: '',
+        active: true,
+        createdAt: db.serverDate(),
+        updatedAt: db.serverDate()
+      }
+    })
+  } catch (err) {
+    if (isDuplicateKeyError(err)) {
+      return fail('ACCOUNT_EXISTS', '账号已存在')
     }
-  })
+    throw err
+  }
 
   const session = await createSession(user._id)
 
@@ -89,8 +117,25 @@ async function login(event) {
     return fail('INVALID_CREDENTIALS', '账号或密码错误')
   }
 
+  if (!isValidIdentifier(identifier)) {
+    return fail('INVALID_IDENTIFIER', '请输入有效的手机号或邮箱')
+  }
+
+  if (password.length > PASSWORD_MAX_LENGTH) {
+    return fail('INVALID_CREDENTIALS', '账号或密码错误')
+  }
+
   const account = await findWebAccount(identifier, true)
-  if (!account || !verifyPassword(password, account.passwordSalt, account.passwordHash)) {
+  if (!account) {
+    return fail('INVALID_CREDENTIALS', '账号或密码错误')
+  }
+
+  if (isAccountLocked(account)) {
+    return fail('ACCOUNT_LOCKED', '登录尝试次数过多，请稍后再试')
+  }
+
+  if (!verifyPassword(password, account.passwordSalt, account.passwordHash)) {
+    await recordFailedLogin(account)
     return fail('INVALID_CREDENTIALS', '账号或密码错误')
   }
 
@@ -101,6 +146,8 @@ async function login(event) {
 
   await db.collection('web_accounts').doc(account._id).update({
     data: {
+      failedLoginCount: 0,
+      lockUntil: '',
       lastLoginAt: db.serverDate(),
       updatedAt: db.serverDate()
     }
@@ -147,6 +194,12 @@ async function me(event) {
 }
 
 async function findWebAccount(identifier, activeOnly = false) {
+  const accountId = getAccountId(identifier)
+  const docAccount = await getWebAccountById(accountId)
+  if (docAccount && (!activeOnly || docAccount.active === true)) {
+    return docAccount
+  }
+
   const query = {
     identifierType: identifier.type,
     identifier: identifier.value
@@ -164,6 +217,15 @@ async function findWebAccount(identifier, activeOnly = false) {
   return res.data[0] || null
 }
 
+async function getWebAccountById(accountId) {
+  try {
+    const res = await db.collection('web_accounts').doc(accountId).get()
+    return res.data || null
+  } catch (err) {
+    return null
+  }
+}
+
 async function findOrCreateUser(identifier, profile) {
   if (identifier.type === 'phone') {
     const userRes = await db.collection('users')
@@ -172,20 +234,12 @@ async function findOrCreateUser(identifier, profile) {
       .get()
 
     if (userRes.data.length > 0) {
-      const user = userRes.data[0]
-      const authSources = mergeAuthSources(user.authSources)
-      const updateData = {
-        authSources,
-        webLinkedAt: db.serverDate(),
-        updatedAt: db.serverDate()
+      return {
+        error: fail(
+          'PHONE_LINK_REQUIRED',
+          '该手机号已有关联用户，请先完成手机号验证后再绑定网页账号'
+        )
       }
-
-      if (!user.webOpenid) {
-        updateData.webOpenid = createWebOpenid()
-      }
-
-      await db.collection('users').doc(user._id).update({ data: updateData })
-      return { ...user, ...updateData }
     }
   }
 
@@ -193,7 +247,6 @@ async function findOrCreateUser(identifier, profile) {
   const userType = profile.userType || profile.role || 'disabled'
   const webOpenid = createWebOpenid()
   const userData = {
-    ...profile,
     openid: webOpenid,
     webOpenid,
     miniOpenid: profile.miniOpenid || '',
@@ -242,7 +295,7 @@ async function findOrCreateUser(identifier, profile) {
   }
 
   const addRes = await db.collection('users').add({ data: userData })
-  return { _id: addRes._id, ...userData }
+  return { user: { _id: addRes._id, ...userData } }
 }
 
 async function createSession(userId) {
@@ -285,17 +338,61 @@ function verifyPassword(password, salt, expectedHash) {
   return crypto.timingSafeEqual(actual, expected)
 }
 
+async function recordFailedLogin(account) {
+  const failedLoginCount = Number(account.failedLoginCount || 0) + 1
+  const updateData = {
+    failedLoginCount,
+    failedLoginAt: db.serverDate(),
+    updatedAt: db.serverDate()
+  }
+
+  if (failedLoginCount >= MAX_FAILED_LOGINS) {
+    updateData.lockUntil = new Date(Date.now() + LOCKOUT_MS).toISOString()
+  }
+
+  await db.collection('web_accounts').doc(account._id).update({ data: updateData })
+}
+
+function isAccountLocked(account) {
+  if (!account.lockUntil) {
+    return false
+  }
+
+  const lockUntil = new Date(account.lockUntil).getTime()
+  return Number.isFinite(lockUntil) && lockUntil > Date.now()
+}
+
+function isValidIdentifier(identifier) {
+  if (identifier.type === 'phone') {
+    return /^1\d{10}$/.test(identifier.value)
+  }
+
+  if (identifier.type === 'email') {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(identifier.value)
+  }
+
+  return false
+}
+
+function getAccountId(identifier) {
+  const hash = crypto
+    .createHash('sha256')
+    .update(`${identifier.type}:${identifier.value}`)
+    .digest('hex')
+  return `acct_${hash.slice(0, 40)}`
+}
+
+function isDuplicateKeyError(err) {
+  const message = String((err && (err.message || err.errMsg)) || '').toLowerCase()
+  return message.includes('duplicate') || message.includes('e11000')
+}
+
 function createAuthToken() {
   return crypto.randomBytes(32)
     .toString('base64')
     .replace(/\+/g, '-')
     .replace(/\//g, '_')
     .replace(/=+$/g, '')
-}
-
-function mergeAuthSources(authSources) {
-  const sources = Array.isArray(authSources) ? authSources : []
-  return Array.from(new Set([...sources, 'web']))
 }
 
 function sanitizeProfile(profile) {
