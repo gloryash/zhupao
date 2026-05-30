@@ -1,0 +1,16 @@
+{
+  "name": "blind-run-miniapp-workspace",
+  "private": true,
+  "scripts": {
+    "tcb": "tcb",
+    "cloudbase:env": "tcb env detail -e cloud1-d8gbfzr7t6c5dc8bc --json",
+    "cloudbase:functions": "tcb fn list -e cloud1-d8gbfzr7t6c5dc8bc --json",
+    "cloudbase:sync-shared": "node scripts/cloudbase/sync-shared.js",
+    "cloudbase:verify-auth": "node scripts/cloudbase/verify-web-auth.js",
+    "cloudbase:verify-core": "node scripts/cloudbase/verify-core-flow.js"
+  },
+  "devDependencies": {
+    "@cloudbase/cli": "^3.5.3",
+    "@cloudbase/node-sdk": "^3.18.1"
+  }
+}

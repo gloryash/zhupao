@@ -3,3 +3,7 @@ miniprogram_npm/
 project.private.config.json
 .claude/
 .superpowers/
+.env
+.env.*
+!.env.example
+!web/.env.example
