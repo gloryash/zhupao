@@ -74,7 +74,7 @@ async function submitExam(openid, event) {
   const { answers } = event // answers: [{questionId, selectedIndex}]
 
   if (!Array.isArray(answers) || answers.length === 0) {
-    return { success: false, error: '请完成所有题目' }
+    return fail('VALIDATION_ERROR', '请完成所有题目')
   }
 
   // 获取所有题目（含答案）
@@ -84,7 +84,7 @@ async function submitExam(openid, event) {
 
   const questions = questionsRes.data
   if (answers.length !== questions.length) {
-    return { success: false, error: '请完成所有题目' }
+    return fail('VALIDATION_ERROR', '请完成所有题目')
   }
 
   const questionMap = {}
@@ -116,7 +116,7 @@ async function submitExam(openid, event) {
   }
 
   if (Object.keys(answerMap).length !== questions.length) {
-    return { success: false, error: '请完成所有题目' }
+    return fail('VALIDATION_ERROR', '请完成所有题目')
   }
 
   // 计算分数
