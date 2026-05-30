@@ -1,0 +1,9 @@
+{
+  "name": "webAuth",
+  "version": "1.0.0",
+  "description": "Web password authentication",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}
