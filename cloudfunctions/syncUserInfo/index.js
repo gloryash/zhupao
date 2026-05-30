@@ -103,6 +103,9 @@ exports.main = async (event, context) => {
         avatarUrl: userInfo.avatarUrl || '',
         phone: normalizedPhone || '',
         name: userInfo.name || '',
+        gender: userInfo.gender || '',
+        idCard: userInfo.idCard || '',
+        resume: userInfo.resume || '',
         // 积分和经验值
         points: 0,
         exp: 0,
@@ -118,9 +121,26 @@ exports.main = async (event, context) => {
         medals: 0,
         // 紧急联系人（仅视障人士）
         emergencyPhone: userInfo.emergencyPhone || '',
+        emergencyName: '',
+        emergencyRelation: '',
+        // 视障人士专属
+        runningLocation: userInfo.runningLocation || '',
         // 志愿者专属
         examPassed: userType === 'volunteer' ? false : null,
+        examScore: 0,
+        examDate: '',
+        certificateNo: '',
         certificateUrl: '',
+        videoWatched: false,
+        isAvailable: false,
+        runningYears: userInfo.runningYears || '',
+        pace: userInfo.pace || '',
+        hasMarathon: userInfo.hasMarathon || 'no',
+        hasFirstAid: userInfo.hasFirstAid || 'no',
+        hasCompanionExp: userInfo.hasCompanionExp || 'no',
+        // 位置信息
+        latitude: 0,
+        longitude: 0,
         // 时间戳
         createdAt: now.toLocaleString(),
         lastLoginTime: now.toLocaleString(),
