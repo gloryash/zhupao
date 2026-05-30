@@ -11,6 +11,7 @@ const { resolveIdentity, hashToken } = require('./shared/auth')
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 
 const db = cloud.database()
+const _ = db.command
 const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000
 const PASSWORD_MIN_LENGTH = 8
 const PASSWORD_MAX_LENGTH = 128
@@ -64,13 +65,12 @@ async function register(event) {
     return fail('ACCOUNT_EXISTS', '账号已存在')
   }
 
-  const userResult = await findOrCreateUser(identifier, profile)
-  if (userResult.error) {
-    return userResult.error
+  const accountId = getAccountId(identifier)
+  const linkConflict = await getPhoneLinkConflict(identifier)
+  if (linkConflict) {
+    return linkConflict
   }
 
-  const accountId = getAccountId(identifier)
-  const user = userResult.user
   const passwordRecord = hashPassword(password)
 
   try {
@@ -80,14 +80,15 @@ async function register(event) {
         accountId,
         identifierType: identifier.type,
         identifier: identifier.value,
-        userId: user._id,
-        openid: user.openid,
+        userId: '',
+        openid: '',
         passwordHash: passwordRecord.hash,
         passwordSalt: passwordRecord.salt,
         passwordAlgorithm: 'scrypt',
         failedLoginCount: 0,
         lockUntil: '',
-        active: true,
+        active: false,
+        status: 'provisioning',
         createdAt: db.serverDate(),
         updatedAt: db.serverDate()
       }
@@ -96,6 +97,25 @@ async function register(event) {
     if (isDuplicateKeyError(err)) {
       return fail('ACCOUNT_EXISTS', '账号已存在')
     }
+    throw err
+  }
+
+  const userResult = await createNewUser(identifier, profile)
+  const user = userResult.user
+
+  try {
+    await db.collection('web_accounts').doc(accountId).update({
+      data: {
+        userId: user._id,
+        openid: user.openid,
+        active: true,
+        status: 'active',
+        updatedAt: db.serverDate()
+      }
+    })
+  } catch (err) {
+    await cleanupCreatedUser(user._id)
+    await cleanupProvisioningAccount(accountId)
     throw err
   }
 
@@ -225,7 +245,7 @@ async function getWebAccountById(accountId) {
   }
 }
 
-async function findOrCreateUser(identifier, profile) {
+async function getPhoneLinkConflict(identifier) {
   if (identifier.type === 'phone') {
     const userRes = await db.collection('users')
       .where({ phone: identifier.value })
@@ -233,15 +253,17 @@ async function findOrCreateUser(identifier, profile) {
       .get()
 
     if (userRes.data.length > 0) {
-      return {
-        error: fail(
-          'PHONE_LINK_REQUIRED',
-          '该手机号已有关联用户，请先完成手机号验证后再绑定网页账号'
-        )
-      }
+      return fail(
+        'PHONE_LINK_REQUIRED',
+        '该手机号已有关联用户，请先完成手机号验证后再绑定网页账号'
+      )
     }
   }
 
+  return null
+}
+
+async function createNewUser(identifier, profile) {
   const now = new Date()
   const userType = profile.userType || profile.role || 'disabled'
   const webOpenid = createWebOpenid()
@@ -297,6 +319,27 @@ async function findOrCreateUser(identifier, profile) {
   return { user: { _id: addRes._id, ...userData } }
 }
 
+async function cleanupProvisioningAccount(accountId) {
+  try {
+    const account = await getWebAccountById(accountId)
+    if (account && account.status === 'provisioning' && !account.userId) {
+      await db.collection('web_accounts').doc(accountId).remove()
+    }
+  } catch (err) {
+    console.error('cleanup provisioning account failed:', err && err.message ? err.message : err)
+  }
+}
+
+async function cleanupCreatedUser(userId) {
+  try {
+    if (userId) {
+      await db.collection('users').doc(userId).remove()
+    }
+  } catch (err) {
+    console.error('cleanup created user failed:', err && err.message ? err.message : err)
+  }
+}
+
 async function createSession(userId) {
   const authToken = createAuthToken()
   const expiresAt = new Date(Date.now() + SESSION_TTL_MS).toISOString()
@@ -338,18 +381,27 @@ function verifyPassword(password, salt, expectedHash) {
 }
 
 async function recordFailedLogin(account) {
-  const failedLoginCount = Number(account.failedLoginCount || 0) + 1
-  const updateData = {
-    failedLoginCount,
-    failedLoginAt: db.serverDate(),
-    updatedAt: db.serverDate()
+  await db.collection('web_accounts').doc(account._id).update({
+    data: {
+      failedLoginCount: _.inc(1),
+      failedLoginAt: db.serverDate(),
+      updatedAt: db.serverDate()
+    }
+  })
+
+  const latest = await getWebAccountById(account._id)
+  const failedLoginCount = Number((latest && latest.failedLoginCount) || 0)
+  if (failedLoginCount < MAX_FAILED_LOGINS) {
+    return
   }
 
-  if (failedLoginCount >= MAX_FAILED_LOGINS) {
-    updateData.lockUntil = new Date(Date.now() + LOCKOUT_MS).toISOString()
-  }
-
-  await db.collection('web_accounts').doc(account._id).update({ data: updateData })
+  await db.collection('web_accounts').doc(account._id).update({
+    data: {
+      lockUntil: new Date(Date.now() + LOCKOUT_MS).toISOString(),
+      failedLoginAt: db.serverDate(),
+      updatedAt: db.serverDate()
+    }
+  })
 }
 
 function isAccountLocked(account) {
