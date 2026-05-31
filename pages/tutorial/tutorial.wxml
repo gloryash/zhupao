@@ -1,0 +1,71 @@
+<view class="tutorial-container">
+  <!-- 跳过按钮 -->
+  <view class="skip-bar">
+    <view class="skip-btn" bindtap="skipTutorial" aria-role="button" aria-label="跳过教程">
+      <text class="skip-text">跳过</text>
+    </view>
+  </view>
+
+  <!-- 步骤计数 -->
+  <view class="step-counter" aria-live="polite">
+    <text class="counter-text">{{currentStep + 1}} / {{steps.length}}</text>
+  </view>
+
+  <!-- 教程内容 -->
+  <swiper
+    class="tutorial-swiper"
+    current="{{currentStep}}"
+    bindchange="onSwiperChange"
+    duration="300"
+    easing-function="easeInOutCubic"
+  >
+    <swiper-item wx:for="{{steps}}" wx:key="index">
+      <view class="step-card" aria-role="region" aria-label="第{{index + 1}}步：{{item.title}}">
+        <view class="step-icon-wrapper">
+          <text class="step-emoji">{{item.icon}}</text>
+        </view>
+        <text class="step-title">{{item.title}}</text>
+        <text class="step-description">{{item.description}}</text>
+        <view class="step-tip-box">
+          <text class="tip-label">💡 操作提示</text>
+          <text class="tip-content">{{item.tip}}</text>
+        </view>
+      </view>
+    </swiper-item>
+  </swiper>
+
+  <!-- 圆点指示器 -->
+  <view class="dots-row" aria-hidden="true">
+    <view wx:for="{{steps}}" wx:key="index" class="dot {{currentStep === index ? 'active' : ''}}"></view>
+  </view>
+
+  <!-- 导航按钮 -->
+  <view class="nav-bar">
+    <view
+      class="nav-btn prev {{currentStep === 0 ? 'disabled' : ''}}"
+      bindtap="prevStep"
+      aria-role="button"
+      aria-label="上一步"
+    >
+      <text class="nav-btn-text">上一步</text>
+    </view>
+    <view
+      class="nav-btn next"
+      bindtap="nextStep"
+      aria-role="button"
+      aria-label="{{currentStep === steps.length - 1 ? '完成教程' : '下一步'}}"
+    >
+      <text class="nav-btn-text">{{currentStep === steps.length - 1 ? '完成' : '下一步'}}</text>
+    </view>
+  </view>
+
+  <!-- 不再显示（最后一步） -->
+  <view class="never-show-row" wx:if="{{currentStep === steps.length - 1}}">
+    <view class="checkbox-wrap" bindtap="toggleNeverShow" aria-role="checkbox" aria-checked="{{neverShowAgain}}" aria-label="不再显示教程">
+      <view class="checkbox {{neverShowAgain ? 'checked' : ''}}">
+        <text wx:if="{{neverShowAgain}}">✓</text>
+      </view>
+      <text class="checkbox-label">不再显示此教程</text>
+    </view>
+  </view>
+</view>

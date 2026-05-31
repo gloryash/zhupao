@@ -27,7 +27,8 @@
     "pages/blind-order-track/blind-order-track",
     "pages/appointment/appointment",
     "pages/appointment-square/appointment-square",
-    "pages/volunteer-order-track/volunteer-order-track"
+    "pages/volunteer-order-track/volunteer-order-track",
+    "pages/tutorial/tutorial"
   ],
   "window": {
     "backgroundTextStyle": "light",

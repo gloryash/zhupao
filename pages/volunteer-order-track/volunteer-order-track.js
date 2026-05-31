@@ -70,70 +70,130 @@ Page({
       let mapMarkers = [];
       let polyline = [];
 
-      if (['accepted', 'arrived', 'running'].includes(order.status)) {
-        // 志愿者位置标记
-        mapMarkers.push({
-          id: 1,
-          latitude: volunteerInfo.latitude || 31.2304,
-          longitude: volunteerInfo.longitude || 121.4737,
-          width: 40,
-          height: 40,
-          iconPath: '/images/volunteer-marker.png',
-          callout: {
-            content: '志愿者: 您',
-            display: 'ALWAYS',
-            padding: 8,
-            borderRadius: 6,
-            bgColor: '#07C160',
-            color: '#ffffff',
-            fontSize: 12
-          }
-        });
-      }
-
-      if (['accepted', 'arrived', 'running', 'completed'].includes(order.status)) {
-        // 盲人位置标记
+      // 接单途中：志愿者（runner）+ 起点绿圆 + 绿色路径
+      if (['accepted', 'arrived'].includes(order.status)) {
+        // 起点绿圆 = 视障者位置
         mapMarkers.push({
           id: 2,
           latitude: order.blindLatitude,
           longitude: order.blindLongitude,
           width: 40,
           height: 40,
-          iconPath: '/images/blind-marker.png',
+          iconPath: '/images/marker/dot-green.png',
           callout: {
-            content: order.blindName || '盲人',
+            content: (order.blindName || '视障跑者') + '（起点）',
             display: 'ALWAYS',
             padding: 8,
             borderRadius: 6,
-            bgColor: '#1890FF',
-            color: '#ffffff',
-            fontSize: 12
-          }
+            bgColor: '#07C160',
+            color: '#FFFFFF',
+            fontSize: 12,
+          },
         });
-
-        // 如果已接单，绘制导航线
-        if (order.status === 'accepted' && volunteerInfo.latitude && volunteerInfo.longitude) {
+        // 志愿者跑者图标
+        mapMarkers.push({
+          id: 1,
+          latitude: volunteerInfo.latitude || 31.2304,
+          longitude: volunteerInfo.longitude || 121.4737,
+          width: 48,
+          height: 48,
+          iconPath: '/images/marker/runner.png',
+          callout: {
+            content: '您',
+            display: 'ALWAYS',
+            padding: 8,
+            borderRadius: 6,
+            bgColor: '#07C160',
+            color: '#FFFFFF',
+            fontSize: 12,
+          },
+        });
+        // 绿色路径：志愿者 → 视障者起点
+        if (volunteerInfo.latitude && volunteerInfo.longitude) {
           polyline = [{
             points: [
               { latitude: volunteerInfo.latitude, longitude: volunteerInfo.longitude },
-              { latitude: order.blindLatitude, longitude: order.blindLongitude }
+              { latitude: order.blindLatitude, longitude: order.blindLongitude },
             ],
             color: '#07C160',
             width: 6,
             dottedLine: false,
-            arrowLine: true
+            arrowLine: true,
           }];
         }
+      }
 
-        // 如果陪跑中，绘制轨迹线
-        if (order.status === 'running') {
-          polyline = [{
-            points: this.data.runningPath,
-            color: '#07C160',
-            width: 8,
-            dottedLine: false,
-            arrowLine: true
-          }];
+      // 陪跑中：起点绿 + 终点红 + 蓝色实时轨迹
+      if (order.status === 'running') {
+        // 起点绿
+        mapMarkers.push({
+          id: 2,
+          latitude: order.blindLatitude,
+          longitude: order.blindLongitude,
+          width: 40,
+          height: 40,
+          iconPath: '/images/marker/dot-green.png',
+          callout: {
+            content: '起点',
+            display: 'ALWAYS',
+            padding: 6,
+            borderRadius: 6,
+            bgColor: '#07C160',
+            color: '#FFFFFF',
+            fontSize: 12,
+          },
+        });
+        // 终点红（若有 endAddress）
+        const endAddr = order.endAddress;
+        if (endAddr && endAddr.latitude) {
+          mapMarkers.push({
+            id: 3,
+            latitude: endAddr.latitude,
+            longitude: endAddr.longitude,
+            width: 40,
+            height: 40,
+            iconPath: '/images/marker/dot-red.png',
+            callout: {
+              content: '终点 ' + (endAddr.name || ''),
+              display: 'ALWAYS',
+              padding: 6,
+              borderRadius: 6,
+              bgColor: '#FF3B30',
+              color: '#FFFFFF',
+              fontSize: 12,
+            },
+          });
+        }
+        // 蓝色轨迹
+        polyline = [{
+          points: this.data.runningPath,
+          color: '#1890FF',
+          width: 6,
+          dottedLine: false,
+          arrowLine: true,
+        }];
+      }
+
+      // 已完成状态只画起点/终点圆点（无路径）
+      if (order.status === 'completed') {
+        mapMarkers.push({
+          id: 2,
+          latitude: order.blindLatitude,
+          longitude: order.blindLongitude,
+          width: 40,
+          height: 40,
+          iconPath: '/images/marker/dot-green.png',
+        });
+        const endAddr = order.endAddress;
+        if (endAddr && endAddr.latitude) {
+          mapMarkers.push({
+            id: 3,
+            latitude: endAddr.latitude,
+            longitude: endAddr.longitude,
+            width: 40,
+            height: 40,
+            iconPath: '/images/marker/dot-red.png',
+          });
         }
       }
 

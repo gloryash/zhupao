@@ -791,3 +791,438 @@
 .submit-rating-btn::after {
   border: none;
 }
+
+/* =========================================================
+   ============ 列表模式 + 筛选条 + 列表项 (新增) ===========
+   ========================================================= */
+
+/* ---------- 顶部筛选条 ---------- */
+.filter-top-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  background: #FFFFFF;
+  padding: 80rpx 24rpx 16rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0,0,0,0.06);
+}
+
+.filter-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 14rpx;
+  padding: 0 4rpx;
+}
+
+.filter-title {
+  font-size: 36rpx;
+  font-weight: 900;
+  color: #1A1A1A;
+  letter-spacing: -0.5rpx;
+}
+
+.filter-count {
+  font-size: 22rpx;
+  color: #FF6B00;
+  font-weight: 700;
+  letter-spacing: 1rpx;
+}
+
+.filter-chips {
+  white-space: nowrap;
+  display: flex;
+  gap: 12rpx;
+}
+
+.filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6rpx;
+  background: #FAFAF7;
+  border: 1rpx solid #EEEEEE;
+  border-radius: 100rpx;
+  padding: 12rpx 22rpx;
+  font-size: 24rpx;
+  color: #1A1A1A;
+  font-weight: 600;
+  margin-right: 8rpx;
+}
+
+.filter-chip.active {
+  background: #FF6B00;
+  border-color: #FF6B00;
+  color: #FFFFFF;
+  font-weight: 800;
+  box-shadow: 0 4rpx 12rpx rgba(255,107,0,0.3);
+}
+
+.chip-arrow {
+  font-size: 18rpx;
+  opacity: 0.7;
+}
+
+/* 筛选面板下拉 */
+.filter-panel {
+  position: fixed;
+  top: 230rpx;
+  left: 0;
+  right: 0;
+  z-index: 100;
+}
+
+.filter-mask {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.25);
+  z-index: -1;
+}
+
+.filter-options {
+  background: #FFFFFF;
+  padding: 24rpx 24rpx 32rpx;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14rpx;
+  box-shadow: 0 8rpx 24rpx rgba(0,0,0,0.12);
+  border-bottom-left-radius: 24rpx;
+  border-bottom-right-radius: 24rpx;
+}
+
+.filter-option {
+  background: #FAFAF7;
+  border: 1rpx solid #EEEEEE;
+  border-radius: 10rpx;
+  padding: 18rpx 36rpx;
+  font-size: 26rpx;
+  color: #1A1A1A;
+  font-weight: 700;
+}
+
+.filter-option.active {
+  background: #FFF4EC;
+  border: 2rpx solid #FF6B00;
+  color: #FF6B00;
+}
+
+/* ---------- 列表面板（底部抽屉） ---------- */
+.list-panel {
+  position: fixed;
+  top: 260rpx;        /* 紧贴顶部筛选条下方 */
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 30;
+  background: #FFFFFF;
+  border-top-left-radius: 28rpx;
+  border-top-right-radius: 28rpx;
+  box-shadow: 0 -8rpx 32rpx rgba(0,0,0,0.1);
+}
+
+.list-handle {
+  position: absolute;
+  top: 12rpx;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80rpx;
+  height: 6rpx;
+  background: #E5E5E5;
+  border-radius: 3rpx;
+}
+
+.list-scroll {
+  position: absolute;
+  top: 36rpx;        /* 让出 handle */
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 8rpx 24rpx 40rpx;
+  box-sizing: border-box;
+}
+
+/* 空列表 */
+.empty-list {
+  padding: 80rpx 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10rpx;
+}
+
+.empty-icon { font-size: 64rpx; opacity: 0.5; }
+.empty-text { font-size: 28rpx; color: #1A1A1A; font-weight: 700; }
+.empty-hint { font-size: 22rpx; color: #9CA3AF; }
+
+/* ---------- 列表项 · 打车 App 风 ---------- */
+.order-list-item {
+  position: relative;
+  background: #FFFFFF;
+  border: 1rpx solid #F0F0F0;
+  border-radius: 20rpx;
+  padding: 24rpx 24rpx 20rpx;
+  margin-bottom: 16rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0,0,0,0.04);
+  transition: all 0.15s ease;
+}
+
+.order-list-item:active {
+  background: #FAFAF7;
+  transform: scale(0.985);
+  box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.06);
+}
+
+/* 右上角距离 chip */
+.item-distance-chip {
+  position: absolute;
+  top: 24rpx;
+  right: 24rpx;
+  display: flex;
+  align-items: baseline;
+  gap: 4rpx;
+  background: linear-gradient(135deg, #FF6B00 0%, #FF8533 100%);
+  padding: 8rpx 16rpx;
+  border-radius: 100rpx;
+  box-shadow: 0 4rpx 12rpx rgba(255,107,0,0.3);
+}
+
+.item-distance-chip .dist-value {
+  font-size: 30rpx;
+  font-weight: 900;
+  color: #FFFFFF;
+  line-height: 1;
+  letter-spacing: -0.5rpx;
+  font-feature-settings: 'tnum' 1;
+}
+
+.item-distance-chip .dist-unit {
+  font-size: 18rpx;
+  font-weight: 800;
+  color: #FFFFFF;
+  letter-spacing: 1.5rpx;
+  opacity: 0.9;
+}
+
+/* 头部：头像 + 身份 */
+.item-header {
+  display: flex;
+  gap: 18rpx;
+  align-items: center;
+  margin-bottom: 18rpx;
+  padding-right: 130rpx; /* 给距离 chip 留位 */
+}
+
+.item-avatar {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.item-avatar.gender-male {
+  background: linear-gradient(135deg, #E0F2FE 0%, #BAE6FD 100%);
+  border: 2rpx solid #7DD3FC;
+}
+
+.item-avatar.gender-female {
+  background: linear-gradient(135deg, #FCE7F3 0%, #FBCFE8 100%);
+  border: 2rpx solid #F9A8D4;
+}
+
+.item-avatar-emoji { font-size: 40rpx; }
+
+.item-identity {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+  min-width: 0;
+}
+
+.item-name-row {
+  display: flex;
+  align-items: center;
+}
+
+.item-name {
+  font-size: 32rpx;
+  font-weight: 900;
+  color: #1A1A1A;
+  letter-spacing: -0.5rpx;
+  line-height: 1.1;
+}
+
+.item-meta-pills {
+  display: flex;
+  gap: 8rpx;
+  flex-wrap: wrap;
+}
+
+.meta-pill {
+  font-size: 20rpx;
+  background: #F5F5F5;
+  color: #666666;
+  padding: 4rpx 12rpx;
+  border-radius: 100rpx;
+  font-weight: 700;
+  letter-spacing: 0.5rpx;
+}
+
+.meta-pill.gender-male {
+  background: #E0F2FE;
+  color: #0369A1;
+}
+
+.meta-pill.gender-female {
+  background: #FCE7F3;
+  color: #BE185D;
+}
+
+.meta-pill.city {
+  background: #FFF4EC;
+  color: #FF6B00;
+}
+
+/* 路径可视化：左侧 dot-line-dot + 右侧地名 */
+.item-route {
+  display: flex;
+  gap: 16rpx;
+  padding: 18rpx 0;
+  border-top: 1rpx dashed #F0F0F0;
+  border-bottom: 1rpx dashed #F0F0F0;
+  margin-bottom: 16rpx;
+}
+
+.route-rail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8rpx 0;
+  flex-shrink: 0;
+}
+
+.route-dot {
+  width: 14rpx;
+  height: 14rpx;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.route-dot.start {
+  background: #07C160;
+  box-shadow: 0 0 0 4rpx rgba(7,193,96,0.18);
+}
+
+.route-dot.end {
+  background: #FF3B30;
+  box-shadow: 0 0 0 4rpx rgba(255,59,48,0.18);
+}
+
+.route-line {
+  width: 2rpx;
+  height: 32rpx;
+  background: repeating-linear-gradient(
+    to bottom,
+    #C7C7CC 0,
+    #C7C7CC 4rpx,
+    transparent 4rpx,
+    transparent 8rpx
+  );
+  margin: 4rpx 0;
+}
+
+.route-points {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 14rpx;
+  min-width: 0;
+}
+
+.route-name {
+  font-size: 26rpx;
+  color: #1A1A1A;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 底部：tag group + CTA */
+.item-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12rpx;
+}
+
+.item-tag-group {
+  display: flex;
+  gap: 10rpx;
+  flex-wrap: wrap;
+  flex: 1;
+  min-width: 0;
+}
+
+.item-tag {
+  font-size: 22rpx;
+  color: #666666;
+  font-weight: 600;
+  letter-spacing: 0.5rpx;
+}
+
+.item-cta {
+  font-size: 22rpx;
+  color: #FF6B00;
+  font-weight: 800;
+  letter-spacing: 1rpx;
+  flex-shrink: 0;
+}
+
+/* ---------- 详情视图：返回按钮 ---------- */
+.back-to-list {
+  display: inline-flex;
+  align-items: center;
+  gap: 6rpx;
+  background: #FFFFFF;
+  padding: 14rpx 24rpx;
+  border-radius: 100rpx;
+  font-size: 26rpx;
+  color: #1A1A1A;
+  font-weight: 700;
+  box-shadow: 0 4rpx 12rpx rgba(0,0,0,0.12);
+}
+
+.back-icon {
+  font-size: 36rpx;
+  font-weight: 300;
+  line-height: 1;
+}
+
+/* 列表态 / 详情态地图上下文：起点/终点小圆点（详情页 detail-grid 用） */
+.detail-icon.green-dot-icon,
+.detail-icon.red-dot-icon {
+  display: inline-block;
+  width: 22rpx;
+  height: 22rpx;
+  border-radius: 50%;
+  font-size: 0;
+  margin-top: 6rpx;
+}
+
+.detail-icon.green-dot-icon {
+  background: #07C160;
+  box-shadow: 0 0 0 4rpx rgba(7,193,96,0.2);
+}
+
+.detail-icon.red-dot-icon {
+  background: #FF3B30;
+  box-shadow: 0 0 0 4rpx rgba(255,59,48,0.2);
+}
+

@@ -62,6 +62,9 @@
       <button class="login-btn" bindtap="handleLogin">
         登录
       </button>
+
+      <!-- 开发者提示 -->
+      <text class="dev-tip">开发模式：不填手机号直接点「登录」即可进入</text>
     </view>
   </view>
 

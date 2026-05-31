@@ -17,21 +17,21 @@
             <text class="gender-icon">{{userInfo.gender === 'male' ? '♂' : '♀'}}</text>
             <text class="gender-text">{{userInfo.gender === 'male' ? '男' : '女'}}</text>
           </view>
-          <view class="tier-badge" wx:if="{{tier}}" style="background: {{tier.color}};">
-            <text class="tier-icon">{{tier.icon}}</text>
+          <view class="tier-badge" wx:if="{{tier}}">
+            <image class="tier-icon" src="{{tier.svg}}"></image>
             <text class="tier-name">{{tier.name}}</text>
           </view>
         </view>
         <text class="user-id">ID: {{userInfo.phone || '未设置'}}</text>
       </view>
-      <text class="arrow">></text>
+      <text class="arrow">›</text>
     </view>
   </view>
 
   <!-- 任务中心（志愿者专属/未完成时显示） -->
   <view class="task-center-section" wx:if="{{userType === 'volunteer' && !allTasksCompleted}}">
     <view class="task-header">
-      <text class="task-title">📋 任务中心</text>
+      <text class="task-title">任务中心</text>
       <text class="task-subtitle">完成以下任务即可开始接单</text>
     </view>
 
@@ -116,7 +116,7 @@
   <!-- 视障人士任务提示 -->
   <view class="task-center-section" wx:if="{{userType === 'disabled' && !taskFlow.resumeCompleted}}">
     <view class="task-header">
-      <text class="task-title">📋 完善信息</text>
+      <text class="task-title">完善信息</text>
       <text class="task-subtitle">请完善您的个人信息以开始使用</text>
     </view>
     <button class="task-btn" bindtap="goToNextTask">填写个人信息</button>
@@ -126,7 +126,7 @@
   <view class="points-section">
     <view class="points-card">
       <view class="points-item">
-        <text class="points-value">{{userPoints}}</text>
+        <text class="points-value accent">{{userPoints}}</text>
         <text class="points-label">当前积分</text>
       </view>
       <view class="points-divider"></view>
@@ -145,12 +145,12 @@
   <!-- 运动月报入口 -->
   <view class="report-section" bindtap="goToMonthlyReport">
     <view class="report-card">
-      <view class="report-icon">📊</view>
+      <image class="report-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiNGRjZCMDAiIHN0cm9rZS13aWR0aD0iMS43IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxsaW5lIHgxPSI2IiB5MT0iMjAiIHgyPSI2IiB5Mj0iMTMiLz48bGluZSB4MT0iMTIiIHkxPSIyMCIgeDI9IjEyIiB5Mj0iNiIvPjxsaW5lIHgxPSIxOCIgeTE9IjIwIiB4Mj0iMTgiIHkyPSIxMCIvPjxsaW5lIHgxPSIzIiB5MT0iMjAiIHgyPSIyMSIgeTI9IjIwIi8+PC9zdmc+"></image>
       <view class="report-info">
         <text class="report-title">运动月报</text>
         <text class="report-desc">查看本月的运动数据报告</text>
       </view>
-      <text class="report-arrow">></text>
+      <text class="report-arrow">›</text>
     </view>
   </view>
 
@@ -159,69 +159,69 @@
     <view class="menu-card">
       <view class="menu-item" bindtap="goToProfile">
         <view class="menu-left">
-          <text class="menu-icon">👤</text>
+          <image class="menu-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiMzMzMzMzMiIHN0cm9rZS13aWR0aD0iMS43IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxjaXJjbGUgY3g9IjEyIiBjeT0iOCIgcj0iMy41Ii8+PHBhdGggZD0iTTUgMjBjMC0zLjkgMy4xLTYgNy02czcgMi4xIDcgNiIvPjwvc3ZnPg=="></image>
           <text class="menu-text">个人信息</text>
         </view>
-        <text class="menu-arrow">></text>
+        <text class="menu-arrow">›</text>
       </view>
 
       <view class="menu-item" wx:if="{{userType === 'volunteer'}}" bindtap="goToCertificate">
         <view class="menu-left">
-          <text class="menu-icon">📜</text>
+          <image class="menu-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiMzMzMzMzMiIHN0cm9rZS13aWR0aD0iMS43IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxjaXJjbGUgY3g9IjEyIiBjeT0iOSIgcj0iNSIvPjxwYXRoIGQ9Ik04LjUgMTMuMkw3IDIxbDUtMi44TDE3IDIxbC0xLjUtNy44Ii8+PC9zdmc+"></image>
           <text class="menu-text">我的证书</text>
         </view>
-        <text class="menu-arrow">></text>
+        <text class="menu-arrow">›</text>
       </view>
 
       <view class="menu-item" wx:if="{{userType === 'volunteer'}}" bindtap="goToTraining">
         <view class="menu-left">
-          <text class="menu-icon">📚</text>
+          <image class="menu-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiMzMzMzMzMiIHN0cm9rZS13aWR0aD0iMS43IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxwYXRoIGQ9Ik0xMiA2LjVDMTAuNSA1IDggNC41IDQgNC44VjE4YzQtLjMgNi41LjIgOCAxLjUiLz48cGF0aCBkPSJNMTIgNi41QzEzLjUgNSAxNiA0LjUgMjAgNC44VjE4Yy00LS4zLTYuNS4yLTggMS41Ii8+PC9zdmc+"></image>
           <text class="menu-text">培训教程</text>
         </view>
-        <text class="menu-arrow">></text>
+        <text class="menu-arrow">›</text>
       </view>
 
       <view class="menu-item" wx:if="{{userType === 'volunteer'}}" bindtap="goToFrequentlyContacted">
         <view class="menu-left">
-          <text class="menu-icon">👥</text>
+          <image class="menu-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiMzMzMzMzMiIHN0cm9rZS13aWR0aD0iMS43IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxjaXJjbGUgY3g9IjkiIGN5PSI4IiByPSIzIi8+PHBhdGggZD0iTTMgMTljMC0zLjMgMi43LTUgNi01czYgMS43IDYgNSIvPjxwYXRoIGQ9Ik0xNiA1LjVhMyAzIDAgMCAxIDAgNS44Ii8+PHBhdGggZD0iTTE3LjUgMTRjMi4xLjUgMy41IDIuMSAzLjUgNC44Ii8+PC9zdmc+"></image>
           <text class="menu-text">经常联系的朋友</text>
         </view>
-        <text class="menu-arrow">></text>
+        <text class="menu-arrow">›</text>
       </view>
 
       <view class="menu-item" bindtap="goToRecords">
         <view class="menu-left">
-          <text class="menu-icon">📋</text>
+          <image class="menu-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiMzMzMzMzMiIHN0cm9rZS13aWR0aD0iMS43IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxjaXJjbGUgY3g9IjEyIiBjeT0iMTIiIHI9IjgiLz48cGF0aCBkPSJNMTIgNy41VjEybDMgMiIvPjwvc3ZnPg=="></image>
           <text class="menu-text">跑步历史</text>
         </view>
-        <text class="menu-arrow">></text>
+        <text class="menu-arrow">›</text>
       </view>
 
       <view class="menu-item" bindtap="goToSchedule">
         <view class="menu-left">
-          <text class="menu-icon">📅</text>
+          <image class="menu-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiMzMzMzMzMiIHN0cm9rZS13aWR0aD0iMS43IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxyZWN0IHg9IjQiIHk9IjUuNSIgd2lkdGg9IjE2IiBoZWlnaHQ9IjE0LjUiIHJ4PSIyIi8+PHBhdGggZD0iTTQgMTBoMTYiLz48cGF0aCBkPSJNOCAzLjV2My41Ii8+PHBhdGggZD0iTTE2IDMuNXYzLjUiLz48L3N2Zz4="></image>
           <text class="menu-text">我的日程</text>
         </view>
-        <text class="menu-arrow">></text>
+        <text class="menu-arrow">›</text>
       </view>
 
       <view class="menu-item" bindtap="goToShop">
         <view class="menu-left">
-          <text class="menu-icon">🛍️</text>
+          <image class="menu-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiMzMzMzMzMiIHN0cm9rZS13aWR0aD0iMS43IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxwYXRoIGQ9Ik02LjUgOGgxMWwtMSAxMS41SDcuNXoiLz48cGF0aCBkPSJNOSA4YTMgMyAwIDAgMSA2IDAiLz48L3N2Zz4="></image>
           <text class="menu-text">积分商城</text>
         </view>
         <view class="menu-right">
           <text class="points-badge" wx:if="{{userPoints > 0}}">{{userPoints}}分</text>
-          <text class="menu-arrow">></text>
+          <text class="menu-arrow">›</text>
         </view>
       </view>
 
       <view class="menu-item" bindtap="goToChangePassword">
         <view class="menu-left">
-          <text class="menu-icon">🔑</text>
+          <image class="menu-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiMzMzMzMzMiIHN0cm9rZS13aWR0aD0iMS43IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxyZWN0IHg9IjUiIHk9IjExIiB3aWR0aD0iMTQiIGhlaWdodD0iOSIgcng9IjIiLz48cGF0aCBkPSJNOCAxMVY4LjVhNCA0IDAgMCAxIDggMFYxMSIvPjwvc3ZnPg=="></image>
           <text class="menu-text">修改密码</text>
         </view>
-        <text class="menu-arrow">></text>
+        <text class="menu-arrow">›</text>
       </view>
     </view>
   </view>

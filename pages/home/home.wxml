@@ -1,12 +1,4 @@
 <view class="home-container">
-  <!-- 顶部导航栏 -->
-  <view class="top-nav">
-    <view class="home-btn" bindtap="goToLogin">
-      <text class="home-icon">🏠</text>
-      <text class="home-text">首页</text>
-    </view>
-  </view>
-
   <!-- 1. 顶部：个人名片区 + 段位展示 -->
   <view class="profile-section">
     <view class="profile-card">
@@ -27,7 +19,7 @@
             <!-- 段位徽章 - 胶囊形状 -->
             <view class="tier-badge" wx:if="{{tier}}">
               <view class="tier-badge-bg"></view>
-              <text class="tier-icon">{{tier.icon}}</text>
+              <image class="tier-icon" src="{{tier.svg}}"></image>
               <text class="tier-name">{{tier.name}}</text>
               <view class="tier-sparkle"></view>
             </view>
@@ -84,10 +76,20 @@
     </button>
   </view>
 
+  <!-- 视障用户：使用教程入口 -->
+  <view class="tutorial-entry" wx:if="{{userType === 'disabled'}}" bindtap="goToTutorial">
+    <view class="tutorial-entry-icon">📖</view>
+    <view class="tutorial-entry-content">
+      <text class="tutorial-entry-title">使用教程</text>
+      <text class="tutorial-entry-desc">了解如何寻找志愿者、发布需求、设置紧急联系人等</text>
+    </view>
+    <text class="tutorial-entry-arrow">›</text>
+  </view>
+
   <!-- 志愿者专属：培训教程（未完成时显示） -->
   <view class="training-section" wx:if="{{userType === 'volunteer' && !examPassed && !trainingCompleted}}">
     <view class="section-header-row">
-      <text class="section-main-title">📚 培训教程</text>
+      <text class="section-main-title">TRAINING</text>
     </view>
     <view class="training-card">
       <view class="training-steps">
@@ -151,7 +153,7 @@
   <!-- 2. 中间：数据看板 -->
   <view class="stats-section">
     <view class="section-header-row">
-      <text class="section-main-title">📊 数据看板</text>
+      <text class="section-main-title">STATS · 数据看板</text>
     </view>
     <view class="stats-grid">
       <view class="stat-item" wx:if="{{userType === 'volunteer'}}">
@@ -234,7 +236,7 @@
   <!-- 3. 列表：功能操作区 -->
   <view class="menu-section">
     <view class="section-header-row">
-      <text class="section-main-title">🎯 功能操作</text>
+      <text class="section-main-title">ACTIONS · 功能操作</text>
     </view>
     <view class="menu-list">
       <view class="menu-item" bindtap="goToProfile">
@@ -311,12 +313,16 @@
   <!-- 4. 底部：系统支持 -->
   <view class="footer-section">
     <view class="section-header-row">
-      <text class="section-main-title">⚙️ 系统支持</text>
+      <text class="section-main-title">SYSTEM · 系统支持</text>
     </view>
     <view class="footer-menu">
       <view class="footer-item" bindtap="goToChangePassword">
         <text class="footer-icon">🔑</text>
         <text class="footer-text">修改密码</text>
+      </view>
+      <view class="footer-item" bindtap="goToTutorial">
+        <text class="footer-icon">📖</text>
+        <text class="footer-text">使用教程</text>
       </view>
       <view class="footer-item" bindtap="goToHelp">
         <text class="footer-icon">💬</text>

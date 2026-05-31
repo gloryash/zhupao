@@ -75,9 +75,11 @@ Page({
 
       console.log('验证码:', code); // 调试用，实际应删除
 
-      wx.showToast({
-        title: '验证码已发送',
-        icon: 'success'
+      // 测试模式：弹窗显示验证码（上线前改为真实短信）
+      wx.showModal({
+        title: '测试验证码',
+        content: '您的验证码是：' + code,
+        showCancel: false
       });
 
       // 开始倒计时
@@ -110,12 +112,9 @@ Page({
   handleLogin() {
     const { phone, verifyCode } = this.data;
 
-    // 验证手机号
+    // 开发者快捷登录：未填写手机号时，直接登录进入首页（不影响真实登录流程）
     if (!phone.trim()) {
-      wx.showToast({
-        title: '请输入手机号',
-        icon: 'none'
-      });
+      this.devLogin();
       return;
     }
 
@@ -156,6 +155,71 @@ Page({
 
     // 验证通过，继续登录
     this.checkRegisteredUser(phone);
+  },
+
+  /**
+   * 开发者快捷登录
+   * 未填写手机号时直接进入：弹身份选择 ActionSheet（视障 / 志愿者），
+   * 选中的身份缺资料则自动创建 dev 账号
+   */
+  devLogin() {
+    // 上次身份作为默认提示
+    const lastUserType = wx.getStorageSync('currentUserType');
+    const lastLabel = lastUserType === 'volunteer' ? '志愿者' : (lastUserType === 'disabled' ? '视障人士' : '');
+
+    const itemList = [
+      '👁  作为视障人士登录' + (lastUserType === 'disabled' ? '（上次身份）' : ''),
+      '🏃  作为志愿者登录' + (lastUserType === 'volunteer' ? '（上次身份）' : ''),
+    ];
+
+    wx.showActionSheet({
+      itemList,
+      itemColor: '#1A1A1A',
+      success: (res) => {
+        const userType = res.tapIndex === 0 ? 'disabled' : 'volunteer';
+
+        // 如果该身份没有 userInfo，自动创建
+        if (!wx.getStorageSync(`userInfo_${userType}`)) {
+          this.createDevUserInfo(userType);
+        }
+
+        this.doLogin(this.data.phone, userType);
+      },
+      fail: () => {
+        // 用户取消选择，不做任何处理
+      },
+    });
+  },
+
+  /**
+   * 创建默认开发者账号资料
+   */
+  createDevUserInfo(userType) {
+    const token = 'DEV_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+
+    const userInfo = {
+      userType,
+      name: userType === 'volunteer' ? '开发者志愿者' : '开发者跑者',
+      gender: 'male',
+      idCard: '',
+      phone: '13800000000',
+      resume: '开发者测试账号',
+      // 视障人士专属字段
+      emergencyPhone: '13800000000',
+      runningLocation: '人民公园',
+      // 志愿者专属字段
+      runningYears: '3',
+      pace: '6',
+      hasMarathon: 'no',
+      hasFirstAid: 'no',
+      hasCompanionExp: 'no',
+      token,
+      createdAt: new Date().toLocaleString()
+    };
+
+    wx.setStorageSync(`userInfo_${userType}`, userInfo);
+    wx.setStorageSync(`isRegistered_${userType}`, true);
+    wx.setStorageSync('isRegistered', true);
   },
 
   /**

@@ -1,13 +1,13 @@
 <!-- 全屏地图容器 -->
 <view class="map-page">
-  <!-- 地图占据全屏 -->
+  <!-- 全屏地图 -->
   <map
     id="myMap"
     class="fullscreen-map"
     longitude="{{longitude}}"
     latitude="{{latitude}}"
     markers="{{markers}}"
-    scale="16"
+    scale="14"
     show-location="true"
     show-compass="true"
     enable-zoom="true"
@@ -16,19 +16,12 @@
     polyline="{{navigationPolyline}}"
   ></map>
 
-  <!-- 顶部信息栏 -->
-  <view class="top-bar">
-    <!-- 未点亮状态 -->
-    <view class="location-info-bar" wx:if="{{!isLighted}}">
-      <text class="location-icon">📍</text>
-      <text class="location-text">{{statusText}}</text>
-    </view>
-    <!-- 已点亮等待中状态 -->
-    <view class="location-info-bar waiting" wx:elif="{{orderStatus === 'waiting'}}">
+  <!-- 顶部状态栏（发布后才显示） -->
+  <view class="top-bar" wx:if="{{isLighted}}">
+    <view class="location-info-bar waiting" wx:if="{{orderStatus === 'waiting'}}">
       <text class="location-icon">⏳</text>
       <text class="location-text">{{statusText}}</text>
     </view>
-    <!-- 志愿者已接单状态 -->
     <view class="location-info-bar accepted" wx:elif="{{orderStatus === 'accepted'}}">
       <view class="accepted-badge">
         <text class="badge-icon">🤝</text>
@@ -37,115 +30,207 @@
     </view>
   </view>
 
-  <!-- 右侧控制按钮 -->
+  <!-- 重定位按钮 -->
   <view class="map-controls">
     <view class="control-btn" bindtap="getUserCurrentLocation">
       <text class="control-icon">🎯</text>
-      <text class="control-label">重新定位</text>
     </view>
   </view>
 
-  <!-- 左侧安全功能按钮（仅在已点亮状态显示） -->
+  <!-- 安全控制按钮（发布后） -->
   <view class="safety-controls" wx:if="{{isLighted}}">
-    <!-- 一键报警按钮 -->
     <view class="safety-btn emergency" bindtap="handleEmergencyCall">
       <text class="safety-icon">🚨</text>
       <text class="safety-label">报警</text>
     </view>
-    <!-- 紧急联系人 -->
     <view class="safety-btn contact" bindtap="handleCallEmergencyContact" wx:if="{{emergencyPhone}}">
       <text class="safety-icon">📞</text>
       <text class="safety-label">联系人</text>
     </view>
-    <!-- 投诉按钮 -->
     <view class="safety-btn complaint" bindtap="handleComplaint">
       <text class="safety-icon">⚠️</text>
       <text class="safety-label">投诉</text>
     </view>
   </view>
 
-  <!-- 底部浮动操作面板 -->
+  <!-- 底部浮动面板 -->
   <view class="bottom-panel">
-    <view class="panel-content">
-      <!-- 未点亮状态 -->
-      <view wx:if="{{!isLighted}}">
-        <view class="info-section">
-          <text class="title">发布陪跑需求</text>
-          <text class="subtitle">周边志愿者将看到您的位置</text>
+
+    <!-- =============================================== -->
+    <!-- 发布前：4 步流程                                  -->
+    <!-- =============================================== -->
+    <block wx:if="{{!isLighted}}">
+      <!-- 步骤进度点 -->
+      <view class="step-dots">
+        <view class="step-dot {{flowStep === 'address-start' ? 'active' : (startAddress ? 'done' : '')}}">1</view>
+        <view class="step-line {{startAddress ? 'done' : ''}}"></view>
+        <view class="step-dot {{flowStep === 'address-end' ? 'active' : (endAddress ? 'done' : '')}}">2</view>
+        <view class="step-line {{endAddress ? 'done' : ''}}"></view>
+        <view class="step-dot {{flowStep === 'duration' ? 'active' : (flowStep === 'confirm' ? 'done' : '')}}">3</view>
+        <view class="step-line {{flowStep === 'confirm' ? 'done' : ''}}"></view>
+        <view class="step-dot {{flowStep === 'confirm' ? 'active' : ''}}">4</view>
+      </view>
+
+      <!-- 步骤标题 -->
+      <view class="step-title">
+        <text wx:if="{{flowStep === 'address-start'}}">选择起点</text>
+        <text wx:elif="{{flowStep === 'address-end'}}">选择跑步终点</text>
+        <text wx:elif="{{flowStep === 'duration'}}">预计跑步时长</text>
+        <text wx:elif="{{flowStep === 'confirm'}}">确认需求</text>
+      </view>
+      <view class="step-subtitle">
+        <text wx:if="{{flowStep === 'address-start'}}">从哪里开始跑？</text>
+        <text wx:elif="{{flowStep === 'address-end'}}">想跑到哪里？</text>
+        <text wx:elif="{{flowStep === 'duration'}}">让志愿者更好地安排时间</text>
+        <text wx:elif="{{flowStep === 'confirm'}}">确认无误后发布给周边志愿者</text>
+      </view>
+
+      <!-- ============== 步骤 1 / 2：地址选择 ============== -->
+      <block wx:if="{{flowStep === 'address-start' || flowStep === 'address-end'}}">
+        <!-- 已选地址显示 -->
+        <view class="selected-address" wx:if="{{(flowStep === 'address-start' && startAddress) || (flowStep === 'address-end' && endAddress)}}">
+          <view class="addr-icon {{flowStep === 'address-start' ? 'start' : 'end'}}"></view>
+          <view class="addr-text">
+            <text class="addr-name">{{flowStep === 'address-start' ? startAddress.name : endAddress.name}}</text>
+            <text class="addr-detail">{{flowStep === 'address-start' ? startAddress.address : endAddress.address}}</text>
+          </view>
+          <text class="addr-edit" bindtap="{{flowStep === 'address-start' ? 'chooseStartAddress' : 'chooseEndAddress'}}">修改</text>
         </view>
 
-        <!-- 需求详情输入 -->
-        <view class="need-details">
-          <!-- 目标里程 -->
-          <view class="detail-item">
-            <text class="detail-label">目标里程</text>
-            <picker mode="selector" range="{{distanceOptions}}" value="{{distanceIndex}}" bindchange="onDistanceChange">
-              <view class="picker-view">
-                {{distanceOptions[distanceIndex]}}
-              </view>
-            </picker>
-          </view>
-
-          <!-- 预计时间 -->
-          <view class="detail-item">
-            <text class="detail-label">预计时间</text>
-            <picker mode="selector" range="{{durationOptions}}" value="{{durationIndex}}" bindchange="onDurationChange">
-              <view class="picker-view">
-                {{durationOptions[durationIndex]}}
-              </view>
-            </picker>
-          </view>
+        <!-- 主操作：去地图选点 -->
+        <view class="map-pick-btn" bindtap="{{flowStep === 'address-start' ? 'chooseStartAddress' : 'chooseEndAddress'}}" wx:if="{{!((flowStep === 'address-start' && startAddress) || (flowStep === 'address-end' && endAddress))}}">
+          <text class="pick-icon">📍</text>
+          <text class="pick-text">在地图上选择位置</text>
+          <text class="pick-arrow">›</text>
         </view>
 
-        <button
-          class="publish-btn {{isLighted ? 'lighted' : ''}}"
-          bindtap="handlePublish"
-          disabled="{{isLighted}}">
-          {{isLighted ? '已点亮' : '点亮位置'}}
+        <!-- 历史地址 -->
+        <view class="history-section" wx:if="{{addressHistory.length > 0}}">
+          <view class="history-label">最近使用</view>
+          <view class="history-list">
+            <view class="history-item"
+                  wx:for="{{addressHistory}}"
+                  wx:key="index"
+                  data-index="{{index}}"
+                  bindtap="useHistoryAddress">
+              <text class="history-icon">🕘</text>
+              <view class="history-text">
+                <text class="history-name">{{item.name}}</text>
+                <text class="history-addr">{{item.address}}</text>
+              </view>
+            </view>
+          </view>
+        </view>
+      </block>
+
+      <!-- ============== 步骤 3：时长 ============== -->
+      <block wx:if="{{flowStep === 'duration'}}">
+        <view class="duration-grid">
+          <view class="duration-chip {{selectedDuration === item ? 'active' : ''}}"
+                wx:for="{{durationChips}}"
+                wx:key="*this"
+                data-duration="{{item}}"
+                bindtap="selectDuration">
+            <text class="chip-text">{{item}}</text>
+          </view>
+        </view>
+        <view class="duration-hint">
+          <text>预估跑步距离：{{estimatedDistance > 0 ? estimatedDistance + ' km' : '—'}}（直线距离）</text>
+        </view>
+      </block>
+
+      <!-- ============== 步骤 4：确认 ============== -->
+      <block wx:if="{{flowStep === 'confirm'}}">
+        <view class="summary-card">
+          <view class="summary-row">
+            <view class="summary-icon start"></view>
+            <view class="summary-text">
+              <text class="summary-label">起点</text>
+              <text class="summary-value">{{startAddress.name}}</text>
+            </view>
+          </view>
+          <view class="summary-divider"></view>
+          <view class="summary-row">
+            <view class="summary-icon end"></view>
+            <view class="summary-text">
+              <text class="summary-label">终点</text>
+              <text class="summary-value">{{endAddress.name}}</text>
+            </view>
+          </view>
+          <view class="summary-divider"></view>
+          <view class="summary-row">
+            <text class="summary-icon-emoji">⏱️</text>
+            <view class="summary-text">
+              <text class="summary-label">预计时长</text>
+              <text class="summary-value">{{selectedDuration}}</text>
+            </view>
+          </view>
+          <view class="summary-row">
+            <text class="summary-icon-emoji">📏</text>
+            <view class="summary-text">
+              <text class="summary-label">预估距离</text>
+              <text class="summary-value">{{estimatedDistance}} km</text>
+            </view>
+          </view>
+        </view>
+      </block>
+
+      <!-- 底部操作区 -->
+      <view class="action-row">
+        <view class="back-btn" bindtap="prevStep" wx:if="{{flowStep !== 'address-start'}}">
+          <text>‹ 上一步</text>
+        </view>
+        <button class="next-btn {{canProceed ? '' : 'disabled'}}"
+                bindtap="{{flowStep === 'confirm' ? 'publishNeed' : 'nextStep'}}"
+                disabled="{{!canProceed}}">
+          <text>{{flowStep === 'confirm' ? '🌟 发布需求' : '下一步'}}</text>
         </button>
       </view>
+    </block>
 
-      <!-- 已点亮等待中状态 -->
-      <view wx:elif="{{orderStatus === 'waiting'}}">
-        <view class="waiting-info">
-          <view class="waiting-animation">
-            <view class="pulse-ring"></view>
-            <view class="pulse-ring delay-1"></view>
-            <view class="pulse-ring delay-2"></view>
-            <text class="pulse-icon">🌟</text>
-          </view>
-          <text class="waiting-text">等待周边志愿者响应...</text>
-          <text class="waiting-hint">请保持在原地</text>
+    <!-- =============================================== -->
+    <!-- 发布后：等待中                                    -->
+    <!-- =============================================== -->
+    <view wx:if="{{isLighted && orderStatus === 'waiting'}}">
+      <view class="waiting-info">
+        <view class="waiting-animation">
+          <view class="pulse-ring"></view>
+          <view class="pulse-ring delay-1"></view>
+          <view class="pulse-ring delay-2"></view>
+          <text class="pulse-icon">🌟</text>
         </view>
+        <text class="waiting-text">等待周边志愿者响应...</text>
+        <text class="waiting-hint">请保持在原地</text>
+        <view class="cancel-link" bindtap="handleCancelOrder">取消需求</view>
       </view>
+    </view>
 
-      <!-- 志愿者已接单状态 -->
-      <view wx:elif="{{orderStatus === 'accepted'}}">
-        <view class="volunteer-info">
-          <view class="volunteer-header">
-            <view class="volunteer-avatar">👤</view>
-            <view class="volunteer-details">
-              <text class="volunteer-name">{{volunteerName}}</text>
-              <text class="volunteer-status">正在赶来与您会合</text>
-            </view>
-            <view class="distance-badge">
-              <text class="distance-value">{{volunteerDistance}}</text>
-              <text class="distance-unit">km</text>
-            </view>
+    <!-- =============================================== -->
+    <!-- 发布后：志愿者已接单                              -->
+    <!-- =============================================== -->
+    <view wx:if="{{isLighted && orderStatus === 'accepted'}}">
+      <view class="volunteer-info">
+        <view class="volunteer-header">
+          <view class="volunteer-avatar">👤</view>
+          <view class="volunteer-details">
+            <text class="volunteer-name">{{volunteerName}}</text>
+            <text class="volunteer-status">正在赶来与您会合</text>
           </view>
-
-          <view class="volunteer-actions">
-            <button class="call-btn" bindtap="handleCallVolunteer">
-              <text class="btn-icon">📞</text>
-              拨打电话
-            </button>
-            <button class="cancel-btn" bindtap="handleCancelOrder">
-              <text class="btn-icon">✕</text>
-              取消订单
-            </button>
+          <view class="distance-badge">
+            <text class="distance-value">{{volunteerDistance}}</text>
+            <text class="distance-unit">km</text>
           </view>
+        </view>
+        <view class="volunteer-actions">
+          <button class="call-btn" bindtap="handleCallVolunteer">
+            <text class="btn-icon">📞</text>拨打电话
+          </button>
+          <button class="cancel-btn" bindtap="handleCancelOrder">
+            <text class="btn-icon">✕</text>取消订单
+          </button>
         </view>
       </view>
     </view>
+
   </view>
 </view>

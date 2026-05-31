@@ -5,7 +5,7 @@
 // 1. 点击左侧菜单的"云开发"
 // 2. 点击"开通"按钮
 // 3. 创建环境，记录环境 ID
-// 4. 将下方的 'blind-run-test-xxxx' 替换为你的环境 ID
+// 4. 将下方的 'cloudbase-4gujmrr46d949513' 替换为你的环境 ID
 
 // 初始化云开发
 if (!wx.cloud) {
@@ -15,26 +15,36 @@ if (!wx.cloud) {
     icon: 'none'
   });
 } else {
-  // TODO: 将 'blind-run-test-xxxx' 替换为你的云开发环境 ID
   wx.cloud.init({
-    env: 'blind-run-test-xxxx',  // ⚠️ 请替换为你的环境 ID
+    env: 'cloudbase-4gujmrr46d949513',
     traceUser: true
   });
 }
 
 // 段位体系配置
+// 段位线性图标（base64 SVG，统一暖橙描边，替代彩色 emoji）
+const TIER_ICONS = {
+  star: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiNGRjZCMDAiIHN0cm9rZS13aWR0aD0iMS44IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxwYXRoIGQ9Ik0xMiAzbDIuNiA1LjQgNS45LjgtNC4zIDQuMSAxLjEgNS45TDEyIDE2LjkgNi43IDE5LjJsMS4xLTUuOUwzLjUgOS4ybDUuOS0uOHoiLz48L3N2Zz4=',
+  sprout: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiNGRjZCMDAiIHN0cm9rZS13aWR0aD0iMS44IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxwYXRoIGQ9Ik0xMiAyMXYtOCIvPjxwYXRoIGQ9Ik0xMiAxM2MtMS4yLTMuMi00LjItNC4yLTYuNS00LjIuMiAzLjIgMi40IDUgNi41IDQuMnoiLz48cGF0aCBkPSJNMTIgMTJjMS4yLTMuMiA0LjItNC4yIDYuNS00LjItLjIgMy4yLTIuNCA1LTYuNSA0LjJ6Ii8+PC9zdmc+',
+  wind: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiNGRjZCMDAiIHN0cm9rZS13aWR0aD0iMS44IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxwYXRoIGQ9Ik0zIDhoMTBhMi40IDIuNCAwIDEgMC0yLjQtMi40Ii8+PHBhdGggZD0iTTMgMTJoMTRhMi40IDIuNCAwIDEgMS0yLjQgMi40Ii8+PHBhdGggZD0iTTMgMTZoNy41YTIgMiAwIDEgMS0yIDIiLz48L3N2Zz4=',
+  bolt: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiNGRjZCMDAiIHN0cm9rZS13aWR0aD0iMS44IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxwYXRoIGQ9Ik0xMyAyLjVMNS41IDEzSDExbC0xLjUgOC41TDE4LjUgMTBIMTJ6Ii8+PC9zdmc+',
+  sunrise: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiNGRjZCMDAiIHN0cm9rZS13aWR0aD0iMS44IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxwYXRoIGQ9Ik0zIDE4LjVoMTgiLz48cGF0aCBkPSJNNi41IDE4LjVhNS41IDUuNSAwIDAgMSAxMSAwIi8+PHBhdGggZD0iTTEyIDYuNVYzLjUiLz48cGF0aCBkPSJNNSA5TDMuNiA3LjYiLz48cGF0aCBkPSJNMTkgOWwxLjQtMS40Ii8+PC9zdmc+',
+  sun: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiNGRjZCMDAiIHN0cm9rZS13aWR0aD0iMS44IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxjaXJjbGUgY3g9IjEyIiBjeT0iMTIiIHI9IjQiLz48cGF0aCBkPSJNMTIgMi41djIuMiIvPjxwYXRoIGQ9Ik0xMiAxOS4zdjIuMiIvPjxwYXRoIGQ9Ik0yLjUgMTJoMi4yIi8+PHBhdGggZD0iTTE5LjMgMTJoMi4yIi8+PHBhdGggZD0iTTUuNCA1LjRsMS42IDEuNiIvPjxwYXRoIGQ9Ik0xNyAxN2wxLjYgMS42Ii8+PHBhdGggZD0iTTE4LjYgNS40TDE3IDciLz48cGF0aCBkPSJNNyAxN2wtMS42IDEuNiIvPjwvc3ZnPg==',
+  crown: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiNGRjZCMDAiIHN0cm9rZS13aWR0aD0iMS44IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxwYXRoIGQ9Ik00IDguNWw0IDMuNSA0LTYgNCA2IDQtMy41TDE5IDE5SDV6Ii8+PC9zdmc+'
+};
+
 const TIER_SYSTEM = {
   volunteer: [
-    { level: 1, name: '启明之星', icon: '🌟', minRuns: 0, color: '#CD7F32', description: '初入跑道的爱心新星' },
-    { level: 2, name: '破晓勇士', icon: '🌅', minRuns: 5, color: '#C0C0C0', description: '用奔跑点亮希望的曙光' },
-    { level: 3, name: '烈阳守护', icon: '☀️', minRuns: 15, color: '#FFD700', description: '温暖每一位跑者的心' },
-    { level: 4, name: '领跑天使', icon: '👼', minRuns: 30, color: '#E6E6FA', description: '奔跑在人间的天使' }
+    { level: 1, name: '启明之星', icon: '🌟', svg: TIER_ICONS.star, minRuns: 0, color: '#CD7F32', description: '初入跑道的爱心新星' },
+    { level: 2, name: '破晓勇士', icon: '🌅', svg: TIER_ICONS.sunrise, minRuns: 5, color: '#C0C0C0', description: '用奔跑点亮希望的曙光' },
+    { level: 3, name: '烈阳守护', icon: '☀️', svg: TIER_ICONS.sun, minRuns: 15, color: '#FFD700', description: '温暖每一位跑者的心' },
+    { level: 4, name: '领跑天使', icon: '👼', svg: TIER_ICONS.crown, minRuns: 30, color: '#E6E6FA', description: '奔跑在人间的天使' }
   ],
   disabled: [
-    { level: 1, name: '初心跑者', icon: '🎯', minRuns: 0, color: '#CD7F32', description: '踏出第一步的勇气' },
-    { level: 2, name: '疾风跑者', icon: '💨', minRuns: 5, color: '#C0C0C0', description: '在风中自由奔跑' },
-    { level: 3, name: '极速护卫', icon: '⚡', minRuns: 15, color: '#FFD700', description: '速度与勇气并存' },
-    { level: 4, name: '光明统帅', icon: '🌟', minRuns: 30, color: '#E6E6FA', description: '成为黑暗中的光' }
+    { level: 1, name: '初心跑者', icon: '🎯', svg: TIER_ICONS.sprout, minRuns: 0, color: '#CD7F32', description: '踏出第一步的勇气' },
+    { level: 2, name: '疾风跑者', icon: '💨', svg: TIER_ICONS.wind, minRuns: 5, color: '#C0C0C0', description: '在风中自由奔跑' },
+    { level: 3, name: '极速护卫', icon: '⚡', svg: TIER_ICONS.bolt, minRuns: 15, color: '#FFD700', description: '速度与勇气并存' },
+    { level: 4, name: '光明统帅', icon: '🌟', svg: TIER_ICONS.star, minRuns: 30, color: '#E6E6FA', description: '成为黑暗中的光' }
   ]
 };
 
@@ -839,6 +849,83 @@ App({
     return await this.callCloudFunction('updatePoints', {
       action: 'feedback',
       rating: rating
+    });
+  },
+
+  // ==================== 补充：预约完成方法 ====================
+
+  async completeAppointment(appointmentId, data = {}) {
+    return await this.callCloudFunction('handleSchedule', {
+      action: 'completeAppointment',
+      appointmentId: appointmentId,
+      ...data
+    });
+  },
+
+  // ==================== 补充：订单查询方法 ====================
+
+  async getMyOrders(status, page) {
+    return await this.callCloudFunction('handleOrder', {
+      action: 'getMyOrders',
+      status: status || 'all',
+      page: page || 1
+    });
+  },
+
+  async getWaitingOrders(page, latitude, longitude) {
+    return await this.callCloudFunction('handleOrder', {
+      action: 'getWaitingOrders',
+      page: page || 1,
+      latitude: latitude,
+      longitude: longitude
+    });
+  },
+
+  // ==================== 补充：订单实时追踪方法 ====================
+
+  async getOrderDetail(orderId) {
+    return await this.callCloudFunction('handleOrder', {
+      action: 'getOrderDetail',
+      orderId: orderId || ''
+    });
+  },
+
+  async updateVolunteerLocation(orderId, latitude, longitude, runningStats, runningPath) {
+    const params = {
+      action: 'updateVolunteerLocation',
+      orderId: orderId,
+      latitude: latitude,
+      longitude: longitude
+    };
+    if (runningStats) params.runningStats = runningStats;
+    if (runningPath) params.runningPath = runningPath;
+    return await this.callCloudFunction('handleOrder', params);
+  },
+
+  async updateOrderStatus(orderId, status) {
+    return await this.callCloudFunction('handleOrder', {
+      action: 'updateOrderStatus',
+      orderId: orderId,
+      status: status
+    });
+  },
+
+  // ==================== 补充：跑友圈评论查询 ====================
+
+  async getComments(postId, page) {
+    return await this.callCloudFunction('handleCircle', {
+      action: 'getComments',
+      postId: postId,
+      page: page || 1
+    });
+  },
+
+  // ==================== 补充：志愿者详情 ====================
+
+  async getVolunteerDetail(volunteerId) {
+    return await this.callCloudFunction('handleVolunteer', {
+      action: 'getVolunteerDetail',
+      volunteerId: volunteerId
     });
   }
 })

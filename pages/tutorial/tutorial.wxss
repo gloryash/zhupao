@@ -1,0 +1,218 @@
+.tutorial-container {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #FFF8F0 0%, #FFFFFF 100%);
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 60rpx;
+}
+
+/* 跳过按钮 */
+.skip-bar {
+  display: flex;
+  justify-content: flex-end;
+  padding: 24rpx 32rpx;
+}
+
+.skip-btn {
+  padding: 16rpx 32rpx;
+  border-radius: 30rpx;
+  background: rgba(255, 107, 0, 0.1);
+}
+
+.skip-text {
+  font-size: 28rpx;
+  color: #FF6B00;
+}
+
+/* 步骤计数 */
+.step-counter {
+  text-align: center;
+  padding: 8rpx 0 16rpx;
+}
+
+.counter-text {
+  font-size: 28rpx;
+  font-weight: bold;
+  color: #FF6B00;
+}
+
+/* Swiper */
+.tutorial-swiper {
+  height: 820rpx;
+}
+
+/* 步骤卡片 */
+.step-card {
+  margin: 0 32rpx;
+  background: #FFFFFF;
+  border-radius: 24rpx;
+  padding: 60rpx 40rpx;
+  box-shadow: 0 10rpx 40rpx rgba(255, 69, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  box-sizing: border-box;
+  overflow-y: auto;
+}
+
+.step-icon-wrapper {
+  width: 160rpx;
+  height: 160rpx;
+  background: linear-gradient(135deg, #FFF3E0 0%, #FFE0B2 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 40rpx;
+}
+
+.step-emoji {
+  font-size: 80rpx;
+}
+
+.step-title {
+  font-size: 40rpx;
+  font-weight: bold;
+  color: #333333;
+  text-align: center;
+  margin-bottom: 24rpx;
+}
+
+.step-description {
+  font-size: 32rpx;
+  color: #666666;
+  line-height: 1.8;
+  text-align: center;
+  margin-bottom: 40rpx;
+  padding: 0 16rpx;
+}
+
+/* 操作提示 */
+.step-tip-box {
+  width: 100%;
+  background: #FFF5E6;
+  border-radius: 16rpx;
+  padding: 24rpx;
+  box-sizing: border-box;
+}
+
+.tip-label {
+  font-size: 28rpx;
+  font-weight: bold;
+  color: #FF6B00;
+  display: block;
+  margin-bottom: 8rpx;
+}
+
+.tip-content {
+  font-size: 28rpx;
+  color: #333333;
+  line-height: 1.6;
+}
+
+/* 圆点指示器 */
+.dots-row {
+  display: flex;
+  justify-content: center;
+  gap: 16rpx;
+  padding: 24rpx 0;
+}
+
+.dot {
+  width: 16rpx;
+  height: 16rpx;
+  border-radius: 8rpx;
+  background: #FFD699;
+  transition: all 0.3s ease;
+}
+
+.dot.active {
+  width: 48rpx;
+  background: linear-gradient(135deg, #FF8C00 0%, #FF4500 100%);
+}
+
+/* 导航按钮 */
+.nav-bar {
+  display: flex;
+  gap: 24rpx;
+  padding: 0 32rpx;
+}
+
+.nav-btn {
+  flex: 1;
+  height: 100rpx;
+  border-radius: 50rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-btn.prev {
+  background: #FFFFFF;
+  border: 2rpx solid #FF6B00;
+}
+
+.nav-btn.prev .nav-btn-text {
+  color: #FF6B00;
+  font-size: 32rpx;
+  font-weight: bold;
+}
+
+.nav-btn.prev.disabled {
+  opacity: 0.4;
+  border-color: #CCCCCC;
+}
+
+.nav-btn.prev.disabled .nav-btn-text {
+  color: #CCCCCC;
+}
+
+.nav-btn.next {
+  background: linear-gradient(135deg, #FF8C00 0%, #FF4500 100%);
+  box-shadow: 0 8rpx 24rpx rgba(255, 69, 0, 0.25);
+}
+
+.nav-btn.next .nav-btn-text {
+  color: #FFFFFF;
+  font-size: 32rpx;
+  font-weight: bold;
+}
+
+.nav-btn:active {
+  transform: scale(0.98);
+}
+
+/* 不再显示 */
+.never-show-row {
+  padding: 24rpx 32rpx 0;
+  display: flex;
+  justify-content: center;
+}
+
+.checkbox-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.checkbox {
+  width: 40rpx;
+  height: 40rpx;
+  border: 2rpx solid #FF6B00;
+  border-radius: 8rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24rpx;
+  color: #FFFFFF;
+}
+
+.checkbox.checked {
+  background: linear-gradient(135deg, #FF8C00 0%, #FF4500 100%);
+}
+
+.checkbox-label {
+  font-size: 28rpx;
+  color: #999999;
+}

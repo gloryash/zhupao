@@ -478,6 +478,15 @@ Page({
   },
 
   /**
+   * 使用教程
+   */
+  goToTutorial() {
+    wx.navigateTo({
+      url: '/pages/tutorial/tutorial?force=true'
+    });
+  },
+
+  /**
    * 客服与帮助
    */
   goToHelp() {

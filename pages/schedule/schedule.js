@@ -62,15 +62,38 @@ Page({
   },
 
   /**
-   * 加载预约数据
+   * 从云端加载预约数据
    */
   loadAppointments() {
-    const appointments = wx.getStorageSync('appointments') || [];
-    this.setData({ appointments });
+    // 先从本地快速显示
+    const localAppointments = wx.getStorageSync('appointments') || [];
+    this.setData({ appointments: localAppointments });
+
+    // 从云端获取最新数据
+    app.getAppointments().then(res => {
+      if (res.success) {
+        const appointments = (res.appointments || []).map(apt => ({
+          id: apt._id,
+          date: apt.appointmentDate,
+          timeSlot: apt.appointmentTime,
+          volunteerName: apt.volunteerName || '',
+          volunteerPhone: '',
+          blindName: apt.blindName || '',
+          blindPhone: '',
+          blindOpenid: apt.blindOpenid || '',
+          remark: apt.note || '',
+          status: apt.status || 'pending',
+          createdAt: apt.createdAt ? new Date(apt.createdAt).toLocaleString() : ''
+        }));
+        this.setData({ appointments });
+        // 同步到本地缓存
+        wx.setStorageSync('appointments', appointments);
+      }
+    }).catch(() => {});
   },
 
   /**
-   * 保存预约数据
+   * 保存预约数据（本地缓存）
    */
   saveAppointments() {
     wx.setStorageSync('appointments', this.data.appointments);
@@ -302,7 +325,7 @@ Page({
   },
 
   /**
-   * 取消预约
+   * 取消预约（同步云端）
    */
   cancelAppointment(e) {
     const appointmentId = e.currentTarget.dataset.id;
@@ -312,14 +335,28 @@ Page({
       content: '确定要取消这次预约吗？',
       success: (res) => {
         if (res.confirm) {
-          const appointments = this.data.appointments.filter(
-            apt => apt.id !== appointmentId
-          );
-          this.setData({ appointments });
-          this.saveAppointments();
-          this.updateSelectedAppointments();
+          wx.showLoading({ title: '取消中...' });
 
-          wx.showToast({ title: '已取消', icon: 'success' });
+          app.cancelAppointment(appointmentId).then(() => {
+            wx.hideLoading();
+            const appointments = this.data.appointments.filter(
+              apt => apt.id !== appointmentId
+            );
+            this.setData({ appointments });
+            this.saveAppointments();
+            this.updateSelectedAppointments();
+            wx.showToast({ title: '已取消', icon: 'success' });
+          }).catch(() => {
+            wx.hideLoading();
+            // 云端失败，降级本地删除
+            const appointments = this.data.appointments.filter(
+              apt => apt.id !== appointmentId
+            );
+            this.setData({ appointments });
+            this.saveAppointments();
+            this.updateSelectedAppointments();
+            wx.showToast({ title: '已取消', icon: 'success' });
+          });
         }
       }
     });
@@ -341,7 +378,7 @@ Page({
   },
 
   /**
-   * 完成预约（志愿者操作）
+   * 完成预约（志愿者操作，同步云端）
    */
   completeAppointment(e) {
     const appointmentId = e.currentTarget.dataset.id;
@@ -351,17 +388,34 @@ Page({
       content: '确认完成这次陪跑服务吗？',
       success: (res) => {
         if (res.confirm) {
-          const appointments = this.data.appointments.map(apt => {
-            if (apt.id === appointmentId) {
-              return { ...apt, status: 'completed' };
-            }
-            return apt;
-          });
-          this.setData({ appointments });
-          this.saveAppointments();
-          this.updateSelectedAppointments();
+          wx.showLoading({ title: '提交中...' });
 
-          wx.showToast({ title: '已完成', icon: 'success' });
+          app.completeAppointment(appointmentId).then(() => {
+            wx.hideLoading();
+            const appointments = this.data.appointments.map(apt => {
+              if (apt.id === appointmentId) {
+                return { ...apt, status: 'completed' };
+              }
+              return apt;
+            });
+            this.setData({ appointments });
+            this.saveAppointments();
+            this.updateSelectedAppointments();
+            wx.showToast({ title: '已完成', icon: 'success' });
+          }).catch(() => {
+            wx.hideLoading();
+            // 云端失败，降级本地更新
+            const appointments = this.data.appointments.map(apt => {
+              if (apt.id === appointmentId) {
+                return { ...apt, status: 'completed' };
+              }
+              return apt;
+            });
+            this.setData({ appointments });
+            this.saveAppointments();
+            this.updateSelectedAppointments();
+            wx.showToast({ title: '已完成', icon: 'success' });
+          });
         }
       }
     });

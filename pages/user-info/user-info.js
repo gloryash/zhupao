@@ -392,18 +392,20 @@ Page({
     // 同时保存到全局变量
     app.globalData.userInfo = userInfo;
 
-    wx.showToast({
-      title: '注册成功',
-      icon: 'success',
-      duration: 1500
+    // 同步到云端
+    wx.showLoading({ title: '注册中...' });
+    app.syncUserToCloud(userInfo, userType).then(cloudUser => {
+      wx.hideLoading();
+      wx.showToast({ title: '注册成功', icon: 'success', duration: 1500 });
+      console.log(`${userType === 'disabled' ? '视障人士' : '志愿者'}信息已同步到云端:`, cloudUser);
+      setTimeout(() => { this.navigateToPage(userType); }, 1500);
+    }).catch(() => {
+      wx.hideLoading();
+      // 云端同步失败，本地已保存，仍可使用
+      wx.showToast({ title: '注册成功', icon: 'success', duration: 1500 });
+      console.log(`${userType === 'disabled' ? '视障人士' : '志愿者'}信息已本地保存`);
+      setTimeout(() => { this.navigateToPage(userType); }, 1500);
     });
-
-    console.log(`${userType === 'disabled' ? '视障人士' : '志愿者'}信息已保存：`, userInfo);
-
-    // 延迟跳转，确保数据保存完成
-    setTimeout(() => {
-      this.navigateToPage(userType);
-    }, 1500);
   },
 
   /**

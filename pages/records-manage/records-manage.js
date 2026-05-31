@@ -2,12 +2,14 @@
  * 陪跑记录管理页面
  * 保存志愿者与视障人士的陪跑记录
  */
+const app = getApp();
+
 Page({
   data: {
-    records: [],      // 陪跑记录列表
-    filteredRecords: [], // 筛选后的记录
-    currentTab: 'all', // 当前筛选：all-全部, volunteer-志愿者视角, blind-盲人视角
-    searchKeyword: '', // 搜索关键词
+    records: [],
+    filteredRecords: [],
+    currentTab: 'all',
+    searchKeyword: '',
     stats: {
       total: 0,
       totalDistance: 0,
@@ -20,24 +22,41 @@ Page({
   },
 
   onShow() {
-    // 每次显示页面时重新加载数据
     this.loadRecords();
   },
 
   /**
-   * 加载陪跑记录
+   * 从云端加载陪跑记录
    */
   loadRecords() {
-    const records = wx.getStorageSync('companion_records') || [];
-    // 按时间倒序排列
-    records.sort((a, b) => new Date(b.completedTime) - new Date(a.completedTime));
+    // 先从本地快速显示
+    const localRecords = wx.getStorageSync('companion_records') || [];
+    localRecords.sort((a, b) => new Date(b.completedTime) - new Date(a.completedTime));
+    this.setData({ records: localRecords, filteredRecords: localRecords });
+    this.calculateStats(localRecords);
 
-    this.setData({
-      records,
-      filteredRecords: records
-    });
-
-    this.calculateStats(records);
+    // 从云端获取最新数据
+    app.getCompanionRecords(1).then(res => {
+      if (res.success && res.records.length > 0) {
+        const records = res.records.map(r => ({
+          id: r._id,
+          volunteerName: r.partnerType === 'volunteer' ? r.partnerName : r.userName,
+          blindName: r.partnerType === 'disabled' ? r.partnerName : r.userName,
+          completedTime: r.endTime || r.date,
+          targetDistance: r.distance ? r.distance + ' km' : '',
+          actualDistance: r.distance || 0,
+          distance: r.distance || 0,
+          duration: r.duration || 0,
+          estimatedDuration: '',
+          volunteerRate: r.rating || 0,
+          blindRate: r.rating || 0,
+          volunteerComment: r.comment || '',
+          blindComment: ''
+        }));
+        this.setData({ records: records, filteredRecords: records });
+        this.calculateStats(records);
+      }
+    }).catch(() => {});
   },
 
   /**
@@ -169,7 +188,7 @@ Page({
   },
 
   /**
-   * 删除记录
+   * 删除记录（同步云端）
    */
   deleteRecord(e) {
     const id = e.currentTarget.dataset.id;
@@ -178,18 +197,34 @@ Page({
       content: '确定要删除这条陪跑记录吗？',
       success: (res) => {
         if (res.confirm) {
-          const records = this.data.records.filter(r => r.id !== id);
-          wx.setStorageSync('companion_records', records);
-          this.setData({ records });
-          this.filterRecords(this.data.searchKeyword, this.data.currentTab);
-          wx.showToast({ title: '删除成功', icon: 'success' });
+          wx.showLoading({ title: '删除中...' });
+
+          // 云端删除
+          app.deleteRecords([id], false).then(() => {
+            wx.hideLoading();
+            const records = this.data.records.filter(r => r.id !== id);
+            wx.setStorageSync('companion_records', records);
+            this.setData({ records });
+            this.filterRecords(this.data.searchKeyword, this.data.currentTab);
+            this.calculateStats(records);
+            wx.showToast({ title: '删除成功', icon: 'success' });
+          }).catch(() => {
+            wx.hideLoading();
+            // 降级本地删除
+            const records = this.data.records.filter(r => r.id !== id);
+            wx.setStorageSync('companion_records', records);
+            this.setData({ records });
+            this.filterRecords(this.data.searchKeyword, this.data.currentTab);
+            this.calculateStats(records);
+            wx.showToast({ title: '删除成功', icon: 'success' });
+          });
         }
       }
     });
   },
 
   /**
-   * 清除所有记录
+   * 清除所有记录（同步云端）
    */
   clearAllRecords() {
     wx.showModal({
@@ -197,10 +232,23 @@ Page({
       content: '确定要清除所有陪跑记录吗？此操作不可恢复！',
       success: (res) => {
         if (res.confirm) {
-          wx.removeStorageSync('companion_records');
-          this.setData({ records: [], filteredRecords: [] });
-          this.calculateStats([]);
-          wx.showToast({ title: '已清除所有记录', icon: 'success' });
+          wx.showLoading({ title: '清除中...' });
+
+          // 云端删除全部
+          app.deleteRecords(null, true).then(() => {
+            wx.hideLoading();
+            wx.removeStorageSync('companion_records');
+            this.setData({ records: [], filteredRecords: [] });
+            this.calculateStats([]);
+            wx.showToast({ title: '已清除所有记录', icon: 'success' });
+          }).catch(() => {
+            wx.hideLoading();
+            // 降级本地清除
+            wx.removeStorageSync('companion_records');
+            this.setData({ records: [], filteredRecords: [] });
+            this.calculateStats([]);
+            wx.showToast({ title: '已清除所有记录', icon: 'success' });
+          });
         }
       }
     });

@@ -7,7 +7,8 @@ Page({
     currentStep: 1,
 
     // 视频相关
-    videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-group-of-friends-running-in-the-park-42331-large.mp4',
+    // 培训视频地址（云存储）— 请将文件名替换为你实际上传的视频文件名
+    videoUrl: 'cloud://cloudbase-4gujmrr46d949513.636c-cloudbase-4gujmrr46d949513-1330514838/training-video.mp4',
     videoCompleted: false,
 
     // 考试相关
@@ -35,43 +36,76 @@ Page({
   },
 
   /**
-   * 检查培训状态，确定当前步骤
+   * 检查培训状态（云端优先）
    */
   checkTrainingStatus() {
+    // 先从本地快速判断
     const examPassed = wx.getStorageSync('exam_passed');
     const videoWatched = wx.getStorageSync('volunteer_video_watched');
 
     if (examPassed) {
-      // 已通过考试，显示证书
       const examDate = wx.getStorageSync('exam_date') || new Date().toLocaleString();
-      this.setData({
-        currentStep: 3,
-        examDate: examDate,
-        examPassed: true
-      });
+      this.setData({ currentStep: 3, examDate: examDate, examPassed: true });
+    } else if (videoWatched) {
+      this.loadExamQuestions();
+      this.setData({ currentStep: 2, videoCompleted: true });
     } else {
-      // 未通过考试
-      if (videoWatched) {
-        // 已观看过视频，进入考试步骤
-        this.loadExamQuestions();
-        this.setData({
-          currentStep: 2,
-          videoCompleted: true
-        });
-      } else {
-        // 未观看视频，停留在第一步
-        this.setData({
-          currentStep: 1,
-          videoCompleted: false
-        });
-      }
+      this.setData({ currentStep: 1, videoCompleted: false });
     }
+
+    // 云端同步培训状态
+    app.getTrainingStatus().then(res => {
+      if (res.success) {
+        const status = res.status;
+        if (status.examPassed) {
+          wx.setStorageSync('exam_passed', true);
+          wx.setStorageSync('exam_score', status.examScore);
+          wx.setStorageSync('exam_date', status.examDate);
+          wx.setStorageSync('certificate_no', status.certificateNo);
+          this.setData({ currentStep: 3, examDate: status.examDate, examPassed: true });
+        } else if (status.videoWatched) {
+          wx.setStorageSync('volunteer_video_watched', true);
+          if (this.data.currentStep < 2) {
+            this.loadExamQuestions();
+            this.setData({ currentStep: 2, videoCompleted: true });
+          }
+        }
+      }
+    }).catch(() => {});
   },
 
   /**
-   * 加载考试题目
+   * 从云端加载考试题目
    */
   loadExamQuestions() {
+    // 云端获取题目
+    app.getExamQuestions().then(res => {
+      if (res.success && res.questions.length > 0) {
+        const questions = res.questions.map(q => ({
+          ...q,
+          // 云端返回 options 数组，映射为 optionA/B/C/D 供 WXML 使用
+          optionA: q.options ? q.options[0] : q.optionA,
+          optionB: q.options ? q.options[1] : q.optionB,
+          optionC: q.options ? q.options[2] : q.optionC,
+          optionD: q.options ? q.options[3] : q.optionD,
+          correctAnswer: q.answer !== undefined ? q.answer : -1,
+          userAnswer: -1,
+          answered: false,
+          correct: false
+        }));
+        this.setData({ questions });
+      } else {
+        this._loadLocalQuestions();
+      }
+    }).catch(() => {
+      this._loadLocalQuestions();
+    });
+  },
+
+  /**
+   * 本地降级加载题目
+   */
+  _loadLocalQuestions() {
     const exams = wx.getStorageSync('training_exams') || [];
     if (exams.length > 0) {
       const exam = exams[0];
@@ -89,14 +123,11 @@ Page({
    * 视频播放完成
    */
   onVideoEnded() {
-    this.setData({
-      videoCompleted: true
-    });
+    this.setData({ videoCompleted: true });
     wx.setStorageSync('volunteer_video_watched', true);
-    wx.showToast({
-      title: '视频学习完成！',
-      icon: 'success'
-    });
+    // 同步到云端
+    app.updateVideoWatched().catch(() => {});
+    wx.showToast({ title: '视频学习完成！', icon: 'success' });
   },
 
   /**
@@ -206,7 +237,7 @@ Page({
       const correctCount = questions.filter(q => q.correct).length;
       const totalCount = questions.length;
       const score = Math.round((correctCount / totalCount) * 100);
-      const passed = correctCount >= Math.ceil(totalCount * 0.6); // 60%及格
+      const passed = score >= 80; // 80%及格，与云端一致
 
       this.setData({
         allAnswered: true,
@@ -229,6 +260,19 @@ Page({
           examDate: examDate
         });
 
+        // 提交考试结果到云端
+        const answers = questions.map(q => ({
+          questionId: q._id,
+          selectedIndex: q.userAnswer
+        }));
+        app.submitExam(answers).then(res => {
+          if (res.success && res.certificateNo) {
+            wx.setStorageSync('certificate_no', res.certificateNo);
+          }
+        }).catch(err => {
+          console.error('云端提交考试失败:', err);
+        });
+
         // 延迟显示证书页面
         setTimeout(() => {
           wx.showModal({
@@ -242,6 +286,23 @@ Page({
         }, 500);
       }
     }
+  },
+
+  /**
+   * 演示模式：跳过考试
+   */
+  skipExam() {
+    const examDate = new Date().toLocaleDateString('zh-CN');
+    wx.setStorageSync('exam_passed', true);
+    wx.setStorageSync('exam_score', 100);
+    wx.setStorageSync('exam_date', examDate);
+    wx.setStorageSync('isRegistered', true);
+    this.setData({
+      currentStep: 3,
+      examPassed: true,
+      examDate: examDate
+    });
+    wx.showToast({ title: '已跳过考试', icon: 'none' });
   },
 
   /**

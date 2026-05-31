@@ -1,11 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 81 81" width="81" height="81">
-  <!-- Home - Orange Gradient -->
-  <defs>
-    <linearGradient id="homeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#FF8C00"/>
-      <stop offset="100%" style="stop-color:#FF4500"/>
-    </linearGradient>
-  </defs>
-  <rect width="81" height="81" fill="white" rx="12"/>
-  <path d="M40.5 20L20 38v30h15v-18h11v18h15V38L40.5 20z" fill="url(#homeGrad)"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 81 81" width="200" height="200">
+  <g fill="none" stroke="#8E8E93" stroke-width="5.5" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M6 38 L40.5 8 L75 38 V69 a4 4 0 0 1 -4 4 H10 a4 4 0 0 1 -4 -4 Z"/>
+    <path d="M30 73 V54 a2 2 0 0 1 2 -2 h17 a2 2 0 0 1 2 2 V73"/>
+  </g>
 </svg>

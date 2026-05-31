@@ -9,6 +9,7 @@
         latitude="{{mapLatitude}}"
         longitude="{{mapLongitude}}"
         markers="{{mapMarkers}}"
+        polyline="{{polyline}}"
         scale="15"
         show-location="true"
         enable-zoom="true"

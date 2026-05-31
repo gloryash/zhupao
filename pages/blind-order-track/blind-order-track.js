@@ -10,6 +10,7 @@ Page({
     mapLatitude: null,
     mapLongitude: null,
     mapMarkers: [],
+    polyline: [],
     runningStats: {
       totalDistance: 0,
       totalTime: 0,
@@ -37,17 +38,64 @@ Page({
   },
 
   /**
-   * 加载订单状态
+   * 加载订单状态（云端优先）
    */
   loadOrderStatus() {
+    // 云端查询我的订单
+    app.getMyOrders('all', 1).then(res => {
+      if (res.success && res.orders.length > 0) {
+        // 找到最近的活跃订单
+        const activeOrder = res.orders.find(o =>
+          ['waiting', 'accepted', 'arrived', 'running', 'completed'].includes(o.status)
+        );
+        if (activeOrder) {
+          this._renderOrder({
+            id: activeOrder._id,
+            blindPhone: '',
+            blindName: activeOrder.userName,
+            blindLatitude: activeOrder.latitude,
+            blindLongitude: activeOrder.longitude,
+            volunteerName: activeOrder.volunteerName,
+            volunteerPhone: activeOrder.volunteerPhone,
+            volunteerLat: activeOrder.volunteerLat || 0,
+            volunteerLng: activeOrder.volunteerLng || 0,
+            status: activeOrder.status === 'waiting' ? 'pending' : activeOrder.status,
+            createTime: activeOrder.publishTime,
+            // 从云端获取实时跑步数据
+            runningStats: activeOrder.runningStats || null,
+            runningPath: activeOrder.runningPath || []
+          });
+          return;
+        }
+      }
+      // 云端没有，降级本地
+      this._loadLocalOrder();
+    }).catch(() => {
+      this._loadLocalOrder();
+    });
+  },
+
+  /**
+   * 本地降级加载订单
+   */
+  _loadLocalOrder() {
     const userInfo = wx.getStorageSync('userInfo_disabled') || {};
     const orders = wx.getStorageSync('blind_orders') || [];
-    // 查找当前用户最近的未完成订单
     const myOrder = orders.find(o =>
       o.blindPhone === userInfo.phone &&
       ['pending', 'accepted', 'arrived', 'running', 'completed'].includes(o.status)
     );
+    if (myOrder) {
+      this._renderOrder(myOrder);
+    } else {
+      this.setData({ hasOrder: false, orderStatus: 'pending', orderInfo: null, mapMarkers: [], polyline: [] });
+    }
+  },
 
+  /**
+   * 渲染订单数据到页面
+   */
+  _renderOrder(myOrder) {
     if (myOrder) {
       // 获取志愿者信息
       const volunteerInfo = {
@@ -61,6 +109,7 @@ Page({
 
       // 设置地图标记
       let mapMarkers = [];
+      let polyline = [];
       let statusText = '';
       if (myOrder.status === 'pending') {
         statusText = '等待接单';
@@ -74,43 +123,110 @@ Page({
         statusText = '已完成';
       }
 
-      if (['accepted', 'arrived', 'running'].includes(myOrder.status)) {
-        // 显示志愿者位置标记
-        mapMarkers.push({
-          id: 1,
-          latitude: myOrder.volunteerLat,
-          longitude: myOrder.volunteerLng,
-          width: 40,
-          height: 40,
-          iconPath: '/images/volunteer-marker.png',
-          callout: {
-            content: '志愿者: ' + (myOrder.volunteerName || '志愿者'),
-            display: 'ALWAYS',
-            padding: 8,
-            borderRadius: 6,
-            bgColor: '#07C160',
-            color: '#ffffff',
-            fontSize: 12
-          }
-        });
-        // 显示盲人位置标记
+      // 接单途中：志愿者 → 起点（视障者位置）绿色路径
+      if (['accepted', 'arrived'].includes(myOrder.status)) {
+        // 起点绿圆（视障者位置）
         mapMarkers.push({
           id: 2,
           latitude: myOrder.blindLatitude,
           longitude: myOrder.blindLongitude,
           width: 40,
           height: 40,
-          iconPath: '/images/blind-marker.png',
+          iconPath: '/images/marker/dot-green.png',
           callout: {
-            content: '您的位置',
+            content: '您（起点）',
             display: 'ALWAYS',
             padding: 8,
             borderRadius: 6,
-            bgColor: '#1890FF',
-            color: '#ffffff',
-            fontSize: 12
-          }
+            bgColor: '#07C160',
+            color: '#FFFFFF',
+            fontSize: 12,
+          },
         });
+        // 志愿者跑者图标
+        if (myOrder.volunteerLat && myOrder.volunteerLng) {
+          mapMarkers.push({
+            id: 1,
+            latitude: myOrder.volunteerLat,
+            longitude: myOrder.volunteerLng,
+            width: 48,
+            height: 48,
+            iconPath: '/images/marker/runner.png',
+            callout: {
+              content: '志愿者 ' + (myOrder.volunteerName || ''),
+              display: 'ALWAYS',
+              padding: 8,
+              borderRadius: 6,
+              bgColor: '#07C160',
+              color: '#FFFFFF',
+              fontSize: 12,
+            },
+          });
+          // 绿色带箭头路径：志愿者 → 视障者起点
+          polyline = [{
+            points: [
+              { latitude: myOrder.volunteerLat, longitude: myOrder.volunteerLng },
+              { latitude: myOrder.blindLatitude, longitude: myOrder.blindLongitude },
+            ],
+            color: '#07C160',
+            width: 6,
+            dottedLine: false,
+            arrowLine: true,
+          }];
+        }
+      }
+
+      // 陪跑中：起点绿 + 终点红 + 蓝色实时轨迹
+      if (myOrder.status === 'running') {
+        // 起点绿圆（最初的视障者位置）
+        mapMarkers.push({
+          id: 2,
+          latitude: myOrder.blindLatitude,
+          longitude: myOrder.blindLongitude,
+          width: 40,
+          height: 40,
+          iconPath: '/images/marker/dot-green.png',
+          callout: {
+            content: '起点',
+            display: 'ALWAYS',
+            padding: 6,
+            borderRadius: 6,
+            bgColor: '#07C160',
+            color: '#FFFFFF',
+            fontSize: 12,
+          },
+        });
+        // 终点红圆（若有 endAddress）
+        const endAddr = (myOrder.endAddress) || ((app.globalData.orderInfo || {}).endAddress);
+        if (endAddr && endAddr.latitude) {
+          mapMarkers.push({
+            id: 3,
+            latitude: endAddr.latitude,
+            longitude: endAddr.longitude,
+            width: 40,
+            height: 40,
+            iconPath: '/images/marker/dot-red.png',
+            callout: {
+              content: '终点 ' + (endAddr.name || ''),
+              display: 'ALWAYS',
+              padding: 6,
+              borderRadius: 6,
+              bgColor: '#FF3B30',
+              color: '#FFFFFF',
+              fontSize: 12,
+            },
+          });
+        }
+        // 蓝色轨迹线
+        if (myOrder.runningPath && myOrder.runningPath.length >= 2) {
+          polyline = [{
+            points: myOrder.runningPath,
+            color: '#1890FF',
+            width: 6,
+            dottedLine: false,
+            arrowLine: true,
+          }];
+        }
       }
 
       this.setData({
@@ -121,14 +237,22 @@ Page({
         mapLatitude: myOrder.blindLatitude,
         mapLongitude: myOrder.blindLongitude,
         mapMarkers: mapMarkers,
-        statusText: statusText
+        statusText: statusText,
+        runningStats: myOrder.runningStats ? {
+          totalDistance: parseFloat(Number(myOrder.runningStats.totalDistance).toFixed(2)),
+          totalTime: myOrder.runningStats.totalTime || 0,
+          formattedTime: myOrder.runningStats.formattedTime || '0',
+          avgSpeed: myOrder.runningStats.avgSpeed || 0
+        } : this.data.runningStats,
+        polyline: polyline,
       });
     } else {
       this.setData({
         hasOrder: false,
         orderStatus: 'pending',
         orderInfo: null,
-        mapMarkers: []
+        mapMarkers: [],
+        polyline: []
       });
     }
   },
@@ -184,6 +308,7 @@ Page({
    * 拨打电话
    */
   makeCall() {
+    wx.vibrateShort();
     const phone = this.data.volunteerInfo?.phone;
     if (phone) {
       wx.makePhoneCall({
@@ -196,6 +321,7 @@ Page({
    * 取消订单
    */
   cancelOrder() {
+    wx.vibrateShort();
     wx.showModal({
       title: '取消订单',
       content: '确定要取消这次陪跑请求吗？',
@@ -203,11 +329,18 @@ Page({
       confirmColor: '#ff4d4f',
       success: (res) => {
         if (res.confirm) {
+          // 本地更新
           const orders = wx.getStorageSync('blind_orders') || [];
           const orderIndex = orders.findIndex(o => o.id === this.data.orderInfo.id);
           if (orderIndex !== -1) {
             orders[orderIndex].status = 'cancelled';
             wx.setStorageSync('blind_orders', orders);
+          }
+          // 云端取消
+          if (this.data.orderInfo && this.data.orderInfo.id) {
+            app.cancelOrder(this.data.orderInfo.id).catch(err => {
+              console.error('云端取消订单失败:', err);
+            });
           }
           this.setData({ hasOrder: false });
           wx.showToast({ title: '订单已取消', icon: 'none' });
@@ -220,6 +353,7 @@ Page({
    * 结束陪跑（盲人端主动结束）
    */
   endRun() {
+    wx.vibrateLong();
     wx.showModal({
       title: '结束陪跑',
       content: '确定要结束这次陪跑吗？',
@@ -249,6 +383,7 @@ Page({
    * 设置评分
    */
   setRating(e) {
+    wx.vibrateShort();
     this.setData({ rating: e.currentTarget.dataset.score });
   },
 
@@ -263,6 +398,7 @@ Page({
    * 提交评价
    */
   submitRating() {
+    wx.vibrateShort();
     if (this.data.rating === 0) {
       wx.showToast({ title: '请先评分', icon: 'none' });
       return;
@@ -305,6 +441,7 @@ Page({
    * 返回首页
    */
   goHome() {
+    wx.vibrateShort();
     wx.switchTab({ url: '/pages/home/home' });
   },
 
@@ -312,6 +449,7 @@ Page({
    * 发起新订单
    */
   createOrder() {
+    wx.vibrateShort();
     wx.navigateTo({ url: '/pages/appointment/appointment' });
   }
 })

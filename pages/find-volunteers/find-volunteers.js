@@ -21,54 +21,78 @@ Page({
   },
 
   /**
-   * 加载接单中的志愿者列表
+   * 从云端加载接单中的志愿者列表
    */
   loadVolunteers() {
     const userInfo = wx.getStorageSync('userInfo_disabled') || {};
-    this.setData({ userInfo });
+    this.setData({ userInfo, loading: true });
 
-    // 获取接单中的志愿者列表
-    let takingOrdersList = wx.getStorageSync('takingOrdersList') || [];
-
-    // 如果没有志愿者，添加测试数据（开发测试用）
-    if (takingOrdersList.length === 0) {
-      // 测试数据
-      takingOrdersList = [
-        {
-          phone: '13800138000',
-          name: '测试志愿者',
-          avatar: '',
-          latitude: 31.2304,
-          longitude: 121.4737,
-          pace: '5分30秒/公里',
-          runningYears: '3',
-          takingOrdersTime: Date.now()
-        }
-      ];
-    }
-
-    // 获取盲人当前位置
+    // 获取盲人当前位置，然后查询附近志愿者
     wx.getLocation({
       type: 'gcj02',
       success: (res) => {
-        const volunteersWithDistance = takingOrdersList.map(v => ({
-          ...v,
-          distance: this.calculateDistance(res.latitude, res.longitude, v.latitude, v.longitude)
-        })).sort((a, b) => a.distance - b.distance);
-
-        this.setData({
-          volunteers: volunteersWithDistance,
-          loading: false
+        // 云端查询可用志愿者
+        app.getAvailableVolunteers(res.latitude, res.longitude, 10000).then(cloudRes => {
+          if (cloudRes.success && cloudRes.volunteers.length > 0) {
+            const volunteers = cloudRes.volunteers.map(v => ({
+              openid: v.openid,
+              phone: v.phone || '',
+              name: v.nickName || v.name || '志愿者',
+              avatar: v.avatarUrl || '',
+              latitude: v.latitude,
+              longitude: v.longitude,
+              tierName: v.tierName || '',
+              totalRuns: v.totalRuns || 0,
+              likes: v.likes || 0,
+              distance: v.distance ? (v.distance / 1000).toFixed(1) : null
+            }));
+            this.setData({ volunteers, loading: false });
+            wx.stopPullDownRefresh();
+          } else {
+            this._loadLocalVolunteers(res.latitude, res.longitude);
+          }
+        }).catch(() => {
+          this._loadLocalVolunteers(res.latitude, res.longitude);
         });
       },
       fail: () => {
-        // 如果获取位置失败，显示列表不计算距离
-        this.setData({
-          volunteers: takingOrdersList,
-          loading: false
+        // 位置获取失败，尝试不带坐标查询
+        app.getVolunteers(1).then(cloudRes => {
+          if (cloudRes.success && cloudRes.volunteers.length > 0) {
+            const volunteers = cloudRes.volunteers.map(v => ({
+              openid: v.openid,
+              phone: '',
+              name: v.nickName || v.name || '志愿者',
+              avatar: v.avatarUrl || '',
+              tierName: v.tierName || '',
+              totalRuns: v.totalRuns || 0,
+              distance: null
+            }));
+            this.setData({ volunteers, loading: false });
+          } else {
+            this._loadLocalVolunteers();
+          }
+        }).catch(() => {
+          this._loadLocalVolunteers();
         });
+        wx.stopPullDownRefresh();
       }
     });
+  },
+
+  /**
+   * 本地降级加载志愿者
+   */
+  _loadLocalVolunteers(lat, lng) {
+    let takingOrdersList = wx.getStorageSync('takingOrdersList') || [];
+    if (lat && lng) {
+      takingOrdersList = takingOrdersList.map(v => ({
+        ...v,
+        distance: this.calculateDistance(lat, lng, v.latitude, v.longitude)
+      })).sort((a, b) => a.distance - b.distance);
+    }
+    this.setData({ volunteers: takingOrdersList, loading: false });
+    wx.stopPullDownRefresh();
   },
 
   /**
@@ -108,7 +132,7 @@ Page({
   },
 
   /**
-   * 创建订单
+   * 创建订单（云端优先，本地降级）
    */
   createOrder(volunteer, userInfo) {
     wx.showLoading({ title: '下单中...' });
@@ -117,43 +141,71 @@ Page({
     wx.getLocation({
       type: 'gcj02',
       success: (locationRes) => {
-        // 创建订单
-        const order = {
-          id: Date.now(),
-          blindPhone: userInfo.phone,
-          blindName: userInfo.name || '视障跑者',
-          blindAvatar: userInfo.avatarUrl || '',
-          blindLatitude: locationRes.latitude,
-          blindLongitude: locationRes.longitude,
-          volunteerPhone: volunteer.phone,
-          volunteerName: volunteer.name,
-          volunteerAvatar: volunteer.avatar || '',
-          status: 'pending', // pending-待接单, accepted-已接单
-          createTime: Date.now()
-        };
+        // 云端发布订单
+        app.publishOrder({
+          targetDistance: '3',
+          estimatedDuration: '30分钟',
+          latitude: locationRes.latitude,
+          longitude: locationRes.longitude,
+          address: '当前位置'
+        }).then(res => {
+          wx.hideLoading();
+          if (res.success) {
+            // 同步到本地缓存
+            const localOrder = {
+              id: res.orderId,
+              blindPhone: userInfo.phone,
+              blindName: userInfo.name || '视障跑者',
+              blindLatitude: locationRes.latitude,
+              blindLongitude: locationRes.longitude,
+              volunteerName: volunteer.name,
+              status: 'waiting',
+              createTime: Date.now()
+            };
+            let orders = wx.getStorageSync('blind_orders') || [];
+            orders.unshift(localOrder);
+            wx.setStorageSync('blind_orders', orders);
 
-        // 保存订单
-        let orders = wx.getStorageSync('blind_orders') || [];
-        orders.unshift(order);
-        wx.setStorageSync('blind_orders', orders);
-
-        wx.hideLoading();
-
-        wx.showModal({
-          title: '下单成功',
-          content: `已向「${volunteer.name}」发送陪跑请求，请等待对方接单。`,
-          confirmText: '查看订单',
-          success: () => {
-            // 跳转到订单跟踪页面
-            wx.navigateTo({
-              url: '/pages/blind-order-track/blind-order-track'
+            wx.showModal({
+              title: '下单成功',
+              content: `已向「${volunteer.name}」发送陪跑请求，请等待对方接单。`,
+              confirmText: '查看订单',
+              success: () => {
+                wx.navigateTo({
+                  url: '/pages/blind-order-track/blind-order-track'
+                });
+              }
             });
           }
-        });
+        }).catch(() => {
+          wx.hideLoading();
+          // 降级到本地保存
+          const order = {
+            id: Date.now(),
+            blindPhone: userInfo.phone,
+            blindName: userInfo.name || '视障跑者',
+            blindLatitude: locationRes.latitude,
+            blindLongitude: locationRes.longitude,
+            volunteerPhone: volunteer.phone,
+            volunteerName: volunteer.name,
+            status: 'pending',
+            createTime: Date.now()
+          };
+          let orders = wx.getStorageSync('blind_orders') || [];
+          orders.unshift(order);
+          wx.setStorageSync('blind_orders', orders);
 
-        // 通知志愿者有新订单（通过全局状态）
-        app.globalData.hasNewOrderFromBlind = true;
-        app.globalData.newOrderInfo = order;
+          wx.showModal({
+            title: '下单成功',
+            content: `已向「${volunteer.name}」发送陪跑请求，请等待对方接单。`,
+            confirmText: '查看订单',
+            success: () => {
+              wx.navigateTo({
+                url: '/pages/blind-order-track/blind-order-track'
+              });
+            }
+          });
+        });
       },
       fail: () => {
         wx.hideLoading();

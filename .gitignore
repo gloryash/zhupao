@@ -1,5 +1,9 @@
 node_modules/
 miniprogram_npm/
+dist/
+*.tsbuildinfo
+.DS_Store
+tmp/
 project.private.config.json
 .claude/
 .superpowers/

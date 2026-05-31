@@ -226,6 +226,15 @@
   transform: translateY(0);
 }
 
+/* 开发者提示 */
+.dev-tip {
+  display: block;
+  margin-top: 24rpx;
+  text-align: center;
+  font-size: 24rpx;
+  color: #B0B0B0;
+}
+
 /* 底部说明 */
 .footer-section {
   display: flex;

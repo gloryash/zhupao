@@ -1,0 +1,21 @@
+# Dependencies
+node_modules
+
+# Build output
+dist
+dist-ssr
+
+# TypeScript incremental build artifacts
+*.tsbuildinfo
+
+# Local env / logs
+*.local
+logs
+*.log
+npm-debug.log*
+
+# Editor / OS
+.DS_Store
+.vscode/*
+!.vscode/extensions.json
+.idea

@@ -21,7 +21,7 @@ exports.main = async (event, context) => {
   try {
     // 查询云端用户数据
     const userRes = await db.collection('users').where({
-      _openid: openid
+      openid: openid
     }).get()
 
     if (userRes.data.length > 0) {

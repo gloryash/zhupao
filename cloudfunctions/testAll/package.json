@@ -1,0 +1,9 @@
+{
+  "name": "testAll",
+  "version": "1.0.0",
+  "description": "一键测试所有云函数接口",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

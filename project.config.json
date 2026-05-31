@@ -39,7 +39,7 @@
     "swc": false,
     "disableSWC": true
   },
-  "appid": "wxf0197bd9267e83df",
+  "appid": "wx63b77737f1b394e7",
   "projectname": "blind-run-miniapp",
   "libVersion": "3.0.2",
   "cloudfunctionTemplateRoot": "cloudfunctionTemplate/",

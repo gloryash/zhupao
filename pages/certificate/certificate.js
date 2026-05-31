@@ -1,4 +1,6 @@
 // pages/certificate/certificate.js
+const app = getApp();
+
 Page({
 
   /**
@@ -23,31 +25,50 @@ Page({
   },
 
   /**
-   * 加载证书信息
+   * 加载证书信息（云端优先）
    */
   loadCertificateInfo() {
-    // 获取当前用户类型
     const currentUserType = wx.getStorageSync('currentUserType');
     const isVolunteer = currentUserType === 'volunteer';
-
     this.setData({ isVolunteer });
 
-    // 如果是视障人士，不需要证书
     if (!isVolunteer) {
-      this.setData({
-        hasCertificate: false
-      });
+      this.setData({ hasCertificate: false });
       return;
     }
 
-    // 志愿者读取证书信息
+    // 先从本地快速显示
+    this._loadLocalCertificate();
+
+    // 云端获取最新证书信息
+    app.getCertificate().then(res => {
+      if (res.success) {
+        const cert = res.certificate;
+        this.setData({
+          hasCertificate: true,
+          userName: cert.userName || '志愿者',
+          score: cert.score || 0,
+          examDate: cert.examDate || '',
+          certificateNo: cert.certificateNo || ''
+        });
+        // 同步到本地
+        wx.setStorageSync('exam_passed', true);
+        wx.setStorageSync('exam_score', cert.score);
+        wx.setStorageSync('exam_date', cert.examDate);
+        wx.setStorageSync('certificate_no', cert.certificateNo);
+      }
+    }).catch(() => {});
+  },
+
+  /**
+   * 本地降级加载证书
+   */
+  _loadLocalCertificate() {
     const userInfo = wx.getStorageSync('userInfo_volunteer') || {};
     const passed = wx.getStorageSync('exam_passed') || false;
     const score = wx.getStorageSync('exam_score') || 0;
     const examDate = wx.getStorageSync('exam_date') || '';
     const certificateNo = wx.getStorageSync('certificate_no') || '';
-
-    // 检查是否已有数字身份牌
     const hasIdCard = wx.getStorageSync('hasIdCard_volunteer') || false;
     const userToken = userInfo.token || '';
 

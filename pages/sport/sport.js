@@ -131,7 +131,16 @@ Page({
       return;
     }
 
-    // 盲人用户 → 跳转到预约/即时点亮页面
+    // 盲人用户 + 陪跑 → 跳转到打车式发布需求页面
+    if (userType === 'disabled' && sportType === 'companion') {
+      wx.vibrateLong();
+      wx.navigateTo({
+        url: '/pages/publish-need/publish-need'
+      });
+      return;
+    }
+
+    // 盲人用户 + 其他运动类型 → 走运动记录或保留旧预约流程
     if (userType === 'disabled') {
       wx.vibrateLong();
       wx.navigateTo({

@@ -7,196 +7,277 @@
     <text class="loading-hint">请确保位置权限已开启</text>
   </view>
 
-  <!-- 地图占据全屏 -->
+  <!-- 地图 -->
   <map
     id="volunteerMap"
     class="fullscreen-map {{!locationReady ? 'hidden' : ''}}"
     longitude="{{longitude}}"
     latitude="{{latitude}}"
     markers="{{markers}}"
-    scale="16"
+    scale="14"
     show-location="true"
     show-compass="true"
     enable-zoom="true"
     enable-scroll="true"
-    polyline="{{orderStatus === 'running' ? runningPolyline : (orderStatus === 'accepted' ? navigationPolyline : '')}}"
+    polyline="{{orderStatus === 'running' ? runningPolyline : (orderStatus === 'accepted' || orderStatus === 'arrived' ? navigationPolyline : '')}}"
   ></map>
 
-  <!-- 顶部标题栏 -->
-  <view class="top-bar">
-    <view class="title-bar">
-      <text class="page-title">发现周边的光</text>
+  <!-- ============== 列表视图 ============== -->
+  <block wx:if="{{viewMode === 'list'}}">
+    <!-- 顶部筛选条 -->
+    <view class="filter-top-bar">
+      <view class="filter-header">
+        <text class="filter-title">附近需求</text>
+        <text class="filter-count">{{filteredOrders.length}} 条</text>
+      </view>
+      <scroll-view scroll-x class="filter-chips" enhanced show-scrollbar="{{false}}">
+        <view class="filter-chip {{filters.distanceMax !== 5 ? 'active' : ''}}" data-panel="distance" bindtap="toggleFilterPanel">
+          <text>距离 · {{filters.distanceMax}}km</text>
+          <text class="chip-arrow">▾</text>
+        </view>
+        <view class="filter-chip {{filters.gender !== 'all' ? 'active' : ''}}" data-panel="gender" bindtap="toggleFilterPanel">
+          <text>{{filters.gender === 'all' ? '性别' : (filters.gender === 'male' ? '男' : '女')}}</text>
+          <text class="chip-arrow">▾</text>
+        </view>
+        <view class="filter-chip {{filters.ageRange !== 'all' ? 'active' : ''}}" data-panel="age" bindtap="toggleFilterPanel">
+          <text>{{filters.ageRange === 'all' ? '年龄' : filters.ageRange}}</text>
+          <text class="chip-arrow">▾</text>
+        </view>
+        <view class="filter-chip {{filters.timeSlot !== 'all' ? 'active' : ''}}" data-panel="time" bindtap="toggleFilterPanel">
+          <text>{{filters.timeSlot === 'all' ? '时段' : (filters.timeSlot === 'morning' ? '上午' : filters.timeSlot === 'afternoon' ? '下午' : '晚间')}}</text>
+          <text class="chip-arrow">▾</text>
+        </view>
+      </scroll-view>
+
+      <!-- 筛选面板 -->
+      <view class="filter-panel" wx:if="{{activeFilterPanel}}">
+        <view class="filter-mask" bindtap="closeFilterPanel"></view>
+        <view class="filter-options">
+          <block wx:if="{{activeFilterPanel === 'distance'}}">
+            <view class="filter-option {{filters.distanceMax === item.k ? 'active' : ''}}"
+                  wx:for="{{distanceFilters}}" wx:key="k"
+                  data-type="distanceMax" data-value="{{item.k}}" bindtap="setFilter">
+              <text>{{item.label}}</text>
+            </view>
+          </block>
+          <block wx:elif="{{activeFilterPanel === 'gender'}}">
+            <view class="filter-option {{filters.gender === item.k ? 'active' : ''}}"
+                  wx:for="{{genderFilters}}" wx:key="k"
+                  data-type="gender" data-value="{{item.k}}" bindtap="setFilter">
+              <text>{{item.label}}</text>
+            </view>
+          </block>
+          <block wx:elif="{{activeFilterPanel === 'age'}}">
+            <view class="filter-option {{filters.ageRange === item.k ? 'active' : ''}}"
+                  wx:for="{{ageFilters}}" wx:key="k"
+                  data-type="ageRange" data-value="{{item.k}}" bindtap="setFilter">
+              <text>{{item.label}}</text>
+            </view>
+          </block>
+          <block wx:elif="{{activeFilterPanel === 'time'}}">
+            <view class="filter-option {{filters.timeSlot === item.k ? 'active' : ''}}"
+                  wx:for="{{timeFilters}}" wx:key="k"
+                  data-type="timeSlot" data-value="{{item.k}}" bindtap="setFilter">
+              <text>{{item.label}}</text>
+            </view>
+          </block>
+        </view>
+      </view>
+    </view>
+
+    <!-- 订单列表（底部抽屉） -->
+    <view class="list-panel">
+      <view class="list-handle"></view>
+      <scroll-view scroll-y class="list-scroll">
+        <view class="empty-list" wx:if="{{filteredOrders.length === 0}}">
+          <text class="empty-icon">🔍</text>
+          <text class="empty-text">没有符合条件的需求</text>
+          <text class="empty-hint">试试放宽筛选条件</text>
+        </view>
+
+        <view class="order-list-item"
+              wx:for="{{filteredOrders}}" wx:key="id"
+              data-index="{{index}}" bindtap="selectOrder">
+          <!-- 距离悬浮 chip -->
+          <view class="item-distance-chip">
+            <text class="dist-value">{{item.distance}}</text>
+            <text class="dist-unit">KM</text>
+          </view>
+
+          <!-- 头部：头像 + 姓名/标签 -->
+          <view class="item-header">
+            <view class="item-avatar gender-{{item.gender}}">
+              <text class="item-avatar-emoji">{{item.avatarEmoji}}</text>
+            </view>
+            <view class="item-identity">
+              <view class="item-name-row">
+                <text class="item-name">{{item.userName}}</text>
+              </view>
+              <view class="item-meta-pills">
+                <text class="meta-pill">{{item.age}}岁</text>
+                <text class="meta-pill gender-{{item.gender}}">{{item.gender === 'male' ? '男' : '女'}}</text>
+                <text class="meta-pill city">{{item.city}}</text>
+              </view>
+            </view>
+          </view>
+
+          <!-- 路径可视化 -->
+          <view class="item-route">
+            <view class="route-rail">
+              <view class="route-dot start"></view>
+              <view class="route-line"></view>
+              <view class="route-dot end"></view>
+            </view>
+            <view class="route-points">
+              <text class="route-name">{{item.startAddress.name}}</text>
+              <text class="route-name">{{item.endAddress.name}}</text>
+            </view>
+          </view>
+
+          <!-- 底部：时段 + 时长 -->
+          <view class="item-footer">
+            <view class="item-tag-group">
+              <text class="item-tag">⏱ {{item.estimatedDuration}}</text>
+              <text class="item-tag">📅 {{item.timeLabel}}</text>
+            </view>
+            <text class="item-cta">查看详情 ›</text>
+          </view>
+        </view>
+      </scroll-view>
+    </view>
+  </block>
+
+  <!-- ============== 详情视图（旧状态机） ============== -->
+  <block wx:if="{{viewMode === 'detail'}}">
+    <!-- 顶部返回 + 状态 -->
+    <view class="top-bar">
+      <view class="back-to-list" bindtap="backToList">
+        <text class="back-icon">‹</text>
+        <text>返回列表</text>
+      </view>
       <view class="status-badge" wx:if="{{hasNewOrder}}">
         <view class="status-dot {{orderStatus === 'waiting' ? 'breathing' : ''}}"></view>
         <text class="status-text">{{orderStatus === 'waiting' ? '等待接单' : orderStatus === 'accepted' ? '已接单' : orderStatus === 'arrived' ? '已到达' : orderStatus === 'running' ? '陪跑中' : '已完成'}}</text>
       </view>
     </view>
-    <!-- 预约广场入口 -->
-    <view class="appointment-entry" bindtap="goToAppointmentSquare">
-      <text class="entry-icon">📅</text>
-      <text class="entry-text">预约广场</text>
-    </view>
-  </view>
 
-  <!-- 底部信息面板 -->
-  <view class="bottom-panel">
-    <!-- 有需求时显示 - 订单卡片 -->
-    <view class="order-card" wx:if="{{hasNewOrder}}">
-      <!-- 卡片头部 -->
-      <view class="card-header">
-        <view class="avatar-wrapper">
-          <image class="user-avatar" wx:if="{{orderInfo.avatarUrl}}" src="{{orderInfo.avatarUrl}}" mode="aspectFill"></image>
-          <view class="user-avatar" wx:else style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center;">
-            <text style="font-size: 40rpx;">👤</text>
+    <!-- 底部信息面板 -->
+    <view class="bottom-panel">
+      <view class="order-card" wx:if="{{hasNewOrder}}">
+        <view class="card-header">
+          <view class="avatar-wrapper">
+            <view class="user-avatar" style="background: #FFF4EC; border: 2rpx solid #FF6B00; display: flex; align-items: center; justify-content: center;">
+              <text style="font-size: 40rpx;">{{orderInfo.avatarEmoji || '👤'}}</text>
+            </view>
           </view>
-          <view class="avatar-ring"></view>
-        </view>
-        <view class="user-info">
-          <text class="user-name">{{orderInfo.userName || '视障跑者'}}</text>
-          <view class="user-tags">
-            <text class="tag" wx:if="{{orderInfo.experience}}">{{orderInfo.experience}}年跑步</text>
-            <text class="tag" wx:if="{{orderInfo.pace}}">配速{{orderInfo.pace}}</text>
+          <view class="user-info">
+            <text class="user-name">{{orderInfo.userName || '视障跑者'}}</text>
+            <view class="user-tags">
+              <text class="tag" wx:if="{{orderInfo.age}}">{{orderInfo.age}}岁</text>
+              <text class="tag" wx:if="{{orderInfo.gender}}">{{orderInfo.gender === 'male' ? '男' : '女'}}</text>
+              <text class="tag" wx:if="{{orderInfo.city}}">{{orderInfo.city}}</text>
+            </view>
+          </view>
+          <view class="distance-badge">
+            <text class="distance-value">{{orderInfo.distance !== undefined ? orderInfo.distance : (distance !== null ? distance : '--')}}</text>
+            <text class="distance-unit">km</text>
           </view>
         </view>
-        <view class="distance-badge">
-          <text class="distance-value">{{distance !== null ? distance : '--'}}</text>
-          <text class="distance-unit">km</text>
-        </view>
-      </view>
 
-      <!-- 订单详情网格 -->
-      <view class="order-details">
-        <view class="detail-grid">
-          <view class="detail-cell">
-            <text class="detail-icon">🎯</text>
-            <view class="detail-text">
-              <text class="detail-label">目标里程</text>
-              <text class="detail-value">{{orderInfo.targetDistance || '5公里'}}</text>
+        <view class="order-details">
+          <view class="detail-grid">
+            <view class="detail-cell">
+              <text class="detail-icon">🎯</text>
+              <view class="detail-text">
+                <text class="detail-label">目标里程</text>
+                <text class="detail-value">{{orderInfo.targetDistance || '5公里'}}</text>
+              </view>
             </view>
-          </view>
-          <view class="detail-cell">
-            <text class="detail-icon">⏱️</text>
-            <view class="detail-text">
-              <text class="detail-label">预计时间</text>
-              <text class="detail-value">{{orderInfo.estimatedDuration || '1小时'}}</text>
+            <view class="detail-cell">
+              <text class="detail-icon">⏱️</text>
+              <view class="detail-text">
+                <text class="detail-label">预计时间</text>
+                <text class="detail-value">{{orderInfo.estimatedDuration || '1小时'}}</text>
+              </view>
             </view>
-          </view>
-          <view class="detail-cell">
-            <text class="detail-icon">📍</text>
-            <view class="detail-text">
-              <text class="detail-label">起点</text>
-              <text class="detail-value location-text">{{orderInfo.startLocation || '世纪公园'}}</text>
+            <view class="detail-cell">
+              <text class="detail-icon green-dot-icon"></text>
+              <view class="detail-text">
+                <text class="detail-label">起点</text>
+                <text class="detail-value location-text">{{orderInfo.startAddress.name || '世纪公园'}}</text>
+              </view>
             </view>
-          </view>
-          <view class="detail-cell">
-            <text class="detail-icon">🗺️</text>
-            <view class="detail-text">
-              <text class="detail-label">类型</text>
-              <text class="detail-value">{{orderInfo.runType || '跑步'}}</text>
+            <view class="detail-cell">
+              <text class="detail-icon red-dot-icon"></text>
+              <view class="detail-text">
+                <text class="detail-label">终点</text>
+                <text class="detail-value location-text">{{orderInfo.endAddress.name || '—'}}</text>
+              </view>
             </view>
           </view>
         </view>
-      </view>
 
-      <!-- 状态机：等待中 -->
-      <view class="status-section waiting" wx:if="{{orderStatus === 'waiting'}}">
-        <view class="breathing-container">
-          <view class="breathing-ring"></view>
-          <view class="breathing-ring delay-1"></view>
-          <view class="breathing-ring delay-2"></view>
-          <view class="pulse-icon">👆</view>
-        </view>
-        <text class="status-hint">对方正在等待您的回应</text>
-        <button class="primary-btn" bindtap="handleAccept">
-          <text class="btn-icon">🤝</text>
-          我要陪跑
-        </button>
-      </view>
-
-      <!-- 状态机：已接单 -->
-      <view class="status-section accepted" wx:if="{{orderStatus === 'accepted'}}">
-        <view class="action-row">
-          <button class="action-btn phone-btn" bindtap="handleCall">
-            <text class="btn-icon">📞</text>
-            拨打电话
-          </button>
-          <button class="action-btn nav-btn" bindtap="handleNavigate">
-            <text class="btn-icon">🧭</text>
-            导航前往
+        <view class="status-section waiting" wx:if="{{orderStatus === 'waiting'}}">
+          <button class="primary-btn" bindtap="handleAccept">
+            <text class="btn-icon">🤝</text>我要陪跑
           </button>
         </view>
-        <button class="primary-btn" bindtap="handleConfirmArrival">
-          <text class="btn-icon">✅</text>
-          确认到达
-        </button>
-      </view>
 
-      <!-- 状态机：已到达 -->
-      <view class="status-section arrived" wx:if="{{orderStatus === 'arrived'}}">
-        <view class="arrived-info">
-          <text class="arrived-text">已到达会合点</text>
-          <text class="arrived-hint">请确认与视障跑者会合后开始陪跑</text>
-        </view>
-        <button class="primary-btn running-btn" bindtap="handleStartRunning">
-          <text class="btn-icon">🏃</text>
-          开始陪跑
-        </button>
-      </view>
-
-      <!-- 状态机：陪跑中 -->
-      <view class="status-section running" wx:if="{{orderStatus === 'running'}}">
-        <!-- 实时运动统计 -->
-        <view class="running-stats">
-          <view class="stat-item">
-            <view class="stat-value-large">{{runningStats.totalDistance}}</view>
-            <view class="stat-unit">km</view>
-            <text class="stat-label">总里程</text>
+        <view class="status-section accepted" wx:if="{{orderStatus === 'accepted'}}">
+          <view class="action-row">
+            <button class="action-btn phone-btn" bindtap="handleCall">
+              <text class="btn-icon">📞</text>拨打电话
+            </button>
+            <button class="action-btn nav-btn" bindtap="handleNavigate">
+              <text class="btn-icon">🧭</text>导航前往
+            </button>
           </view>
-          <view class="stat-item">
-            <view class="stat-value-large">{{runningStats.formattedTime}}</view>
-            <view class="stat-unit">分钟</view>
-            <text class="stat-label">用时</text>
-          </view>
-          <view class="stat-item">
-            <view class="stat-value-large">{{runningStats.avgSpeed}}</view>
-            <view class="stat-unit">km/h</view>
-            <text class="stat-label">配速</text>
-          </view>
+          <button class="primary-btn" bindtap="handleConfirmArrival">
+            <text class="btn-icon">✅</text>确认到达
+          </button>
         </view>
 
-        <!-- 轨迹动画指示 -->
-        <view class="tracking-indicator">
-          <view class="pulse-dot"></view>
-          <text class="tracking-text">正在实时记录运动轨迹</text>
+        <view class="status-section arrived" wx:if="{{orderStatus === 'arrived'}}">
+          <view class="arrived-info">
+            <text class="arrived-text">已到达会合点</text>
+            <text class="arrived-hint">请确认与视障跑者会合后开始陪跑</text>
+          </view>
+          <button class="primary-btn running-btn" bindtap="handleStartRunning">
+            <text class="btn-icon">🏃</text>开始陪跑
+          </button>
         </view>
 
-        <button class="primary-btn end-btn" bindtap="handleEndRunning">
-          <text class="btn-icon">🛑</text>
-          结束陪跑
-        </button>
-      </view>
+        <view class="status-section running" wx:if="{{orderStatus === 'running'}}">
+          <view class="running-stats">
+            <view class="stat-item">
+              <view class="stat-value-large">{{runningStats.totalDistance}}</view>
+              <view class="stat-unit">km</view>
+              <text class="stat-label">总里程</text>
+            </view>
+            <view class="stat-item">
+              <view class="stat-value-large">{{runningStats.formattedTime}}</view>
+              <view class="stat-unit">分钟</view>
+              <text class="stat-label">用时</text>
+            </view>
+            <view class="stat-item">
+              <view class="stat-value-large">{{runningStats.avgSpeed}}</view>
+              <view class="stat-unit">km/h</view>
+              <text class="stat-label">配速</text>
+            </view>
+          </view>
+          <button class="primary-btn end-btn" bindtap="handleEndRunning">
+            <text class="btn-icon">🛑</text>结束陪跑
+          </button>
+        </view>
 
-      <!-- 状态机：已完成 -->
-      <view class="status-section completed" wx:if="{{orderStatus === 'completed'}}">
-        <view class="completed-icon">🎉</view>
-        <text class="completed-title">陪跑完成</text>
-        <text class="completed-hint">感谢您的爱心陪伴！</text>
+        <view class="status-section completed" wx:if="{{orderStatus === 'completed'}}">
+          <view class="completed-icon">🎉</view>
+          <text class="completed-title">陪跑完成</text>
+          <text class="completed-hint">感谢您的爱心陪伴！</text>
+        </view>
       </view>
     </view>
-
-    <!-- 无需求时显示 - 呼吸灯动画 -->
-    <view class="no-order-card" wx:else>
-      <view class="searching-animation">
-        <view class="search-ring"></view>
-        <view class="search-ring delay-1"></view>
-        <view class="search-ring delay-2"></view>
-        <view class="search-icon">👀</view>
-      </view>
-      <text class="no-order-title">守望中...</text>
-      <text class="no-order-desc">附近暂无光点</text>
-      <text class="no-order-hint">如有需求，盲友会点亮地图</text>
-    </view>
-  </view>
+  </block>
 
   <!-- 评价弹窗 -->
   <view class="rating-popup" wx:if="{{showRatingPopup}}">
@@ -206,8 +287,6 @@
         <text class="rating-title">本次陪跑评价</text>
         <text class="rating-subtitle">您的评价对盲友非常重要</text>
       </view>
-
-      <!-- 盲人对志愿者的评价 -->
       <view class="rating-section">
         <text class="rating-label">您对盲友的评分</text>
         <view class="star-row">
@@ -217,18 +296,6 @@
         </view>
         <input class="comment-input" placeholder="给盲友留句话吧（选填）" bindinput="onCommentInput" data-type="blindComment" value="{{rating.blindComment}}"/>
       </view>
-
-      <!-- 志愿者对盲人的评价 -->
-      <view class="rating-section">
-        <text class="rating-label">盲人对您的评价</text>
-        <view class="star-row">
-          <view class="star" wx:for="{{[1,2,3,4,5]}}" wx:key="*this" bindtap="setRating" data-type="volunteerRate" data-score="{{item}}">
-            <text class="star-icon {{item <= rating.volunteerRate ? 'active' : ''}}">★</text>
-          </view>
-        </view>
-        <input class="comment-input" placeholder="给盲友留句话吧（选填）" bindinput="onCommentInput" data-type="volunteerComment" value="{{rating.volunteerComment}}"/>
-      </view>
-
       <button class="submit-rating-btn" bindtap="submitRating">提交评价</button>
     </view>
   </view>

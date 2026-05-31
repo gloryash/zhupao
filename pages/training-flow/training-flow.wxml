@@ -97,6 +97,9 @@
     <view class="no-questions" wx:if="{{questions.length === 0}}">
       <text>暂无可用考试题目</text>
     </view>
+
+    <!-- 演示模式：跳过考试 -->
+    <button class="skip-btn" bindtap="skipExam">演示模式：跳过考试</button>
   </view>
 
   <!-- 第三步：领取证书 -->
