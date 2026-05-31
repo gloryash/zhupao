@@ -104,7 +104,7 @@ exports.main = async (event, context) => {
     // 所有需要的集合
     const collections = [
       'users', 'orders', 'products', 'exchange_orders', 'moments',
-      'sport_records', 'appointments', 'certificates', 'exams',
+      'sport_records', 'appointments', 'appointment_locks', 'certificates', 'exams',
       'comments', 'web_accounts', 'web_sessions'
     ]
 

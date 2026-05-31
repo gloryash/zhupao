@@ -573,12 +573,12 @@ git commit -m "feat: add web password authentication"
 
 - [ ] **Step 1: Add Web auth collections**
 
-In `cloudfunctions/initDB/index.js`, include `web_accounts` and `web_sessions` in the collections array:
+In `cloudfunctions/initDB/index.js`, include `web_accounts`, `web_sessions`, and `appointment_locks` in the collections array:
 
 ```js
 const collections = [
   'users', 'orders', 'products', 'exchange_orders', 'moments',
-  'sport_records', 'appointments', 'certificates', 'exams',
+  'sport_records', 'appointments', 'appointment_locks', 'certificates', 'exams',
   'comments', 'web_accounts', 'web_sessions'
 ]
 ```
@@ -918,7 +918,7 @@ if (user.userType !== 'disabled') {
 }
 ```
 
-Appointments should be created from the disabled-user side only. Resolve the selected volunteer from either `volunteerOpenid` or `volunteerId`, and require the volunteer to have completed training and certification before the appointment is created.
+Appointments should be created from the disabled-user side only. Resolve the selected volunteer from either `volunteerOpenid` or `volunteerId`, and require the volunteer to have completed training and certification before the appointment is created. Use appointment slot locks, backed by an `appointment_locks` collection, so concurrent creates cannot double-book either participant for the same date/time.
 
 - [ ] **Step 3: Validate completion idempotency**
 
@@ -935,7 +935,7 @@ if (res.data.rewardApplied) {
 
 Set `rewardApplied: true` and `rewardAppliedAt: db.serverDate()` when completion succeeds.
 
-Only the blind requester should be allowed to confirm appointment completion and rating; the volunteer should not be able to self-award appointment completion rewards.
+Only the blind requester should be allowed to confirm appointment completion and rating, and only after the volunteer has confirmed the appointment. The volunteer should not be able to self-award appointment completion rewards.
 
 - [ ] **Step 4: Keep appointments as source of truth**
 
@@ -1161,7 +1161,7 @@ Run:
 npm run tcb -- fn invoke initDB --params '{}' -e cloud1-d8gbfzr7t6c5dc8bc --json
 ```
 
-Expected: result contains `success: true` and collections including `web_accounts` and `web_sessions`.
+Expected: result contains `success: true` and collections including `web_accounts`, `web_sessions`, and `appointment_locks`.
 
 - [ ] **Step 4: Run backend verification**
 

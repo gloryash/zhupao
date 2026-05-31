@@ -2,6 +2,7 @@
 // 功能：预约管理（创建、获取、取消、完成预约）
 
 const cloud = require('wx-server-sdk')
+const crypto = require('crypto')
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 
 const { resolveIdentity, requireUser } = require('./shared/auth')
@@ -35,6 +36,8 @@ exports.main = async (event, context) => {
         return await cancelAppointment(params)
       case 'completeAppointment':
         return await completeAppointment(params)
+      case 'confirmAppointment':
+        return await confirmAppointment(params)
       case 'getAppointmentsByDate':
         return await getAppointmentsByDate(params)
       default:
@@ -134,36 +137,31 @@ async function createAppointment({ openid, user, event }) {
     estimatedDuration: estimatedDuration || '',
     note: note || '',
     status: 'pending',
+    slotLockIds: [
+      appointmentLockId(openid, appointmentDate, appointmentTime),
+      appointmentLockId(volunteerUser.openid, appointmentDate, appointmentTime)
+    ],
     createdBy: openid,
     createdByUserId: user._id,
     createdAt: db.serverDate()
   }
 
   return await db.runTransaction(async transaction => {
-    const conflictRes = await transaction.collection('appointments')
-      .where(_.and([
-        _.or([
-          { blindOpenid: openid },
-          { volunteerOpenid: openid },
-          { blindOpenid: volunteerUser.openid },
-          { volunteerOpenid: volunteerUser.openid }
-        ]),
-        { appointmentDate: appointmentDate },
-        { appointmentTime: appointmentTime },
-        { status: _.in(['pending', 'confirmed']) }
-      ]))
-      .count()
-
-    if (conflictRes.total > 0) {
-      return fail('VALIDATION_ERROR', '该时间段已有预约')
+    for (const lockId of appointment.slotLockIds) {
+      const lock = await getTransactionDoc(transaction, 'appointment_locks', lockId)
+      if (lock && ['pending', 'confirmed'].includes(lock.status)) {
+        return fail('VALIDATION_ERROR', '该时间段已有预约')
+      }
     }
 
-    const addRes = await transaction.collection('appointments').add({ data: appointment })
+    const appointmentId = createAppointmentId()
+    await transaction.collection('appointments').doc(appointmentId).set({ data: appointment })
+    await writeAppointmentLocks(transaction, appointmentId, appointment, 'pending')
 
     return {
       success: true,
-      appointmentId: addRes._id,
-      appointment: { _id: addRes._id, ...appointment }
+      appointmentId: appointmentId,
+      appointment: { _id: appointmentId, ...appointment }
     }
   })
 }
@@ -176,30 +174,26 @@ async function cancelAppointment({ openid, event }) {
     return fail('VALIDATION_ERROR', '缺少预约ID')
   }
 
-  const res = await db.collection('appointments').doc(appointmentId).get()
-  if (!res.data) {
-    return fail('APPOINTMENT_NOT_FOUND', '预约不存在')
+  if (typeof db.runTransaction !== 'function') {
+    return fail('VALIDATION_ERROR', '当前云开发环境不支持事务，无法安全取消预约')
   }
 
-  // 验证权限
-  if (res.data.blindOpenid !== openid && res.data.volunteerOpenid !== openid) {
-    return fail('FORBIDDEN', '无权取消此预约')
-  }
+  return await db.runTransaction(async transaction => {
+    const res = await transaction.collection('appointments').doc(appointmentId).get()
+    const appointment = res.data
+    if (!appointment) {
+      return fail('APPOINTMENT_NOT_FOUND', '预约不存在')
+    }
 
-  if (['cancelled', 'completed'].includes(res.data.status)) {
-    return fail('INVALID_APPOINTMENT_STATUS', '该预约无法取消')
-  }
+    if (appointment.blindOpenid !== openid && appointment.volunteerOpenid !== openid) {
+      return fail('FORBIDDEN', '无权取消此预约')
+    }
 
-  const cancelRes = await db.collection('appointments')
-    .where(_.and([
-      { _id: appointmentId },
-      _.or([
-        { blindOpenid: openid },
-        { volunteerOpenid: openid }
-      ]),
-      { status: _.nin(['completed', 'cancelled']) }
-    ]))
-    .update({
+    if (['cancelled', 'completed'].includes(appointment.status)) {
+      return fail('INVALID_APPOINTMENT_STATUS', '该预约无法取消')
+    }
+
+    await transaction.collection('appointments').doc(appointmentId).update({
       data: {
         status: 'cancelled',
         cancelBy: openid,
@@ -207,11 +201,57 @@ async function cancelAppointment({ openid, event }) {
       }
     })
 
-  if (!cancelRes.stats || cancelRes.stats.updated !== 1) {
-    return fail('INVALID_APPOINTMENT_STATUS', '该预约无法取消')
+    await writeAppointmentLocks(transaction, appointmentId, appointment, 'cancelled')
+    return { success: true }
+  })
+}
+
+async function confirmAppointment({ openid, user, event }) {
+  const { appointmentId } = event
+
+  if (!hasValue(appointmentId)) {
+    return fail('VALIDATION_ERROR', '缺少预约ID')
   }
 
-  return { success: true }
+  if (user.userType !== 'volunteer') {
+    return fail('FORBIDDEN', '只有志愿者可以确认预约')
+  }
+
+  if (!user.videoWatched || !user.examPassed || !hasValue(user.certificateNo)) {
+    return fail('TRAINING_REQUIRED', '请先完成培训、考试并获得证书')
+  }
+
+  if (typeof db.runTransaction !== 'function') {
+    return fail('VALIDATION_ERROR', '当前云开发环境不支持事务，无法安全确认预约')
+  }
+
+  return await db.runTransaction(async transaction => {
+    const res = await transaction.collection('appointments').doc(appointmentId).get()
+    const appointment = res.data
+
+    if (!appointment) {
+      return fail('APPOINTMENT_NOT_FOUND', '预约不存在')
+    }
+
+    if (appointment.volunteerOpenid !== openid) {
+      return fail('FORBIDDEN', '无权确认此预约')
+    }
+
+    if (appointment.status !== 'pending') {
+      return fail('INVALID_APPOINTMENT_STATUS', '当前预约状态无法确认')
+    }
+
+    await transaction.collection('appointments').doc(appointmentId).update({
+      data: {
+        status: 'confirmed',
+        confirmedBy: openid,
+        confirmedAt: db.serverDate()
+      }
+    })
+
+    await writeAppointmentLocks(transaction, appointmentId, appointment, 'confirmed')
+    return { success: true }
+  })
 }
 
 // 完成预约（志愿者操作）
@@ -243,12 +283,16 @@ async function completeAppointment({ openid, event }) {
       return fail('INVALID_APPOINTMENT_STATUS', '该预约已完成')
     }
 
+    if (appointment.status === 'cancelled') {
+      return fail('INVALID_APPOINTMENT_STATUS', '已取消的预约无法完成')
+    }
+
     if (appointment.rewardApplied) {
       return fail('INVALID_APPOINTMENT_STATUS', '预约奖励已发放')
     }
 
-    if (appointment.status === 'cancelled') {
-      return fail('INVALID_APPOINTMENT_STATUS', '已取消的预约无法完成')
+    if (appointment.status !== 'confirmed') {
+      return fail('INVALID_APPOINTMENT_STATUS', '预约需由志愿者确认后才能完成')
     }
 
     const participants = await resolveAppointmentParticipants(appointment)
@@ -268,6 +312,7 @@ async function completeAppointment({ openid, event }) {
     await transaction.collection('appointments').doc(appointmentId).update({
       data: updateData
     })
+    await writeAppointmentLocks(transaction, appointmentId, appointment, 'completed')
 
     await transaction.collection('users').doc(participants.blindUserId).update({
       data: {
@@ -373,8 +418,8 @@ async function resolveAppointmentParticipants(appointment) {
   if (!blindUser || !volunteerUser ||
       blindUser.userType !== 'disabled' ||
       volunteerUser.userType !== 'volunteer' ||
-      blindUser.openid !== appointment.blindOpenid ||
-      volunteerUser.openid !== appointment.volunteerOpenid) {
+      !matchesUserOpenid(blindUser, appointment.blindOpenid) ||
+      !matchesUserOpenid(volunteerUser, appointment.volunteerOpenid)) {
     return { error: fail('VALIDATION_ERROR', '预约用户信息不完整') }
   }
 
@@ -405,6 +450,52 @@ async function getUserByOpenid(openid) {
     .get()
 
   return res.data[0] || null
+}
+
+async function getTransactionDoc(transaction, collectionName, docId) {
+  try {
+    const res = await transaction.collection(collectionName).doc(docId).get()
+    return res.data || null
+  } catch (e) {
+    return null
+  }
+}
+
+async function writeAppointmentLocks(transaction, appointmentId, appointment, status) {
+  const lockIds = Array.isArray(appointment.slotLockIds) && appointment.slotLockIds.length > 0
+    ? appointment.slotLockIds
+    : [
+        appointmentLockId(appointment.blindOpenid, appointment.appointmentDate, appointment.appointmentTime),
+        appointmentLockId(appointment.volunteerOpenid, appointment.appointmentDate, appointment.appointmentTime)
+      ]
+
+  for (const lockId of lockIds) {
+    await transaction.collection('appointment_locks').doc(lockId).set({
+      data: {
+        appointmentId: appointmentId,
+        appointmentDate: appointment.appointmentDate,
+        appointmentTime: appointment.appointmentTime,
+        status: status,
+        updatedAt: db.serverDate()
+      }
+    })
+  }
+}
+
+function appointmentLockId(openid, appointmentDate, appointmentTime) {
+  const hash = crypto
+    .createHash('sha1')
+    .update(`${openid}:${appointmentDate}:${appointmentTime}`)
+    .digest('hex')
+  return `appt_lock_${hash}`
+}
+
+function createAppointmentId() {
+  return `appt_${Date.now().toString(36)}_${crypto.randomBytes(4).toString('hex')}`
+}
+
+function matchesUserOpenid(user, openid) {
+  return user.openid === openid || user.miniOpenid === openid || user.webOpenid === openid
 }
 
 function updateRequesterRating(updateData, rating, comment) {
