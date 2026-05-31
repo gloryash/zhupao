@@ -45,10 +45,7 @@ async function main() {
     latitude: 31.2304,
     longitude: 121.4737
   })
-  assertNotSuccess(untrainedWaitingOrders, 'untrained volunteer handleOrder.getWaitingOrders')
-  if (untrainedWaitingOrders.code) {
-    assert(untrainedWaitingOrders.code === 'TRAINING_REQUIRED', `untrained volunteer getWaitingOrders expected TRAINING_REQUIRED, got ${untrainedWaitingOrders.code}`)
-  }
+  assertFailureCode(untrainedWaitingOrders, 'TRAINING_REQUIRED', 'untrained volunteer handleOrder.getWaitingOrders')
 
   const untrainedAccept = invokeCloudFunction('handleOrder', {
     action: 'accept',
