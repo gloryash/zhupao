@@ -98,63 +98,30 @@ async function createAppointment({ openid, user, event }) {
     return fail('VALIDATION_ERROR', '请填写预约日期和时间')
   }
 
-  if (!['disabled', 'volunteer'].includes(user.userType)) {
-    return fail('FORBIDDEN', '当前用户无法创建预约')
+  if (user.userType !== 'disabled') {
+    return fail('FORBIDDEN', '只有视障用户可以创建预约')
   }
 
-  let blindUser = null
-  let volunteerUser = null
-
-  if (user.userType === 'disabled') {
-    if (!hasValue(volunteerOpenid) && !hasValue(volunteerId)) {
-      return fail('VALIDATION_ERROR', '请选择志愿者')
-    }
-
-    blindUser = user
-    const volunteerRes = await resolveVolunteer({ volunteerOpenid, volunteerId })
-    if (volunteerRes.error) return volunteerRes.error
-    volunteerUser = volunteerRes.user
-  } else {
-    if (!hasValue(event.blindOpenid)) {
-      return fail('VALIDATION_ERROR', '请选择视障用户')
-    }
-
-    volunteerUser = user
-    const blindRes = await resolveUserByOpenid(event.blindOpenid)
-    if (blindRes.error) return blindRes.error
-    blindUser = blindRes.user
-    if (blindUser.userType !== 'disabled') {
-      return fail('VALIDATION_ERROR', '视障用户不存在')
-    }
+  if (!hasValue(volunteerOpenid) && !hasValue(volunteerId)) {
+    return fail('VALIDATION_ERROR', '请选择志愿者')
   }
 
-  if (!hasValue(blindUser.openid) || !hasValue(volunteerUser.openid)) {
-    return fail('VALIDATION_ERROR', '预约用户信息不完整')
+  const volunteerRes = await resolveVolunteer({ volunteerOpenid, volunteerId })
+  if (volunteerRes.error) return volunteerRes.error
+  const volunteerUser = volunteerRes.user
+
+  if (!volunteerUser.videoWatched || !volunteerUser.examPassed || !hasValue(volunteerUser.certificateNo)) {
+    return fail('TRAINING_REQUIRED', '请先完成培训、考试并获得证书')
   }
 
-  // 检查时间冲突
-  const conflictRes = await db.collection('appointments')
-    .where(_.and([
-      _.or([
-        { blindOpenid: blindUser.openid },
-        { volunteerOpenid: blindUser.openid },
-        { blindOpenid: volunteerUser.openid },
-        { volunteerOpenid: volunteerUser.openid }
-      ]),
-      { appointmentDate: appointmentDate },
-      { appointmentTime: appointmentTime },
-      { status: _.in(['pending', 'confirmed']) }
-    ]))
-    .count()
-
-  if (conflictRes.total > 0) {
-    return fail('VALIDATION_ERROR', '该时间段已有预约')
+  if (typeof db.runTransaction !== 'function') {
+    return fail('VALIDATION_ERROR', '当前云开发环境不支持事务，无法安全创建预约')
   }
 
   const appointment = {
-    blindOpenid: blindUser.openid,
-    blindUserId: blindUser._id,
-    blindName: blindUser.nickName || blindUser.name || event.blindName || '',
+    blindOpenid: openid,
+    blindUserId: user._id,
+    blindName: user.nickName || user.name || '',
     volunteerOpenid: volunteerUser.openid,
     volunteerUserId: volunteerUser._id,
     volunteerName: volunteerUser.nickName || volunteerUser.name || volunteerName || '',
@@ -166,19 +133,39 @@ async function createAppointment({ openid, user, event }) {
     targetDistance: targetDistance || '',
     estimatedDuration: estimatedDuration || '',
     note: note || '',
-    status: 'pending', // pending-待确认, confirmed-已确认, cancelled-已取消, completed-已完成
+    status: 'pending',
     createdBy: openid,
     createdByUserId: user._id,
     createdAt: db.serverDate()
   }
 
-  const addRes = await db.collection('appointments').add({ data: appointment })
+  return await db.runTransaction(async transaction => {
+    const conflictRes = await transaction.collection('appointments')
+      .where(_.and([
+        _.or([
+          { blindOpenid: openid },
+          { volunteerOpenid: openid },
+          { blindOpenid: volunteerUser.openid },
+          { volunteerOpenid: volunteerUser.openid }
+        ]),
+        { appointmentDate: appointmentDate },
+        { appointmentTime: appointmentTime },
+        { status: _.in(['pending', 'confirmed']) }
+      ]))
+      .count()
 
-  return {
-    success: true,
-    appointmentId: addRes._id,
-    appointment: { _id: addRes._id, ...appointment }
-  }
+    if (conflictRes.total > 0) {
+      return fail('VALIDATION_ERROR', '该时间段已有预约')
+    }
+
+    const addRes = await transaction.collection('appointments').add({ data: appointment })
+
+    return {
+      success: true,
+      appointmentId: addRes._id,
+      appointment: { _id: addRes._id, ...appointment }
+    }
+  })
 }
 
 // 取消预约
@@ -247,9 +234,9 @@ async function completeAppointment({ openid, event }) {
       return fail('APPOINTMENT_NOT_FOUND', '预约不存在')
     }
 
-    // 验证权限：盲人或志愿者都可以标记完成
-    if (appointment.blindOpenid !== openid && appointment.volunteerOpenid !== openid) {
-      return fail('FORBIDDEN', '无权操作此预约')
+    // 验证权限：仅视障用户可以确认完成与评分
+    if (appointment.blindOpenid !== openid) {
+      return fail('FORBIDDEN', '只有视障用户可以完成并评价预约')
     }
 
     if (appointment.status === 'completed') {
@@ -276,9 +263,7 @@ async function completeAppointment({ openid, event }) {
       rewardAppliedAt: completedAt
     }
 
-    if (appointment.blindOpenid === openid) {
-      updateRequesterRating(updateData, rating, comment)
-    }
+    updateRequesterRating(updateData, rating, comment)
 
     await transaction.collection('appointments').doc(appointmentId).update({
       data: updateData

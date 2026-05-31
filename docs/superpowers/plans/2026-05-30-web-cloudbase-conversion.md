@@ -911,10 +911,12 @@ In `createAppointment`, require:
 if (!appointmentDate || !appointmentTime) {
   return fail('VALIDATION_ERROR', '请填写预约日期和时间')
 }
-if (user.userType === 'disabled' && !volunteerOpenid) {
-  return fail('VALIDATION_ERROR', '请选择志愿者')
+if (user.userType !== 'disabled') {
+  return fail('FORBIDDEN', '只有视障用户可以创建预约')
 }
 ```
+
+Appointments should be created from the disabled-user side only. Resolve the selected volunteer from either `volunteerOpenid` or `volunteerId`, and require the volunteer to have completed training and certification before the appointment is created.
 
 - [ ] **Step 3: Validate completion idempotency**
 
@@ -930,6 +932,8 @@ if (res.data.rewardApplied) {
 ```
 
 Set `rewardApplied: true` and `rewardAppliedAt: db.serverDate()` when completion succeeds.
+
+Only the blind requester should be allowed to confirm appointment completion and rating; the volunteer should not be able to self-award appointment completion rewards.
 
 - [ ] **Step 4: Keep appointments as source of truth**
 
