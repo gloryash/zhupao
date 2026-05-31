@@ -253,6 +253,9 @@ async function handleCheckIn(openid, event) {
     return { success: false, error: '用户不存在' }
   }
   const user = userRes.data[0]
+  if (user.userType !== 'disabled') {
+    return fail('FORBIDDEN', '只有视障用户可以每日打卡')
+  }
   const today = new Date().toLocaleDateString()
   const yesterday = new Date(Date.now() - 86400000).toLocaleDateString()
 
