@@ -179,6 +179,57 @@ button {
   box-shadow: 0 0 0 5px rgba(255, 157, 18, 0.25);
 }
 
+/* Quick-experience entry — sits in the left blank gutter beside the device,
+   desktop preview only. Hidden when the viewport is too narrow to clear the
+   centered phone (and never rendered at all in bare/mobile view). */
+.quick-demo {
+  position: fixed;
+  left: 36px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 5;
+  width: 244px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px;
+  border-radius: var(--r-lg);
+  background: rgba(20, 17, 13, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(8px);
+}
+
+.quick-demo__kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--beacon);
+}
+
+.quick-demo__hint {
+  margin: 0 0 4px;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: rgba(251, 246, 234, 0.62);
+}
+
+.quick-demo__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+@media (max-width: 960px) {
+  .quick-demo {
+    display: none;
+  }
+}
+
 .device-switch {
   position: fixed;
   right: 30px;

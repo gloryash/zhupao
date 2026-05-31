@@ -100,14 +100,21 @@ function AuthenticatedApp({ user }: { user: User }) {
 }
 
 export default function App() {
-  const { status, user } = useSession()
+  const { status, user, authToken } = useSession()
 
   return (
     <DeviceFrame>
       {status === 'loading' && <LoadingScreen />}
       {status === 'guest' && <AuthPage />}
+      {/* Key by authToken so every login (incl. quick experience while already
+          authenticated on another tab or role) remounts the shell and resets
+          the active tab back to home. */}
       {status === 'authenticated' &&
-        (user ? <AuthenticatedApp user={user} /> : <LoadingScreen />)}
+        (user ? (
+          <AuthenticatedApp key={authToken ?? user._id} user={user} />
+        ) : (
+          <LoadingScreen />
+        ))}
     </DeviceFrame>
   )
 }
