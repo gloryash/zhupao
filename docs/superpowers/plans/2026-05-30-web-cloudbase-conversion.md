@@ -899,6 +899,8 @@ git commit -m "fix: audit immediate order flow"
 **Files:**
 - Modify: `cloudfunctions/handleSchedule/index.js`
 
+Mini program frontend pages are explicitly out of scope for this task. Source-of-truth enforcement here means cloud functions and the new Web frontend must not read/write local-cache concepts; existing mini program local fallback pages are not edited in this backend/Web conversion pass.
+
 - [ ] **Step 1: Use shared identity resolver**
 
 Resolve identity in `exports.main` and pass `identity.openid` into appointment handlers.
