@@ -2,12 +2,19 @@
 'use strict'
 
 const crypto = require('crypto')
+const fs = require('fs')
+const os = require('os')
 const path = require('path')
 const { spawnSync } = require('child_process')
 
 const DEFAULT_ENV = 'cloud1-d8gbfzr7t6c5dc8bc'
 const envId = process.env.CLOUDBASE_ENV || DEFAULT_ENV
-const tcbBin = path.resolve(__dirname, '../../node_modules/.bin/tcb')
+const tcbBin = path.resolve(
+  __dirname,
+  '../../node_modules/.bin',
+  process.platform === 'win32' ? 'tcb.cmd' : 'tcb'
+)
+const INVOKE_TIMEOUT_MS = 60000
 
 async function main() {
   const disabled = createAccount('disabled')
@@ -129,25 +136,37 @@ function createAccount(userType) {
 }
 
 function invokeCloudFunction(name, payload) {
-  const args = [
-    'fn',
-    'invoke',
-    name,
-    '-e',
-    envId,
-    '--params',
-    JSON.stringify(payload),
-    '--json'
-  ]
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'blind-run-tcb-'))
+  const payloadPath = path.join(tempDir, 'payload.json')
+  fs.writeFileSync(payloadPath, JSON.stringify(payload), { mode: 0o600 })
 
-  const result = spawnSync(tcbBin, args, {
-    cwd: path.resolve(__dirname, '../..'),
-    encoding: 'utf8',
-    env: { ...process.env, CLOUDBASE_ENV: envId }
-  })
+  let result
+  try {
+    result = spawnSync(tcbBin, [
+      'fn',
+      'invoke',
+      name,
+      '-e',
+      envId,
+      '-d',
+      `@${payloadPath}`,
+      '--json'
+    ], {
+      cwd: path.resolve(__dirname, '../..'),
+      encoding: 'utf8',
+      timeout: INVOKE_TIMEOUT_MS,
+      env: { ...process.env, CI: '1', CLOUDBASE_ENV: envId }
+    })
+  } finally {
+    fs.rmSync(tempDir, { recursive: true, force: true })
+  }
 
   if (result.error) {
     throw new Error(`Failed to run tcb CLI: ${result.error.message}`)
+  }
+
+  if (result.signal) {
+    throw new Error(`tcb fn invoke ${name} terminated by ${result.signal}`)
   }
 
   if (result.status !== 0) {
@@ -277,6 +296,7 @@ function summarizeResult(result) {
 function redactOutput(output) {
   return String(output || '')
     .replace(/"authToken"\s*:\s*"[^"]+"/g, '"authToken":"[redacted]"')
+    .replace(/"password"\s*:\s*"[^"]+"/g, '"password":"[redacted]"')
     .trim()
 }
 
