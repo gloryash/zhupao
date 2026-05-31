@@ -138,7 +138,7 @@ function invokeCloudFunction(name, payload) {
     name,
     '-e',
     envId,
-    '-d',
+    '--params',
     JSON.stringify(payload),
     '--json'
   ]
