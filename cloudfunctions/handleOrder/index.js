@@ -56,16 +56,48 @@ exports.main = async (event, context) => {
 
 // 发布订单
 async function publishOrder({ openid, user, event }) {
-  const { targetDistance, estimatedDuration, latitude, longitude, address } = event
-  const parsedLatitude = Number(latitude)
-  const parsedLongitude = Number(longitude)
+  const {
+    targetDistance,
+    estimatedDuration,
+    latitude,
+    longitude,
+    address,
+    origin = {},
+    destination = {},
+    destinationLatitude,
+    destinationLongitude,
+    destinationAddress,
+    runTimeWindow,
+    timeWindow,
+    city,
+    departureMode,
+    departureOffsetMinutes,
+    departureAt,
+    departureLabel
+  } = event
+  const parsedLatitude = Number(coalesce(origin.latitude, latitude))
+  const parsedLongitude = Number(coalesce(origin.longitude, longitude))
+  const parsedDestinationLatitude = parseOptionalNumber(coalesce(destination.latitude, destinationLatitude))
+  const parsedDestinationLongitude = parseOptionalNumber(coalesce(destination.longitude, destinationLongitude))
+  const originAddress = coalesce(origin.address, address, '')
+  const destAddress = coalesce(destination.address, destinationAddress, '')
+  const orderCity = coalesce(city, origin.city, destination.city, inferCity(originAddress), inferCity(destAddress), '')
+  const runnerAge = parseOptionalNumber(coalesce(user.age, user.userAge))
+  const runnerGender = coalesce(user.gender, user.sex, user.userGender, '')
+  const departure = normalizeDeparture({
+    departureMode,
+    departureOffsetMinutes,
+    departureAt,
+    departureLabel,
+    runTimeWindow: coalesce(runTimeWindow, timeWindow, 'immediate')
+  })
 
   if (user.userType !== 'disabled') {
     return fail('FORBIDDEN', '只有视障用户可以发布陪跑需求')
   }
 
   if (!hasValue(targetDistance) || !hasValue(estimatedDuration) ||
-      !hasValue(latitude) || !hasValue(longitude) ||
+      !hasValue(parsedLatitude) || !hasValue(parsedLongitude) ||
       !Number.isFinite(parsedLatitude) || !Number.isFinite(parsedLongitude)) {
     return fail('VALIDATION_ERROR', '请填写目标里程、预计时间和有效位置')
   }
@@ -79,7 +111,37 @@ async function publishOrder({ openid, user, event }) {
     estimatedDuration,
     latitude: parsedLatitude,
     longitude: parsedLongitude,
-    address: address || '',
+    address: originAddress || '',
+    origin: {
+      latitude: parsedLatitude,
+      longitude: parsedLongitude,
+      address: originAddress || '',
+      city: orderCity || ''
+    },
+    originLatitude: parsedLatitude,
+    originLongitude: parsedLongitude,
+    originAddress: originAddress || '',
+    destination: {
+      latitude: parsedDestinationLatitude,
+      longitude: parsedDestinationLongitude,
+      address: destAddress || '',
+      city: coalesce(destination.city, orderCity, '')
+    },
+    destinationLatitude: parsedDestinationLatitude,
+    destinationLongitude: parsedDestinationLongitude,
+    destinationAddress: destAddress || '',
+    city: orderCity || '',
+    runTimeWindow: departure.runTimeWindow,
+    departureMode: departure.mode,
+    departureOffsetMinutes: departure.offsetMinutes,
+    departureAt: departure.at,
+    departureHour: departure.hour,
+    departureDate: departure.date,
+    departureLabel: departure.label,
+    runnerLatitude: parsedLatitude,
+    runnerLongitude: parsedLongitude,
+    runnerGender,
+    runnerAge,
     // 志愿者信息（接单后填充）
     volunteerOpenid: '',
     volunteerName: '',
@@ -116,7 +178,9 @@ async function publishOrder({ openid, user, event }) {
 
 // 接单
 async function acceptOrder({ openid, user, event }) {
-  const { orderId } = event
+  const { orderId, latitude, longitude } = event
+  const volunteerLatitude = parseOptionalNumber(latitude)
+  const volunteerLongitude = parseOptionalNumber(longitude)
 
   if (!orderId) {
     return fail('VALIDATION_ERROR', '缺少订单ID')
@@ -143,16 +207,22 @@ async function acceptOrder({ openid, user, event }) {
   }
 
   // 更新订单
+  const updateData = {
+    volunteerOpenid: openid,
+    volunteerName: user.name || user.nickName,
+    volunteerId: user._id,
+    status: 'accepted',
+    acceptTime: new Date().toLocaleString()
+  }
+  if (Number.isFinite(volunteerLatitude) && Number.isFinite(volunteerLongitude)) {
+    updateData.volunteerLat = volunteerLatitude
+    updateData.volunteerLng = volunteerLongitude
+  }
+
   const acceptRes = await db.collection('orders')
     .where({ _id: orderId, status: 'waiting' })
     .update({
-      data: {
-        volunteerOpenid: openid,
-        volunteerName: user.name || user.nickName,
-        volunteerId: user._id,
-        status: 'accepted',
-        acceptTime: new Date().toLocaleString()
-      }
+      data: updateData
     })
 
   if (!acceptRes.stats || acceptRes.stats.updated !== 1) {
@@ -172,7 +242,11 @@ async function acceptOrder({ openid, user, event }) {
       ...orderRes.data,
       volunteerOpenid: openid,
       volunteerName: user.name || user.nickName,
-      status: 'accepted'
+      volunteerId: user._id,
+      status: 'accepted',
+      ...(Number.isFinite(volunteerLatitude) && Number.isFinite(volunteerLongitude)
+        ? { volunteerLat: volunteerLatitude, volunteerLng: volunteerLongitude }
+        : {})
     }
   }
 }
@@ -344,7 +418,22 @@ async function getMyOrders({ openid, user, event }) {
 
 // 获取等待中的订单（志愿者浏览可接单列表）
 async function getWaitingOrders({ user, event }) {
-  const { page = 1, pageSize = 20, latitude, longitude } = event
+  const {
+    page = 1,
+    pageSize = 20,
+    latitude,
+    longitude,
+    maxDistance = 5000,
+    distanceBasis = 'origin',
+    gender = 'all',
+    ageRange = 'all',
+    timeWindow = 'all',
+    city = 'all',
+    departureFilterType = 'all',
+    departureHour,
+    departureDate,
+    departureWithinMinutes
+  } = event
 
   if (user.userType !== 'volunteer') {
     return fail('FORBIDDEN', '只有志愿者可以查看待接订单')
@@ -363,14 +452,35 @@ async function getWaitingOrders({ user, event }) {
 
   let orders = res.data
 
-  // 如果提供了坐标，计算距离
-  if (latitude && longitude) {
+  orders = filterWaitingOrders(orders, {
+    gender,
+    ageRange,
+    timeWindow,
+    city,
+    departureFilterType,
+    departureHour,
+    departureDate,
+    departureWithinMinutes
+  })
+
+  const parsedLatitude = Number(latitude)
+  const parsedLongitude = Number(longitude)
+  const parsedMaxDistance = Number(maxDistance)
+
+  // 如果提供了坐标，计算距离并默认保留方圆 5 公里内的需求
+  if (Number.isFinite(parsedLatitude) && Number.isFinite(parsedLongitude)) {
     orders = orders.map(order => {
-      if (order.latitude && order.longitude) {
-        order.distance = calculateDistance(latitude, longitude, order.latitude, order.longitude)
+      const point = orderPointForDistance(order, distanceBasis)
+      if (point) {
+        order.distance = calculateDistance(parsedLatitude, parsedLongitude, point.latitude, point.longitude)
+        order.distanceBasis = distanceBasis === 'runner' ? 'runner' : 'origin'
       }
       return order
-    }).sort((a, b) => (a.distance || 999999) - (b.distance || 999999))
+    })
+    if (Number.isFinite(parsedMaxDistance) && parsedMaxDistance > 0) {
+      orders = orders.filter(order => typeof order.distance !== 'number' || order.distance <= parsedMaxDistance)
+    }
+    orders = orders.sort((a, b) => (a.distance || 999999) - (b.distance || 999999))
   }
 
   const countRes = await db.collection('orders')
@@ -548,6 +658,36 @@ function publicWaitingOrder(order) {
     latitude: order.latitude,
     longitude: order.longitude,
     address: order.address || '',
+    origin: order.origin || {
+      latitude: order.originLatitude || order.latitude,
+      longitude: order.originLongitude || order.longitude,
+      address: order.originAddress || order.address || '',
+      city: order.city || ''
+    },
+    originLatitude: order.originLatitude || order.latitude,
+    originLongitude: order.originLongitude || order.longitude,
+    originAddress: order.originAddress || order.address || '',
+    destination: order.destination || {
+      latitude: order.destinationLatitude,
+      longitude: order.destinationLongitude,
+      address: order.destinationAddress || '',
+      city: order.city || ''
+    },
+    destinationLatitude: order.destinationLatitude,
+    destinationLongitude: order.destinationLongitude,
+    destinationAddress: order.destinationAddress || '',
+    city: order.city || '',
+    runTimeWindow: order.runTimeWindow || 'immediate',
+    departureMode: order.departureMode || (order.runTimeWindow === 'immediate' ? 'immediate' : 'delayed'),
+    departureOffsetMinutes: Number.isFinite(Number(order.departureOffsetMinutes)) ? Number(order.departureOffsetMinutes) : 0,
+    departureAt: order.departureAt || '',
+    departureHour: Number.isFinite(Number(order.departureHour)) ? Number(order.departureHour) : null,
+    departureDate: order.departureDate || '',
+    departureLabel: order.departureLabel || timeWindowLabel(order.runTimeWindow || 'immediate'),
+    runnerGender: order.runnerGender || '',
+    runnerAge: order.runnerAge || null,
+    runnerLatitude: order.runnerLatitude || order.latitude,
+    runnerLongitude: order.runnerLongitude || order.longitude,
     publishTime: order.publishTime || '',
     status: order.status || 'waiting'
   }
@@ -555,6 +695,183 @@ function publicWaitingOrder(order) {
   if (typeof order.distance === 'number') {
     result.distance = Math.round(order.distance)
   }
+  if (order.distanceBasis) result.distanceBasis = order.distanceBasis
 
   return result
+}
+
+function coalesce(...values) {
+  for (const value of values) {
+    if (hasValue(value)) return value
+  }
+  return undefined
+}
+
+function parseOptionalNumber(value) {
+  if (!hasValue(value)) return null
+  const number = Number(value)
+  return Number.isFinite(number) ? number : null
+}
+
+function normalizeTimeWindow(value) {
+  const allowed = ['immediate', 'morning', 'afternoon', 'evening', 'delayed', 'scheduled']
+  return allowed.includes(value) ? value : 'immediate'
+}
+
+function normalizeDeparture(input) {
+  const rawWindow = normalizeTimeWindow(input.runTimeWindow || 'immediate')
+  const mode = input.departureMode === 'delayed' || input.departureMode === 'scheduled' || rawWindow !== 'immediate'
+    ? 'delayed'
+    : 'immediate'
+  const requestedOffset = parseOptionalNumber(input.departureOffsetMinutes)
+  const offsetMinutes = mode === 'delayed'
+    ? Math.max(1, Math.min(24 * 60 - 1, Math.round(Number(requestedOffset || 0))))
+    : 0
+  const now = new Date()
+  const parsedAt = hasValue(input.departureAt) ? new Date(input.departureAt) : null
+  const atDate = mode === 'delayed'
+    ? (parsedAt && Number.isFinite(parsedAt.getTime()) ? parsedAt : new Date(now.getTime() + offsetMinutes * 60 * 1000))
+    : now
+  const runTimeWindow = mode === 'delayed' && rawWindow === 'immediate' ? 'delayed' : rawWindow
+  const label = hasValue(input.departureLabel)
+    ? String(input.departureLabel)
+    : mode === 'delayed'
+      ? formatDelayLabel(offsetMinutes)
+      : timeWindowLabel(runTimeWindow)
+
+  return {
+    mode,
+    offsetMinutes,
+    at: atDate.toISOString(),
+    hour: atDate.getHours(),
+    date: formatLocalDate(atDate),
+    label,
+    runTimeWindow
+  }
+}
+
+function formatDelayLabel(minutes) {
+  const hours = Math.floor(minutes / 60)
+  const mins = minutes % 60
+  if (hours > 0 && mins > 0) return `${hours}小时${mins}分钟后出发`
+  if (hours > 0) return `${hours}小时后出发`
+  return `${mins}分钟后出发`
+}
+
+function formatLocalDate(date) {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+function timeWindowLabel(value) {
+  if (value === 'morning') return '上午'
+  if (value === 'afternoon') return '下午'
+  if (value === 'evening') return '晚上'
+  if (value === 'delayed' || value === 'scheduled') return '延后出发'
+  return '立即出发'
+}
+
+function inferCity(address) {
+  if (!address) return ''
+  const knownCities = ['上海', '北京', '广州', '深圳', '杭州', '南京', '苏州', '成都', '重庆', '武汉', '西安', '天津', '宁波', '厦门', '青岛', '济南', '长沙', '郑州']
+  const found = knownCities.find(city => String(address).includes(city))
+  return found ? `${found}市` : ''
+}
+
+function filterWaitingOrders(orders, filters) {
+  const city = normalizeCityName(filters.city)
+  return orders.filter(order => {
+    if (filters.gender && filters.gender !== 'all' && order.runnerGender && order.runnerGender !== filters.gender) {
+      return false
+    }
+    if (filters.timeWindow && filters.timeWindow !== 'all' && !matchesTimeWindow(order, filters.timeWindow)) {
+      return false
+    }
+    if (city && city !== 'all') {
+      const orderCity = normalizeCityName(order.city || inferCity(order.originAddress || order.address || '') || inferCity(order.destinationAddress || ''))
+      if (!orderCity || orderCity !== city) return false
+    }
+    if (!matchesDepartureFilter(order, filters)) {
+      return false
+    }
+    if (filters.ageRange && filters.ageRange !== 'all') {
+      const age = Number(order.runnerAge)
+      if (Number.isFinite(age)) {
+        const [min, max] = String(filters.ageRange).split('-').map(Number)
+        if (Number.isFinite(min) && age < min) return false
+        if (Number.isFinite(max) && age > max) return false
+      }
+    }
+    return true
+  })
+}
+
+function normalizeCityName(value) {
+  const raw = String(value || '').trim()
+  if (!raw || raw === 'all') return raw || 'all'
+  return raw
+    .replace(/(特别行政区|地区|盟)$/g, '')
+    .replace(/市辖区$/g, '')
+    .replace(/市$/g, '')
+}
+
+function matchesTimeWindow(order, timeWindow) {
+  const value = String(timeWindow || 'all')
+  if (value === 'all') return true
+  const mode = order.departureMode || (order.runTimeWindow === 'immediate' ? 'immediate' : 'delayed')
+  if (value === 'immediate') return mode === 'immediate' || (order.runTimeWindow || 'immediate') === 'immediate'
+  if (value === 'delayed' || value === 'scheduled') return mode === 'delayed' || ['delayed', 'scheduled'].includes(order.runTimeWindow)
+  return (order.runTimeWindow || 'immediate') === value
+}
+
+function matchesDepartureFilter(order, filters) {
+  const type = String(filters.departureFilterType || 'all')
+  if (type === 'all') return true
+
+  const mode = order.departureMode || (order.runTimeWindow === 'immediate' ? 'immediate' : 'delayed')
+  if (type === 'immediate') return mode === 'immediate'
+
+  if (type === 'within') {
+    const minutes = Number(filters.departureWithinMinutes)
+    if (!Number.isFinite(minutes) || minutes <= 0) return true
+    const departureTime = parseDepartureTime(order)
+    if (!departureTime) return mode === 'immediate'
+    const now = Date.now()
+    return departureTime >= now - 60 * 1000 && departureTime <= now + minutes * 60 * 1000
+  }
+
+  if (type === 'hour') {
+    const hour = Number(filters.departureHour)
+    if (!Number.isInteger(hour) || hour < 0 || hour > 23) return true
+    const orderHour = Number(order.departureHour)
+    return Number.isInteger(orderHour) && orderHour === hour
+  }
+
+  if (type === 'date') {
+    const date = String(filters.departureDate || '').trim()
+    if (!date) return true
+    return String(order.departureDate || '') === date
+  }
+
+  return true
+}
+
+function parseDepartureTime(order) {
+  if (!hasValue(order.departureAt)) return null
+  const time = new Date(order.departureAt).getTime()
+  return Number.isFinite(time) ? time : null
+}
+
+function orderPointForDistance(order, distanceBasis) {
+  if (distanceBasis === 'runner') {
+    const latitude = Number(coalesce(order.runnerLatitude, order.latitude))
+    const longitude = Number(coalesce(order.runnerLongitude, order.longitude))
+    if (Number.isFinite(latitude) && Number.isFinite(longitude)) return { latitude, longitude }
+  }
+  const latitude = Number(coalesce(order.originLatitude, order.latitude))
+  const longitude = Number(coalesce(order.originLongitude, order.longitude))
+  if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return null
+  return { latitude, longitude }
 }

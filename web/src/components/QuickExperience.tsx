@@ -14,16 +14,19 @@ const ROLE_UI: Record<UserType, { icon: typeof Footprints; btnClass: string }> =
   volunteer: { icon: HeartHandshake, btnClass: 'btn--pine' }
 }
 
+type QuickExperiencePlacement = 'desktop' | 'inline'
+
 /**
- * Desktop-preview-only shortcut that signs into a disposable demo account via
- * the real session login flow (`useSession().login` → `webAuth.login`), so the
- * phone preview lands directly on the matching role home page without manual
- * entry. Rendered beside the DeviceFrame; never shown in bare/mobile view.
+ * Shortcut that signs into a disposable demo account via the real session login
+ * flow (`useSession().login` → `webAuth.login`), so users can enter the matching
+ * role flow without manual credentials. Desktop renders it beside the device
+ * preview; real mobile renders it inline on the auth screen.
  */
-export function QuickExperience() {
+export function QuickExperience({ placement = 'desktop' }: { placement?: QuickExperiencePlacement }) {
   const { login } = useSession()
   const toast = useToast()
   const [pending, setPending] = useState<UserType | null>(null)
+  const inline = placement === 'inline'
 
   const enterAs = async (account: DemoAccount) => {
     if (pending) return
@@ -43,10 +46,13 @@ export function QuickExperience() {
   }
 
   return (
-    <aside className="quick-demo" aria-label="桌面预览快捷体验">
+    <aside
+      className={`quick-demo quick-demo--${placement}`}
+      aria-label={inline ? '快捷体验' : '桌面预览快捷体验'}
+    >
       <span className="quick-demo__kicker">
         <Wand2 size={13} strokeWidth={2.6} />
-        快速体验
+        {inline ? '一键体验' : '快速体验'}
       </span>
       <p className="quick-demo__hint">无需登录，一键以演示身份进入完整流程。</p>
       <div className="quick-demo__actions">

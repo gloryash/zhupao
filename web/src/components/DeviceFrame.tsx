@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 're
 import { StatusBar } from './StatusBar'
 import { useToastViewport } from './Toast'
 import { QuickExperience } from './QuickExperience'
+import brandLogo from '../assets/xinban-run-logo.jpg'
 
 export interface DeviceSpec {
   id: string
@@ -76,9 +77,12 @@ export function DeviceFrame({ children }: { children: ReactNode }) {
     <div className="preview-stage" ref={stageRef}>
       <div className="preview-stage__brand">
         <h1>
-          <span className="preview-stage__dot" /> 助盲跑
+          <span className="preview-stage__mark">
+            <img src={brandLogo} alt="" />
+          </span>
+          心伴助跑精灵
         </h1>
-        <p>移动端预览 · 由微信小程序迁移而来，与原小程序共享同一 CloudBase 后端。</p>
+        <p>移动端预览 · 由微信小程序迁移而来。</p>
       </div>
 
       {/* Preview-only shortcut to enter as a demo role (left blank area). */}

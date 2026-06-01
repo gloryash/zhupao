@@ -5,6 +5,7 @@ import { OrderCard } from '../components/OrderCard'
 import { useToast } from '../components/Toast'
 import { CloudError, cancelOrder, getMyOrders } from '../services/api'
 import { isActiveOrder } from '../lib/format'
+import { getRunnerOrderVoiceCue, speakRunnerOrderVoiceCue } from '../lib/orderVoiceCue'
 import type { Order } from '../types'
 import type { PageProps } from './types'
 
@@ -55,7 +56,8 @@ function RunnerOrders({ onNavigate }: PageProps) {
       setBusyId(order._id)
       try {
         await cancelOrder(order._id)
-        toast.success('已取消该陪跑请求')
+        toast.success(getRunnerOrderVoiceCue('cancelSuccess'))
+        speakRunnerOrderVoiceCue('cancelSuccess')
         await load()
       } catch (err) {
         toast.error(err instanceof CloudError ? err.message : '取消失败，请稍后再试')

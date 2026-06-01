@@ -1,6 +1,7 @@
-import type { ReactNode } from 'react'
+import type { MouseEvent, ReactNode } from 'react'
 import { BottomNav, type NavItem } from './BottomNav'
 import type { UserType } from '../types'
+import { getSpokenLabel, speakVoiceCue } from '../lib/voiceCue'
 
 export function AppShell({
   role,
@@ -21,8 +22,18 @@ export function AppShell({
   onSelectTab: (key: string) => void
   children: ReactNode
 }) {
+  const onClickCapture = (event: MouseEvent<HTMLDivElement>) => {
+    if (role !== 'disabled') return
+    const target = event.target
+    if (!(target instanceof Element)) return
+    const button = target.closest('button')
+    if (!button || !event.currentTarget.contains(button)) return
+    const label = getSpokenLabel(button)
+    if (label) speakVoiceCue(label)
+  }
+
   return (
-    <div className="app" data-role={role}>
+    <div className="app" data-role={role} onClickCapture={onClickCapture}>
       <header className="app__header">
         <div className="app__header-titles">
           <p className="app__eyebrow">{eyebrow}</p>

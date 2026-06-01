@@ -117,6 +117,14 @@ export type OrderStatus =
   | 'completed'
   | 'cancelled'
 
+/** An endpoint (start or destination) attached to an order by the backend. */
+export interface OrderEndpoint {
+  latitude?: number
+  longitude?: number
+  address?: string
+  city?: string
+}
+
 export interface Order {
   _id: string
   openid?: string
@@ -127,6 +135,33 @@ export interface Order {
   latitude?: number
   longitude?: number
   address?: string
+
+  // Start / destination as stored & returned by handleOrder.
+  origin?: OrderEndpoint
+  destination?: OrderEndpoint
+  originLatitude?: number
+  originLongitude?: number
+  originAddress?: string
+  destinationLatitude?: number
+  destinationLongitude?: number
+  destinationAddress?: string
+
+  // Matching metadata surfaced on the waiting board.
+  city?: string
+  runTimeWindow?: string
+  /** Departure timing (immediate vs delayed-by-offset). */
+  departureMode?: 'immediate' | 'delayed'
+  departureOffsetMinutes?: number
+  departureAt?: string
+  departureHour?: number | null
+  departureDate?: string
+  departureLabel?: string
+  runnerGender?: string
+  runnerAge?: number | null
+  runnerLatitude?: number
+  runnerLongitude?: number
+  distanceBasis?: 'origin' | 'runner'
+
   volunteerOpenid?: string
   volunteerName?: string
   volunteerId?: string

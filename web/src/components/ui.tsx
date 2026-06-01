@@ -1,4 +1,5 @@
-import { useEffect, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 import { Star } from 'lucide-react'
 
 /* Small shared UI primitives that lean on the global stylesheet. */
@@ -60,6 +61,17 @@ export function Sheet({
   onClose: () => void
   children: ReactNode
 }) {
+  // Anchor lives in the normal tree; we portal the overlay up to the nearest
+  // .app surface so the absolutely-positioned backdrop covers the whole phone
+  // frame instead of scrolling with (and mis-hit-testing against) app__content.
+  const anchorRef = useRef<HTMLSpanElement>(null)
+  const [container, setContainer] = useState<HTMLElement | null>(null)
+
+  useEffect(() => {
+    const host = anchorRef.current?.closest('.app') as HTMLElement | null
+    setContainer(host ?? document.body)
+  }, [])
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose()
@@ -68,7 +80,7 @@ export function Sheet({
     return () => window.removeEventListener('keydown', onKey)
   }, [onClose])
 
-  return (
+  const overlay = (
     <div
       className="sheet-backdrop"
       onMouseDown={(e) => {
@@ -81,6 +93,13 @@ export function Sheet({
         {children}
       </div>
     </div>
+  )
+
+  return (
+    <>
+      <span ref={anchorRef} aria-hidden style={{ display: 'none' }} />
+      {container && createPortal(overlay, container)}
+    </>
   )
 }
 

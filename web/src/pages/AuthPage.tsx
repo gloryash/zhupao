@@ -6,14 +6,15 @@ import {
   Footprints,
   HeartHandshake,
   Lock,
-  Sun,
   User as UserIcon
 } from 'lucide-react'
+import { QuickExperience } from '../components/QuickExperience'
 import { Spinner } from '../components/ui'
 import { useSession } from '../stores/session'
 import { useToast } from '../components/Toast'
 import type { RegisterProfile } from '../services/api'
 import type { UserType, YesNo } from '../types'
+import brandLogo from '../assets/xinban-run-logo.jpg'
 
 type Mode = 'login' | 'register'
 
@@ -137,9 +138,9 @@ export function AuthPage() {
       <div className="auth__hero">
         <span className="auth__logo">
           <span className="auth__logo-mark">
-            <Sun size={16} strokeWidth={2.6} />
+            <img src={brandLogo} alt="" />
           </span>
-          助盲跑
+          心伴助跑精灵
         </span>
         <h1 className="auth__headline">
           陪你<em>向光</em>
@@ -148,6 +149,8 @@ export function AuthPage() {
         </h1>
         <p className="auth__sub">连接视障跑者与经过认证的陪跑志愿者，让每一段路都有人同行。</p>
       </div>
+
+      <QuickExperience placement="inline" />
 
       <form className="auth__card" onSubmit={onSubmit} noValidate>
         <div className="auth__tabs" role="tablist" aria-label="登录或注册">

@@ -1,5 +1,5 @@
 /* =========================================================================
-   助盲跑 · 向光奔跑  —  Design System
+   心伴助跑精灵 · 向光奔跑  —  Design System
    Aesthetic: warm "paper + beacon" daylight theme. Firm tactile borders,
    hard offset shadows, a guiding amber accent, deep pine for trust/training,
    a faint paper grain. Built for high legibility & accessibility first.
@@ -171,27 +171,39 @@ button {
   color: rgba(251, 246, 234, 0.62);
 }
 
-.preview-stage__dot {
-  width: 13px;
-  height: 13px;
+.preview-stage__mark {
+  width: 34px;
+  height: 34px;
+  flex: none;
   border-radius: 50%;
-  background: var(--beacon);
-  box-shadow: 0 0 0 5px rgba(255, 157, 18, 0.25);
+  overflow: hidden;
+  background: var(--raised);
+  border: 2px solid rgba(251, 246, 234, 0.86);
+  box-shadow: 0 0 0 5px rgba(255, 157, 18, 0.2), 0 10px 24px -14px #000;
 }
 
-/* Quick-experience entry — sits in the left blank gutter beside the device,
-   desktop preview only. Hidden when the viewport is too narrow to clear the
-   centered phone (and never rendered at all in bare/mobile view). */
+.preview-stage__mark img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 .quick-demo {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Quick-experience entry — sits in the left blank gutter beside the device on
+   desktop preview. */
+.quick-demo--desktop {
   position: fixed;
   left: 36px;
   top: 50%;
   transform: translateY(-50%);
   z-index: 5;
   width: 244px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
   padding: 20px;
   border-radius: var(--r-lg);
   background: rgba(20, 17, 13, 0.55);
@@ -224,8 +236,12 @@ button {
   gap: 10px;
 }
 
+.quick-demo--inline {
+  display: none;
+}
+
 @media (max-width: 960px) {
-  .quick-demo {
+  .quick-demo--desktop {
     display: none;
   }
 }
@@ -499,10 +515,9 @@ button {
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
-  /* Trailing space (above the flex-sibling nav) so the last interactive
-     control can always be scrolled clear of the bottom nav / home indicator
-     rather than sitting flush against it. */
-  padding: 4px 16px 36px;
+  /* Trailing space reserves the bottom nav + safe area so the last interactive
+     control can always be scrolled clear of the nav / home indicator. */
+  padding: 4px 16px calc(var(--nav-h) + var(--safe-bottom) + 36px);
   position: relative;
   z-index: 1;
   scrollbar-width: none;
@@ -1314,10 +1329,18 @@ button.list-row:active {
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  background: var(--beacon);
-  display: grid;
-  place-items: center;
-  color: var(--ink);
+  overflow: hidden;
+  background: var(--raised);
+  border: 1.5px solid rgba(251, 246, 234, 0.86);
+  display: block;
+  box-shadow: 0 0 0 3px rgba(255, 157, 18, 0.18);
+}
+
+.auth__logo-mark img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .auth__headline {
@@ -1479,6 +1502,674 @@ button.list-row:active {
   border-radius: var(--r-sm);
   padding: 9px 11px;
   line-height: 1.45;
+}
+
+/* =========================================================================
+   Address search + companion-run order flow
+   ========================================================================= */
+
+/* Start/destination dots — green start, red destination — reused everywhere. */
+.addr-dot {
+  display: inline-block;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  border: 1.5px solid var(--line-ink);
+  flex: none;
+  vertical-align: middle;
+}
+
+.addr-dot--start {
+  background: var(--pine-soft);
+}
+
+.addr-dot--destination {
+  background: var(--coral);
+}
+
+.addr-search {
+  position: relative;
+}
+
+.addr-search__clear {
+  flex: none;
+  border: none;
+  background: none;
+  display: grid;
+  place-items: center;
+  color: var(--ink-faint);
+  cursor: pointer;
+  padding: 4px;
+}
+
+/* Selected-address readout (replaces the input once chosen). */
+.addr-chosen {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 11px 12px;
+  background: var(--raised-2);
+  border: 1.5px solid var(--line);
+  border-radius: var(--r-md);
+}
+
+.addr-chosen svg {
+  flex: none;
+  margin-top: 2px;
+  color: var(--ink-faint);
+}
+
+.addr-chosen__text {
+  flex: 1;
+  min-width: 0;
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1.45;
+  word-break: break-word;
+}
+
+.addr-chosen__change {
+  flex: none;
+  box-shadow: none;
+  border: 1.5px solid var(--line);
+  align-self: center;
+}
+
+/* Result + history list. */
+.addr-list {
+  list-style: none;
+  margin: 0;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: var(--raised);
+  border: 1.5px solid var(--line);
+  border-radius: var(--r-md);
+  max-height: 248px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.addr-list__caption {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  padding: 6px 8px 2px;
+}
+
+.addr-list__item {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: none;
+  padding: 10px 8px;
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  transition: background 0.14s ease;
+}
+
+.addr-list__item:hover,
+.addr-list__item:focus-visible {
+  background: var(--paper-2);
+}
+
+.addr-list__item svg {
+  flex: none;
+  margin-top: 2px;
+  color: var(--accent-deep);
+}
+
+.addr-list__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.addr-list__name {
+  display: block;
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--ink);
+}
+
+.addr-list__detail {
+  display: block;
+  font-size: 11.5px;
+  color: var(--ink-faint);
+  margin-top: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Confirmation summary (runner) + detail summary (volunteer). */
+.confirm__grid {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.confirm__grid > div {
+  min-width: 0;
+}
+
+.confirm__grid dt {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink-faint);
+}
+
+.confirm__grid dd {
+  margin: 4px 0 0;
+  font-size: 14.5px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--ink);
+  word-break: break-word;
+}
+
+.confirm__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  padding-top: 10px;
+  border-top: 1.5px solid var(--line-2);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+.confirm__row span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* Volunteer filter bar. */
+.filter-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px;
+}
+
+.filter-bar__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.filter-bar .select {
+  padding: 10px 12px;
+  font-size: 13.5px;
+}
+
+/* Field mode toggle (search / map) — a compact inline segmented control. */
+.addr-search__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.seg {
+  display: inline-flex;
+  gap: 3px;
+  padding: 3px;
+  background: var(--paper-2);
+  border: 1.5px solid var(--line);
+  border-radius: var(--r-pill);
+}
+
+.seg--mini button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: none;
+  background: none;
+  padding: 6px 12px;
+  border-radius: var(--r-pill);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 12px;
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition: all 0.16s ease;
+}
+
+.seg--mini button[aria-pressed='true'] {
+  background: var(--ink);
+  color: var(--on-dark);
+}
+
+/* Inline map point picker (sits below the address input, never overlays). */
+.map-pick {
+  position: relative;
+  border-radius: var(--r-md);
+  overflow: hidden;
+  border: 1.5px solid var(--line);
+  z-index: 0;
+}
+
+.map-pick__canvas {
+  width: 100%;
+}
+
+.map-pick__canvas .leaflet-container {
+  width: 100%;
+  height: 100%;
+  font-family: var(--font-body);
+  background: var(--paper-2);
+  cursor: crosshair;
+}
+
+.map-pick__veil {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(244, 237, 221, 0.55);
+  z-index: 500;
+}
+
+.map-pick__pin {
+  display: block;
+  width: 22px;
+  height: 22px;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  background: var(--accent);
+  border: 2px solid var(--raised);
+  box-shadow: 0 0 0 1.5px var(--line-ink), 0 4px 10px rgba(28, 24, 19, 0.4);
+}
+
+/* Departure timing (runner publish). */
+.departure {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.departure__delay {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px;
+  background: var(--raised-2);
+  border: 1.5px solid var(--line);
+  border-radius: var(--r-md);
+  /* Keep the delay panel clear of the fixed TabBar when scrolled into view. */
+  scroll-margin-bottom: calc(var(--nav-h) + var(--safe-bottom) + 24px);
+  scroll-margin-top: calc(var(--safe-top) + 24px);
+}
+
+.departure__row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.departure__row--col {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.departure__cap {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink-soft);
+  min-width: 36px;
+}
+
+.departure__eta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--accent-deep);
+}
+
+/* Stepper (delay hours / filter hour). */
+.stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--raised);
+  border: 1.5px solid var(--line);
+  border-radius: var(--r-pill);
+  padding: 3px;
+}
+
+.stepper__btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: none;
+  background: var(--paper-2);
+  color: var(--ink);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  font-weight: 800;
+  font-size: 16px;
+  line-height: 1;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+
+.stepper__btn:active {
+  transform: scale(0.92);
+}
+
+.stepper__btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.stepper__value {
+  min-width: 56px;
+  text-align: center;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Wrap-around selectable chips (age, city presets, departure windows). */
+.chip-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip-toggle {
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.chip-toggle--on {
+  background: var(--accent-tint);
+  border-color: transparent;
+  color: var(--accent-deep);
+  font-weight: 700;
+}
+
+/* Stable in-page volunteer filter panel. */
+.filter-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+}
+
+.filter-panel__field {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.filter-panel__sub {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 11px 12px;
+  background: var(--raised-2);
+  border: 1.5px solid var(--line-2);
+  border-radius: var(--r-md);
+}
+
+.filter-panel__note {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+.filter-panel__reset {
+  align-self: flex-start;
+  border: 1.5px solid var(--line);
+}
+
+/* Active-filter badge on the 筛选 button. */
+.filter-count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  margin-left: 2px;
+  border-radius: var(--r-pill);
+  background: var(--accent);
+  color: var(--ink);
+  font-size: 11px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Demand list rows. */
+.demand-row {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  text-align: left;
+  background: var(--raised);
+  border: 1.5px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: 14px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, transform 0.12s ease;
+}
+
+.demand-row:active {
+  transform: scale(0.99);
+}
+
+.demand-row:hover,
+.demand-row:focus-visible {
+  border-color: var(--pine-soft);
+}
+
+.demand-row__route {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  position: relative;
+}
+
+/* Connector line between the start and destination dots. */
+.demand-row__route::before {
+  content: '';
+  position: absolute;
+  left: 5px;
+  top: 14px;
+  bottom: 14px;
+  width: 1.5px;
+  background: var(--line);
+}
+
+.demand-row__addr {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  position: relative;
+  z-index: 1;
+}
+
+.demand-row__text {
+  flex: 1;
+  min-width: 0;
+  font-weight: 700;
+  font-size: 14px;
+  line-height: 1.35;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.demand-row__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.demand-row__meta .chip {
+  font-size: 11.5px;
+  padding: 4px 9px;
+}
+
+/* Route map card + legend. */
+.route-card {
+  background: var(--raised);
+  border: 1.5px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.route-card__head {
+  display: flex;
+  align-items: center;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 14px;
+}
+
+.route-card__head span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.route-map {
+  width: 100%;
+  border-radius: var(--r-md);
+  overflow: hidden;
+  border: 1.5px solid var(--line);
+  position: relative;
+  z-index: 0;
+}
+
+.route-map .leaflet-container {
+  width: 100%;
+  height: 100%;
+  font-family: var(--font-body);
+  background: var(--paper-2);
+}
+
+.route-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+.route-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Leaflet divIcon markers. */
+.route-mk {
+  background: none;
+  border: none;
+}
+
+.route-dot {
+  display: block;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 3px solid var(--raised);
+  box-shadow: 0 0 0 1.5px var(--line-ink), 0 3px 8px rgba(28, 24, 19, 0.4);
+}
+
+.route-dot--start {
+  background: var(--pine-soft);
+}
+
+.route-dot--dest {
+  background: var(--coral);
+}
+
+.route-walker {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--pine);
+  color: #fff;
+  border: 2px solid var(--raised);
+  box-shadow: 0 0 0 1.5px var(--line-ink), 0 4px 10px rgba(28, 24, 19, 0.4);
+}
+
+.route-walker--mini {
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: var(--pine);
+  border: 1.5px solid var(--line-ink);
+  box-shadow: none;
+}
+
+/* Two-line start→destination on order cards. */
+.order-card__route {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0 0 11px;
+  position: relative;
+}
+
+.order-card__route::before {
+  content: '';
+  position: absolute;
+  left: 5px;
+  top: 14px;
+  bottom: 14px;
+  width: 1.5px;
+  background: var(--line);
+}
+
+.order-card__addr--start,
+.order-card__addr--dest {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 0;
+  font-size: 14.5px;
+  position: relative;
+  z-index: 1;
+}
+
+.order-card__addr--start span:last-child,
+.order-card__addr--dest span:last-child {
+  flex: 1;
+  min-width: 0;
 }
 
 /* =========================================================================
@@ -1746,4 +2437,236 @@ button.list-row:active {
 .vol-option__check {
   flex: none;
   color: var(--accent);
+}
+
+/* =========================================================================
+   Real mobile / narrow viewport refinements
+   ========================================================================= */
+
+@media (max-width: 620px), (pointer: coarse) {
+  body {
+    background: var(--paper);
+  }
+
+  .bare-stage {
+    height: 100dvh;
+    min-height: 100dvh;
+    overflow: hidden;
+  }
+
+  .auth {
+    padding: calc(var(--safe-top) + 18px) clamp(16px, 5vw, 24px)
+      calc(var(--safe-bottom) + 22px);
+  }
+
+  .auth__hero {
+    margin-bottom: 14px;
+  }
+
+  .auth__logo {
+    max-width: 100%;
+    font-size: clamp(15px, 4.6vw, 17px);
+  }
+
+  .auth__headline {
+    font-size: clamp(30px, 9vw, 36px);
+    margin: 18px 0 9px;
+  }
+
+  .auth__sub {
+    max-width: none;
+    font-size: 13.5px;
+  }
+
+  .quick-demo--inline {
+    display: flex;
+    margin: 0 0 14px;
+    padding: 14px;
+    border-radius: var(--r-lg);
+    background: rgba(255, 253, 247, 0.72);
+    border: 1.5px solid var(--line);
+    box-shadow: var(--shadow-soft);
+  }
+
+  .quick-demo--inline .quick-demo__kicker {
+    color: var(--accent-deep);
+  }
+
+  .quick-demo--inline .quick-demo__hint {
+    color: var(--ink-soft);
+    margin-bottom: 0;
+  }
+
+  .quick-demo--inline .quick-demo__actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 9px;
+  }
+
+  .quick-demo--inline .btn {
+    min-width: 0;
+    min-height: 46px;
+    padding-inline: 11px;
+    font-size: 13px;
+    line-height: 1.2;
+  }
+
+  .auth__card {
+    padding: 16px;
+    border-radius: 24px;
+  }
+
+  .role-pick {
+    grid-template-columns: 1fr;
+  }
+
+  .app__header {
+    padding: calc(var(--safe-top) + 10px) 16px 10px;
+  }
+
+  .app__title {
+    font-size: clamp(21px, 6vw, 24px);
+    letter-spacing: 0;
+  }
+
+  .app__content {
+    /* Reserve nav + safe area on real mobile too. */
+    padding: 4px 14px calc(var(--nav-h) + var(--safe-bottom) + 34px);
+  }
+
+  .bottom-nav {
+    padding-inline: 6px;
+  }
+
+  .bottom-nav__item {
+    min-width: 0;
+  }
+
+  .bottom-nav__icon {
+    width: 34px;
+  }
+
+  .bottom-nav__label {
+    font-size: 10px;
+    max-width: 100%;
+    white-space: nowrap;
+  }
+
+  .card {
+    padding: 16px;
+  }
+
+  .grid-2,
+  .filter-bar__grid,
+  .locpick__coords,
+  .cert__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .grid-3 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .stat {
+    padding: 11px;
+  }
+
+  .stat__value {
+    font-size: 20px;
+  }
+
+  .row--between {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .list-row,
+  .vol-option {
+    align-items: flex-start;
+  }
+
+  .list-row .chip {
+    align-self: center;
+  }
+
+  .callout {
+    padding: 14px;
+  }
+
+  .callout__text,
+  .field__hint {
+    word-break: break-word;
+  }
+
+  .input,
+  .textarea,
+  .select {
+    font-size: 16px;
+  }
+
+  .addr-search__head {
+    align-items: stretch;
+  }
+
+  .addr-search__head .seg {
+    width: 100%;
+  }
+
+  .addr-search__head .seg button {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .addr-list__detail,
+  .demand-row__text {
+    white-space: normal;
+  }
+
+  .addr-chosen {
+    flex-wrap: wrap;
+  }
+
+  .addr-chosen__change {
+    align-self: flex-start;
+  }
+
+  .departure__row {
+    flex-wrap: wrap;
+  }
+
+  .filter-panel,
+  .filter-bar {
+    padding: 14px;
+  }
+
+  .sheet-backdrop {
+    position: fixed;
+  }
+
+  .sheet {
+    max-height: 92dvh;
+    padding-inline: 16px;
+  }
+
+  .stars {
+    justify-content: space-between;
+  }
+}
+
+@media (max-width: 360px) {
+  .auth {
+    padding-inline: 14px;
+  }
+
+  .quick-demo--inline .quick-demo__actions {
+    grid-template-columns: 1fr;
+  }
+
+  .bottom-nav__label {
+    font-size: 9.5px;
+  }
+
+  .btn {
+    padding-inline: 16px;
+  }
 }

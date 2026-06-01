@@ -7,6 +7,7 @@ import {
   formatMeters,
   formatMinutes
 } from '../lib/format'
+import { destinationAddress, startAddress } from '../lib/orderGeo'
 import type { Order } from '../types'
 
 /** Presentational summary of a single run order, shared across the runner and
@@ -23,6 +24,8 @@ export function OrderCard({
 }) {
   const near = proximity && Number.isFinite(order.distance) ? formatMeters(order.distance) : ''
   const stats = order.runningStats
+  const start = startAddress(order)
+  const dest = destinationAddress(order)
 
   return (
     <article className="card">
@@ -37,10 +40,23 @@ export function OrderCard({
         )}
       </div>
 
-      <p className="order-card__addr">
-        <MapPin size={16} aria-hidden />
-        <span>{order.address || '未填写地点'}</span>
-      </p>
+      {dest ? (
+        <div className="order-card__route">
+          <p className="order-card__addr order-card__addr--start">
+            <span className="addr-dot addr-dot--start" aria-hidden />
+            <span>{start || '未填写起点'}</span>
+          </p>
+          <p className="order-card__addr order-card__addr--dest">
+            <span className="addr-dot addr-dot--destination" aria-hidden />
+            <span>{dest}</span>
+          </p>
+        </div>
+      ) : (
+        <p className="order-card__addr">
+          <MapPin size={16} aria-hidden />
+          <span>{start || '未填写地点'}</span>
+        </p>
+      )}
 
       <div className="order-card__meta">
         <span>

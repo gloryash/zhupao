@@ -216,19 +216,111 @@ export async function getFrequentContacts(limit = 10): Promise<FrequentContact[]
 
 /* -------------------------------- orders ---------------------------------- */
 
-export async function publishOrder(payload: {
-  targetDistance: string | number
-  estimatedDuration: string | number
+/** One end of a run (start or destination) as selected from address search. */
+export interface OrderEndpointInput {
   latitude: number
   longitude: number
   address: string
-}): Promise<Order> {
+  city?: string
+}
+
+export interface PublishOrderInput {
+  origin: OrderEndpointInput
+  destination: OrderEndpointInput
+  /** Straight-line distance in km, computed from the two endpoints. */
+  targetDistance: string | number
+  /** Estimated duration in minutes. */
+  estimatedDuration: string | number
+  /** When to set off: immediate / morning / afternoon / evening / delayed. */
+  runTimeWindow?: string
+  /** Departure timing — immediate or delayed by an offset. */
+  departureMode?: 'immediate' | 'delayed'
+  departureOffsetMinutes?: number
+  departureAt?: string
+  departureLabel?: string
+  city?: string
+}
+
+export async function publishOrder(input: PublishOrderInput): Promise<Order> {
+  const {
+    origin,
+    destination,
+    targetDistance,
+    estimatedDuration,
+    runTimeWindow,
+    departureMode,
+    departureOffsetMinutes,
+    departureAt,
+    departureLabel,
+    city
+  } = input
+  const resolvedCity = city || origin.city || destination.city || ''
+  // Send both the structured origin/destination blocks and the flat
+  // latitude/longitude/address fields the backend reads for compatibility.
+  const payload = {
+    targetDistance,
+    estimatedDuration,
+    runTimeWindow: runTimeWindow || 'immediate',
+    departureMode: departureMode || 'immediate',
+    departureOffsetMinutes: departureOffsetMinutes ?? 0,
+    departureAt: departureAt || '',
+    departureLabel: departureLabel || '',
+    city: resolvedCity,
+    origin: {
+      latitude: origin.latitude,
+      longitude: origin.longitude,
+      address: origin.address,
+      city: origin.city || resolvedCity
+    },
+    destination: {
+      latitude: destination.latitude,
+      longitude: destination.longitude,
+      address: destination.address,
+      city: destination.city || resolvedCity
+    },
+    latitude: origin.latitude,
+    longitude: origin.longitude,
+    address: origin.address,
+    destinationLatitude: destination.latitude,
+    destinationLongitude: destination.longitude,
+    destinationAddress: destination.address
+  }
   const res = await request('handleOrder', 'publish', payload)
   return res.order as Order
 }
 
-export async function getWaitingOrders(latitude?: number, longitude?: number): Promise<Order[]> {
-  const res = await request('handleOrder', 'getWaitingOrders', { latitude, longitude })
+export interface WaitingOrderFilters {
+  latitude?: number
+  longitude?: number
+  maxDistance?: number
+  distanceBasis?: 'origin' | 'runner'
+  gender?: string
+  ageRange?: string
+  timeWindow?: string
+  city?: string
+  /** Departure-time scoping. `within`/`hour`/`date` use the matching field. */
+  departureFilterType?: 'all' | 'immediate' | 'within' | 'hour' | 'date'
+  departureWithinMinutes?: number
+  departureHour?: number
+  departureDate?: string
+}
+
+export async function getWaitingOrders(filters: WaitingOrderFilters = {}): Promise<Order[]> {
+  const payload: Record<string, unknown> = {
+    maxDistance: filters.maxDistance ?? 5000,
+    distanceBasis: filters.distanceBasis ?? 'origin',
+    gender: filters.gender ?? 'all',
+    ageRange: filters.ageRange ?? 'all',
+    timeWindow: filters.timeWindow ?? 'all',
+    city: filters.city ?? 'all',
+    departureFilterType: filters.departureFilterType ?? 'all'
+  }
+  if (Number.isFinite(filters.latitude)) payload.latitude = filters.latitude
+  if (Number.isFinite(filters.longitude)) payload.longitude = filters.longitude
+  if (Number.isFinite(filters.departureWithinMinutes)) payload.departureWithinMinutes = filters.departureWithinMinutes
+  if (Number.isInteger(filters.departureHour)) payload.departureHour = filters.departureHour
+  if (filters.departureDate) payload.departureDate = filters.departureDate
+  const res = await request('handleOrder', 'getWaitingOrders', payload)
   return (res.orders as Order[]) || []
 }
 
@@ -247,8 +339,16 @@ export async function getOrderDetail(orderId?: string): Promise<Order | null> {
   }
 }
 
-export async function acceptOrder(orderId: string): Promise<Order> {
-  const res = await request('handleOrder', 'accept', { orderId })
+export async function acceptOrder(
+  orderId: string,
+  coords?: { latitude: number; longitude: number }
+): Promise<Order> {
+  const payload: Record<string, unknown> = { orderId }
+  if (coords && Number.isFinite(coords.latitude) && Number.isFinite(coords.longitude)) {
+    payload.latitude = coords.latitude
+    payload.longitude = coords.longitude
+  }
+  const res = await request('handleOrder', 'accept', payload)
   return res.order as Order
 }
 
