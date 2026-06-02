@@ -11,10 +11,11 @@
  *   body: { "name": "<functionName>", "data": { ...payload } }
  *   resp: the cloud function's own return value (the { success, ... } object)
  *
- * No credentials live here. The tcb CLI uses its own machine-local login state.
+ * No credentials live here. The tcb CLI uses this project's isolated login
+ * state under <repo>/.cloudbase-home by default.
  */
 import { spawn } from 'node:child_process'
-import { existsSync, mkdtempSync, writeFileSync, rmSync } from 'node:fs'
+import { existsSync, mkdirSync, mkdtempSync, writeFileSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 import type { Connect, Plugin } from 'vite'
@@ -24,6 +25,18 @@ const DEFAULT_ENV = 'cloud1-d8gbfzr7t6c5dc8bc'
 const INVOKE_TIMEOUT_MS = 60_000
 
 const TCB_BIN_NAME = process.platform === 'win32' ? 'tcb.cmd' : 'tcb'
+const SECRET_ENV_KEYS = [
+  'TENCENTCLOUD_SECRETID',
+  'TENCENTCLOUD_SECRETKEY',
+  'TENCENTCLOUD_SESSIONTOKEN',
+  'TCB_SECRET_ID',
+  'TCB_SECRET_KEY',
+  'TCB_SESSION_TOKEN',
+  'CLOUD_SECRET_ID',
+  'CLOUD_SECRET_KEY',
+  'SECRET_ID',
+  'SECRET_KEY'
+]
 
 /**
  * Walk up from `start`, returning the first ancestor directory that contains
@@ -49,6 +62,34 @@ function repoRoot(): string {
 
 function tcbBinaryPath(root: string): string {
   return resolve(root, 'node_modules', '.bin', TCB_BIN_NAME)
+}
+
+function cloudbaseProfileHome(root: string): string {
+  return resolve(process.env.CLOUDBASE_TCB_HOME || join(root, '.cloudbase-home'))
+}
+
+function ensureCloudbaseProfileHome(root: string): string {
+  const home = cloudbaseProfileHome(root)
+  mkdirSync(home, { recursive: true })
+  mkdirSync(join(home, '.config'), { recursive: true })
+  mkdirSync(join(home, '.cache'), { recursive: true })
+  mkdirSync(join(home, '.local', 'share'), { recursive: true })
+  return home
+}
+
+function cloudbaseProcessEnv(root: string, envId: string): NodeJS.ProcessEnv {
+  const env: NodeJS.ProcessEnv = { ...process.env }
+  for (const key of SECRET_ENV_KEYS) delete env[key]
+
+  const home = ensureCloudbaseProfileHome(root)
+  env.CI = '1'
+  env.CLOUDBASE_ENV = envId
+  env.HOME = home
+  env.USERPROFILE = home
+  env.XDG_CONFIG_HOME = join(home, '.config')
+  env.XDG_CACHE_HOME = join(home, '.cache')
+  env.XDG_DATA_HOME = join(home, '.local', 'share')
+  return env
 }
 
 function readBody(req: IncomingMessage): Promise<string> {
@@ -81,7 +122,7 @@ function invokeCloudFunction(name: string, payload: unknown, envId: string): Pro
       ['fn', 'invoke', name, '-e', envId, '-d', `@${payloadPath}`, '--json'],
       {
         cwd: root,
-        env: { ...process.env, CI: '1', CLOUDBASE_ENV: envId }
+        env: cloudbaseProcessEnv(root, envId)
       }
     )
 

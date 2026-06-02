@@ -2,9 +2,11 @@
   "name": "blind-run-miniapp-workspace",
   "private": true,
   "scripts": {
-    "tcb": "tcb",
-    "cloudbase:env": "node scripts/cloudbase/tcb-command.js env-detail",
-    "cloudbase:functions": "node scripts/cloudbase/tcb-command.js fn-list",
+    "tcb": "node scripts/cloudbase/run-tcb-isolated.js",
+    "tcb:raw": "tcb",
+    "cloudbase:login": "node scripts/cloudbase/run-tcb-isolated.js login -k",
+    "cloudbase:env": "node scripts/cloudbase/run-tcb-isolated.js env detail --json",
+    "cloudbase:functions": "node scripts/cloudbase/run-tcb-isolated.js fn list --json",
     "cloudbase:sync-shared": "node scripts/cloudbase/sync-shared.js",
     "cloudbase:verify-auth": "node scripts/cloudbase/verify-web-auth.js",
     "cloudbase:verify-core": "node scripts/cloudbase/verify-core-flow.js"

@@ -6,15 +6,19 @@ const fs = require('fs')
 const os = require('os')
 const path = require('path')
 const { spawnSync } = require('child_process')
+const {
+  DEFAULT_ENV,
+  buildIsolatedEnv,
+  ensureProfileHome,
+  tcbBinaryPath
+} = require('./tcb-profile')
 
-const DEFAULT_ENV = 'cloud1-d8gbfzr7t6c5dc8bc'
 const envId = process.env.CLOUDBASE_ENV || DEFAULT_ENV
-const tcbBin = path.resolve(
-  __dirname,
-  '../../node_modules/.bin',
-  process.platform === 'win32' ? 'tcb.cmd' : 'tcb'
-)
+const repoRoot = path.resolve(__dirname, '../..')
+const tcbBin = tcbBinaryPath(repoRoot)
 const INVOKE_TIMEOUT_MS = 60000
+
+ensureProfileHome(repoRoot, process.env)
 
 async function main() {
   const disabled = createAccount('disabled')
@@ -152,10 +156,10 @@ function invokeCloudFunction(name, payload) {
       `@${payloadPath}`,
       '--json'
     ], {
-      cwd: path.resolve(__dirname, '../..'),
+      cwd: repoRoot,
       encoding: 'utf8',
       timeout: INVOKE_TIMEOUT_MS,
-      env: { ...process.env, CI: '1', CLOUDBASE_ENV: envId }
+      env: buildIsolatedEnv(process.env, repoRoot, envId)
     })
   } finally {
     fs.rmSync(tempDir, { recursive: true, force: true })

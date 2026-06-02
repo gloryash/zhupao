@@ -3,24 +3,27 @@
 
 const path = require('path')
 const { spawnSync } = require('child_process')
+const {
+  DEFAULT_ENV,
+  buildIsolatedEnv,
+  ensureProfileHome,
+  tcbBinaryPath,
+  withDefaultEnvArg
+} = require('./tcb-profile')
 
-const DEFAULT_ENV = 'cloud1-d8gbfzr7t6c5dc8bc'
 const envId = process.env.CLOUDBASE_ENV || DEFAULT_ENV
 const root = path.resolve(__dirname, '../..')
-const tcbBin = path.join(
-  root,
-  'node_modules',
-  '.bin',
-  process.platform === 'win32' ? 'tcb.cmd' : 'tcb'
-)
+const tcbBin = tcbBinaryPath(root)
 
 const command = process.argv[2]
-const args = buildArgs(command)
+const args = withDefaultEnvArg(buildArgs(command), envId)
+
+ensureProfileHome(root, process.env)
 
 const result = spawnSync(tcbBin, args, {
   cwd: root,
   stdio: 'inherit',
-  env: { ...process.env, CI: '1', CLOUDBASE_ENV: envId },
+  env: buildIsolatedEnv(process.env, root, envId),
   timeout: 60000
 })
 
@@ -38,11 +41,11 @@ process.exit(result.status || 0)
 
 function buildArgs(commandName) {
   if (commandName === 'env-detail') {
-    return ['env', 'detail', '-e', envId, '--json']
+    return ['env', 'detail', '--json']
   }
 
   if (commandName === 'fn-list') {
-    return ['fn', 'list', '-e', envId, '--json']
+    return ['fn', 'list', '--json']
   }
 
   console.error('Usage: node scripts/cloudbase/tcb-command.js <env-detail|fn-list>')
