@@ -6,6 +6,7 @@ import {
   Footprints,
   HeartHandshake,
   Lock,
+  Phone,
   User as UserIcon
 } from 'lucide-react'
 import { QuickExperience } from '../components/QuickExperience'
@@ -60,6 +61,7 @@ export function AuthPage() {
 
   // Registration profile
   const [nickName, setNickName] = useState('')
+  const [phone, setPhone] = useState('')
   const [name, setName] = useState('')
   const [runningLocation, setRunningLocation] = useState('')
   // disabled-only
@@ -80,6 +82,8 @@ export function AuthPage() {
 
   const buildProfile = (): RegisterProfile => {
     const profile: RegisterProfile = { userType: role, nickName: nickName.trim() }
+    const resolvedPhone = registrationPhone(identifier, phone)
+    if (resolvedPhone) profile.phone = resolvedPhone
     if (name.trim()) profile.name = name.trim()
     if (runningLocation.trim()) profile.runningLocation = runningLocation.trim()
     if (role === 'disabled') {
@@ -105,6 +109,10 @@ export function AuthPage() {
     }
     if (mode === 'register' && !nickName.trim()) {
       fail('请填写一个昵称')
+      return
+    }
+    if (mode === 'register' && !/^1\d{10}$/.test(registrationPhone(identifier, phone))) {
+      fail('请填写有效的手机号码')
       return
     }
     setSubmitting(true)
@@ -277,6 +285,25 @@ export function AuthPage() {
               </div>
 
               <div className="field">
+                <label className="field__label" htmlFor="auth-phone">
+                  手机号码
+                </label>
+                <div className="input-group">
+                  <Phone size={18} className="faint" />
+                  <input
+                    id="auth-phone"
+                    className="input"
+                    type="tel"
+                    inputMode="tel"
+                    autoComplete="tel"
+                    placeholder="用于接单后联系与语音播报"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="field">
                 <label className="field__label" htmlFor="auth-name">
                   真实姓名<span className="field__hint">（选填）</span>
                 </label>
@@ -412,6 +439,12 @@ export function AuthPage() {
       </form>
     </div>
   )
+}
+
+function registrationPhone(identifier: string, phone: string): string {
+  const normalizedIdentifier = identifier.replace(/\s+/g, '').trim()
+  if (/^1\d{10}$/.test(normalizedIdentifier)) return normalizedIdentifier
+  return phone.replace(/\s+/g, '').trim()
 }
 
 function YesNoField({

@@ -1,5 +1,16 @@
-import type { ReactNode } from 'react'
-import { Clock, MapPin, Navigation, Route, UserRound, Gauge } from 'lucide-react'
+import { useMemo, useState, type ReactNode } from 'react'
+import {
+  Clock,
+  Gauge,
+  Hash,
+  MapPin,
+  Navigation,
+  Phone,
+  Route,
+  ShieldCheck,
+  UserRound
+} from 'lucide-react'
+import { Avatar, Sheet } from './ui'
 import {
   ORDER_STATUS_CHIP,
   ORDER_STATUS_LABEL,
@@ -8,7 +19,8 @@ import {
   formatMinutes
 } from '../lib/format'
 import { destinationAddress, startAddress } from '../lib/orderGeo'
-import type { Order } from '../types'
+import { getOrderCounterparty, type OrderParty } from '../lib/orderParties'
+import type { Order, UserType } from '../types'
 
 /** Presentational summary of a single run order, shared across the runner and
  *  volunteer flows. Pass `proximity` to surface the backend distance (waiting
@@ -16,16 +28,23 @@ import type { Order } from '../types'
 export function OrderCard({
   order,
   proximity = false,
+  viewerRole,
   children
 }: {
   order: Order
   proximity?: boolean
+  viewerRole?: UserType
   children?: ReactNode
 }) {
+  const [detailParty, setDetailParty] = useState<OrderParty | null>(null)
   const near = proximity && Number.isFinite(order.distance) ? formatMeters(order.distance) : ''
   const stats = order.runningStats
   const start = startAddress(order)
   const dest = destinationAddress(order)
+  const counterparty = useMemo(
+    () => (viewerRole ? getOrderCounterparty(order, viewerRole) : null),
+    [order, viewerRole]
+  )
 
   return (
     <article className="card">
@@ -67,15 +86,43 @@ export function OrderCard({
         </span>
       </div>
 
-      {order.userName && (
-        <p className="order-card__party">
-          <UserRound size={14} aria-hidden /> 发起人 · {order.userName}
-        </p>
-      )}
-      {order.volunteerName && (
-        <p className="order-card__party">
-          <UserRound size={14} aria-hidden /> 陪跑志愿者 · {order.volunteerName}
-        </p>
+      {counterparty ? (
+        <button
+          type="button"
+          className="order-card__party order-card__party-btn"
+          onClick={() => setDetailParty(counterparty)}
+          aria-label={`查看${counterparty.label}${counterparty.name}账号详情${
+            counterparty.phone ? `，电话${counterparty.phone}` : ''
+          }`}
+        >
+          <UserRound size={14} aria-hidden />
+          <span className="order-card__party-main">
+            {counterparty.label} · {counterparty.name}
+          </span>
+          {counterparty.phone && (
+            <span className="order-card__party-phone">
+              <Phone size={13} aria-hidden /> {counterparty.phone}
+            </span>
+          )}
+          {!counterparty.phone && counterparty.account && (
+            <span className="order-card__party-account">
+              <Hash size={13} aria-hidden /> {counterparty.account}
+            </span>
+          )}
+        </button>
+      ) : (
+        <>
+          {order.userName && (
+            <p className="order-card__party">
+              <UserRound size={14} aria-hidden /> 发起人 · {order.userName}
+            </p>
+          )}
+          {order.volunteerName && (
+            <p className="order-card__party">
+              <UserRound size={14} aria-hidden /> 陪跑志愿者 · {order.volunteerName}
+            </p>
+          )}
+        </>
       )}
 
       {stats && (stats.distance > 0 || stats.duration > 0) && (
@@ -93,6 +140,63 @@ export function OrderCard({
       )}
 
       {children && <div className="order-card__actions">{children}</div>}
+
+      {detailParty && (
+        <AccountDetailSheet party={detailParty} onClose={() => setDetailParty(null)} />
+      )}
     </article>
   )
+}
+
+function AccountDetailSheet({ party, onClose }: { party: OrderParty; onClose: () => void }) {
+  return (
+    <Sheet title="账号详情" onClose={onClose}>
+      <div className="account-sheet stack stack--sm">
+        <section className="account-sheet__hero">
+          <Avatar name={party.name} src={party.avatarUrl} size={58} />
+          <div className="account-sheet__identity">
+            <span className={`chip ${party.role === 'volunteer' ? 'chip--pine' : 'chip--accent'}`}>
+              {party.label}
+            </span>
+            <h3>{party.name}</h3>
+            {party.account && (
+              <p>
+                <Hash size={13} aria-hidden /> {party.account}
+              </p>
+            )}
+          </div>
+        </section>
+
+        {party.phone && (
+          <a className="btn btn--accent btn--block account-sheet__phone" href={`tel:${party.phone}`}>
+            <Phone size={18} /> {party.phone}
+          </a>
+        )}
+
+        <div className="account-sheet__details">
+          {party.details.map((row) => (
+            <div className="account-sheet__row" key={`${row.label}-${row.value}`}>
+              <span>
+                {detailIcon(row.label)}
+                {row.label}
+              </span>
+              <strong>{row.value}</strong>
+            </div>
+          ))}
+        </div>
+      </div>
+    </Sheet>
+  )
+}
+
+function detailIcon(label: string) {
+  if (label.includes('手机')) return <Phone size={14} aria-hidden />
+  if (label.includes('账号')) return <Hash size={14} aria-hidden />
+  if (label.includes('身份') || label.includes('认证') || label.includes('证书')) {
+    return <ShieldCheck size={14} aria-hidden />
+  }
+  if (label.includes('配速') || label.includes('里程') || label.includes('次数')) {
+    return <Gauge size={14} aria-hidden />
+  }
+  return <UserRound size={14} aria-hidden />
 }

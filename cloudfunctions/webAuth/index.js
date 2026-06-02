@@ -3,10 +3,12 @@ const crypto = require('crypto')
 const { ok, fail } = require('./shared/responses')
 const {
   normalizeIdentifier,
+  normalizePhone,
   createWebOpenid,
   publicUser
 } = require('./shared/user')
 const { resolveIdentity, hashToken } = require('./shared/auth')
+const { resolveRegistrationPhone } = require('./shared/registration-phone')
 
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 
@@ -52,6 +54,12 @@ async function register(event) {
     return fail('INVALID_IDENTIFIER', '请输入有效的手机号或邮箱')
   }
 
+  const phoneResult = resolveRegistrationPhone(identifier, profile.phone)
+  if (phoneResult.error) {
+    return fail(phoneResult.error.code, phoneResult.error.message)
+  }
+  profile.phone = phoneResult.phone
+
   if (password.length < PASSWORD_MIN_LENGTH) {
     return fail('PASSWORD_TOO_SHORT', '密码至少需要8位')
   }
@@ -66,7 +74,7 @@ async function register(event) {
   }
 
   const accountId = getAccountId(identifier)
-  const linkConflict = await getPhoneLinkConflict(identifier)
+  const linkConflict = await getPhoneLinkConflict(identifier, profile.phone)
   if (linkConflict) {
     return linkConflict
   }
@@ -247,10 +255,11 @@ async function getWebAccountById(accountId) {
   }
 }
 
-async function getPhoneLinkConflict(identifier) {
-  if (identifier.type === 'phone') {
+async function getPhoneLinkConflict(identifier, phone) {
+  const normalizedPhone = normalizePhone(phone || (identifier.type === 'phone' ? identifier.value : ''))
+  if (normalizedPhone) {
     const userRes = await db.collection('users')
-      .where({ phone: identifier.value })
+      .where({ phone: normalizedPhone })
       .limit(1)
       .get()
 
@@ -277,7 +286,7 @@ async function createNewUser(identifier, profile) {
     role: profile.role || userType,
     nickName: profile.nickName || profile.name || 'Web用户',
     avatarUrl: profile.avatarUrl || '',
-    phone: identifier.type === 'phone' ? identifier.value : '',
+    phone: profile.phone,
     email: identifier.type === 'email' ? identifier.value : '',
     name: profile.name || '',
     gender: profile.gender || '',
@@ -457,6 +466,7 @@ function sanitizeProfile(profile) {
     nickName: cleanString(source.nickName, 40),
     avatarUrl: cleanString(source.avatarUrl, 500),
     name: cleanString(source.name, 40),
+    phone: normalizePhone(source.phone).slice(0, 20),
     gender: cleanString(source.gender, 20),
     resume: cleanString(source.resume, 500),
     emergencyPhone: cleanString(source.emergencyPhone, 20),

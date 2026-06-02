@@ -44,7 +44,14 @@ import {
 } from '../services/api'
 import { reverseGeocodeAddress, straightLineDistanceKm } from '../services/location'
 import { isActiveOrder, formatMeters, formatMinutes } from '../lib/format'
-import { getRunnerOrderVoiceCue, speakRunnerOrderVoiceCue } from '../lib/orderVoiceCue'
+import {
+  getRunnerOrderVoiceCue,
+  getVolunteerOrderVoiceCue,
+  speakRunnerOrderVoiceCue,
+  speakVolunteerOrderVoiceCue,
+  type VolunteerOrderVoiceCue
+} from '../lib/orderVoiceCue'
+import { getOrderCounterparty } from '../lib/orderParties'
 import { DEFAULT_DEPARTURE, buildDeparturePayload, type DepartureValue } from '../lib/departure'
 import {
   AGE_FILTERS,
@@ -75,6 +82,7 @@ import type { Order, OrderStatus } from '../types'
 import type { PageProps } from './types'
 
 const ACTIVE_VOLUNTEER_STATUS: OrderStatus[] = ['accepted', 'arrived', 'running']
+const RUNNER_ACCEPTED_STATUS: OrderStatus[] = ['accepted', 'arrived', 'running']
 
 /** Fallback position (People's Square, Shanghai) so local QA can still see the
  *  Shanghai test demand when browser geolocation is denied/unavailable. */
@@ -101,6 +109,7 @@ function RunnerSport(_props: PageProps) {
   const [loading, setLoading] = useState(true)
   const [cancelling, setCancelling] = useState(false)
   const [mapCenter, setMapCenter] = useState<LatLng | null>(null)
+  const announcedAcceptedRef = useRef<Set<string>>(new Set())
 
   // Resolve a best-effort position once so map-pick mode opens near the user.
   useEffect(() => {
@@ -113,20 +122,52 @@ function RunnerSport(_props: PageProps) {
     }
   }, [])
 
-  const loadActive = useCallback(async () => {
-    setLoading(true)
+  const announceAcceptedOrder = useCallback(
+    (order: Order | null) => {
+      if (!order || !RUNNER_ACCEPTED_STATUS.includes(order.status)) return
+      if (announcedAcceptedRef.current.has(order._id)) return
+
+      const party = getOrderCounterparty(order, 'disabled')
+      const hasVolunteer =
+        Boolean(party) ||
+        Boolean(order.volunteerOpenid) ||
+        Boolean(order.volunteerId) ||
+        Boolean(order.volunteerName) ||
+        Boolean(order.volunteerPhone)
+      if (!hasVolunteer) return
+
+      announcedAcceptedRef.current.add(order._id)
+      toast.success(getRunnerOrderVoiceCue('accepted'))
+      speakRunnerOrderVoiceCue('accepted', { phone: party?.phone })
+    },
+    [toast]
+  )
+
+  const loadActive = useCallback(async (options: { showLoading?: boolean } = {}) => {
+    const showLoading = options.showLoading ?? true
+    if (showLoading) setLoading(true)
     try {
-      setActiveOrder(await getOrderDetail())
+      const order = await getOrderDetail()
+      setActiveOrder(order)
+      announceAcceptedOrder(order)
     } catch (err) {
-      if (err instanceof CloudError) toast.error(err.message)
+      if (showLoading && err instanceof CloudError) toast.error(err.message)
     } finally {
-      setLoading(false)
+      if (showLoading) setLoading(false)
     }
-  }, [toast])
+  }, [announceAcceptedOrder, toast])
 
   useEffect(() => {
     void loadActive()
   }, [loadActive])
+
+  useEffect(() => {
+    if (activeOrder?.status !== 'waiting') return
+    const timer = window.setInterval(() => {
+      void loadActive({ showLoading: false })
+    }, 8000)
+    return () => window.clearInterval(timer)
+  }, [activeOrder?._id, activeOrder?.status, loadActive])
 
   const targetDistance = useMemo(() => {
     if (!start || !destination) return 0
@@ -313,7 +354,7 @@ function RunnerSport(_props: PageProps) {
         {loading ? (
           <LoadingBlock label="正在读取订单…" />
         ) : activeOrder ? (
-          <OrderCard order={activeOrder}>
+          <OrderCard order={activeOrder} viewerRole="disabled">
             {hasActiveRequest && (
               <button
                 type="button"
@@ -463,8 +504,10 @@ function VolunteerSport({ onNavigate }: PageProps) {
   const accept = useCallback(
     async (order: Order) => {
       try {
-        await acceptOrder(order._id, pos ?? undefined)
-        toast.success('接单成功，请尽快前往集合点')
+        const accepted = await acceptOrder(order._id, pos ?? undefined)
+        const party = getOrderCounterparty(accepted || order, 'volunteer')
+        toast.success(getVolunteerOrderVoiceCue('acceptSuccess'))
+        speakVolunteerOrderVoiceCue('acceptSuccess', { phone: party?.phone })
         // Clear the open detail and collapse the filter panel so its controls
         // can't sit above/overlap the detail action area after accepting.
         setSelected(null)
@@ -953,12 +996,14 @@ function VolunteerActiveOrder({
   const phase: 'pickup' | 'running' = order.status === 'running' ? 'running' : 'pickup'
 
   const run = useCallback(
-    async (label: string, action: () => Promise<unknown>) => {
+    async (cue: VolunteerOrderVoiceCue, action: () => Promise<unknown>) => {
       if (busy) return
       setBusy(true)
       try {
         await action()
+        const label = getVolunteerOrderVoiceCue(cue)
         toast.success(label)
+        speakVolunteerOrderVoiceCue(cue)
         await onChanged()
       } catch (err) {
         toast.error(err instanceof CloudError ? err.message : '操作失败，请稍后再试')
@@ -969,11 +1014,11 @@ function VolunteerActiveOrder({
     [busy, onChanged, toast]
   )
 
-  const arrive = () => run('已标记到达集合点', () => updateOrderStatus(order._id, 'arrived'))
-  const startRun = () => run('陪跑开始，注意安全', () => updateOrderStatus(order._id, 'running'))
+  const arrive = () => run('arriveSuccess', () => updateOrderStatus(order._id, 'arrived'))
+  const startRun = () => run('startRunSuccess', () => updateOrderStatus(order._id, 'running'))
 
   const upload = () =>
-    run('已上传实时定位与配速', async () => {
+    run('locationUploaded', async () => {
       uploadsRef.current += 1
       const step = uploadsRef.current
       const coords = await bestEffortPosition()
@@ -999,10 +1044,10 @@ function VolunteerActiveOrder({
       toast.error('请填写有效的陪跑时长')
       return
     }
-    void run('陪跑已完成，感谢你的付出', () => completeOrder(order._id, dist, dur))
+    void run('completeSuccess', () => completeOrder(order._id, dist, dur))
   }
 
-  const cancel = () => run('已取消该订单', () => cancelOrder(order._id))
+  const cancel = () => run('cancelSuccess', () => cancelOrder(order._id))
 
   return (
     <div className="stack stack--sm">
@@ -1024,7 +1069,7 @@ function VolunteerActiveOrder({
         </div>
       )}
 
-      <OrderCard order={order}>
+      <OrderCard order={order} viewerRole="volunteer">
         {order.status === 'accepted' && (
           <button
             type="button"

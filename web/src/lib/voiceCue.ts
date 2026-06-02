@@ -29,3 +29,24 @@ export function speakVoiceCue(label: string): void {
   window.speechSynthesis.cancel()
   window.speechSynthesis.speak(utterance)
 }
+
+export function speakVoiceCueSequence(labels: string[]): void {
+  const queue = labels.map(cleanLabel).filter(Boolean)
+  if (queue.length === 0 || typeof window === 'undefined') return
+  if (!('speechSynthesis' in window) || typeof SpeechSynthesisUtterance === 'undefined') return
+
+  window.speechSynthesis.cancel()
+
+  const speakNext = (index: number) => {
+    const text = queue[index]
+    if (!text) return
+    const utterance = new SpeechSynthesisUtterance(text)
+    utterance.lang = 'zh-CN'
+    utterance.rate = 1
+    utterance.pitch = 1
+    utterance.onend = () => speakNext(index + 1)
+    window.speechSynthesis.speak(utterance)
+  }
+
+  speakNext(0)
+}

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ClipboardList, Footprints, Plus, RefreshCw, X } from 'lucide-react'
 import { EmptyState, LoadingBlock, Spinner } from '../components/ui'
 import { OrderCard } from '../components/OrderCard'
@@ -6,6 +6,7 @@ import { useToast } from '../components/Toast'
 import { CloudError, cancelOrder, getMyOrders } from '../services/api'
 import { isActiveOrder } from '../lib/format'
 import { getRunnerOrderVoiceCue, speakRunnerOrderVoiceCue } from '../lib/orderVoiceCue'
+import { getOrderCounterparty } from '../lib/orderParties'
 import type { Order } from '../types'
 import type { PageProps } from './types'
 
@@ -16,6 +17,8 @@ const FILTERS: { key: Filter; label: string }[] = [
   { key: 'active', label: '进行中' },
   { key: 'completed', label: '已完成' }
 ]
+
+const RUNNER_ACCEPTED_STATUSES = new Set(['accepted', 'arrived', 'running'])
 
 /** Order tab. Runners (视障跑者) see their published requests with status
  *  filters and a cancel action; volunteers are pointed to the 接单 board. */
@@ -32,19 +35,46 @@ function RunnerOrders({ onNavigate }: PageProps) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
   const [busyId, setBusyId] = useState<string | null>(null)
+  const announcedAcceptedRef = useRef<Set<string>>(new Set())
+
+  const announceAcceptedOrders = useCallback(
+    (nextOrders: Order[]) => {
+      const order = nextOrders.find((item) => {
+        if (!RUNNER_ACCEPTED_STATUSES.has(item.status)) return false
+        if (announcedAcceptedRef.current.has(item._id)) return false
+        const party = getOrderCounterparty(item, 'disabled')
+        return (
+          Boolean(party) ||
+          Boolean(item.volunteerOpenid) ||
+          Boolean(item.volunteerId) ||
+          Boolean(item.volunteerName) ||
+          Boolean(item.volunteerPhone)
+        )
+      })
+      if (!order) return
+
+      const party = getOrderCounterparty(order, 'disabled')
+      announcedAcceptedRef.current.add(order._id)
+      toast.success(getRunnerOrderVoiceCue('accepted'))
+      speakRunnerOrderVoiceCue('accepted', { phone: party?.phone })
+    },
+    [toast]
+  )
 
   const load = useCallback(async () => {
     setLoading(true)
     setError(false)
     try {
-      setOrders(await getMyOrders())
+      const nextOrders = await getMyOrders()
+      setOrders(nextOrders)
+      announceAcceptedOrders(nextOrders)
     } catch (err) {
       setError(true)
       if (err instanceof CloudError) toast.error(err.message)
     } finally {
       setLoading(false)
     }
-  }, [toast])
+  }, [announceAcceptedOrders, toast])
 
   useEffect(() => {
     void load()
@@ -135,7 +165,7 @@ function RunnerOrders({ onNavigate }: PageProps) {
         </>
       ) : (
         filtered.map((order) => (
-          <OrderCard key={order._id} order={order}>
+          <OrderCard key={order._id} order={order} viewerRole="disabled">
             {isActiveOrder(order.status) && (
               <button
                 type="button"

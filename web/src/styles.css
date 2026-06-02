@@ -1241,6 +1241,57 @@ button.list-row:active {
   margin: 9px 0 0;
 }
 
+.order-card__party-btn {
+  width: 100%;
+  min-height: 44px;
+  padding: 9px 11px;
+  border: 1.4px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--raised-2);
+  color: var(--ink-faint);
+  cursor: pointer;
+  text-align: left;
+  flex-wrap: wrap;
+  transition: transform 0.12s ease, border-color 0.12s ease, background 0.12s ease;
+}
+
+.order-card__party-btn:active {
+  transform: translateY(1px);
+  border-color: var(--line-ink);
+  background: var(--accent-tint);
+}
+
+.order-card__party-main {
+  flex: 1;
+  min-width: 120px;
+  font-weight: 800;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.order-card__party-phone {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 800;
+  color: var(--accent-deep);
+  white-space: nowrap;
+}
+
+.order-card__party-account {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 700;
+  color: var(--ink-faint);
+  white-space: nowrap;
+}
+
 .order-card__actions {
   display: flex;
   flex-direction: column;
@@ -1256,6 +1307,75 @@ button.list-row:active {
 
 .order-card__actions .btn {
   flex: 1;
+}
+
+.account-sheet__hero {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 14px;
+  border: 1.5px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--raised);
+}
+
+.account-sheet__identity {
+  min-width: 0;
+  flex: 1;
+}
+
+.account-sheet__identity h3 {
+  font-family: var(--font-display);
+  font-size: 20px;
+  line-height: 1.15;
+  margin: 8px 0 4px;
+  letter-spacing: 0;
+}
+
+.account-sheet__identity p {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin: 0;
+  color: var(--ink-faint);
+  font-size: 12.5px;
+  font-weight: 700;
+  word-break: break-all;
+}
+
+.account-sheet__phone {
+  text-decoration: none;
+}
+
+.account-sheet__details {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding: 3px 2px 0;
+}
+
+.account-sheet__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  font-size: 13px;
+}
+
+.account-sheet__row span {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--ink-faint);
+}
+
+.account-sheet__row strong {
+  min-width: 0;
+  text-align: right;
+  font-size: 13.5px;
+  color: var(--ink);
+  word-break: break-word;
 }
 
 /* Loader */

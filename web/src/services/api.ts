@@ -69,6 +69,7 @@ async function request(
 export interface RegisterProfile {
   userType: 'disabled' | 'volunteer'
   nickName: string
+  phone?: string
   name?: string
   emergencyName?: string
   emergencyPhone?: string

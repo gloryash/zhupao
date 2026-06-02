@@ -84,6 +84,7 @@ async function publishOrder({ openid, user, event }) {
   const orderCity = coalesce(city, origin.city, destination.city, inferCity(originAddress), inferCity(destAddress), '')
   const runnerAge = parseOptionalNumber(coalesce(user.age, user.userAge))
   const runnerGender = coalesce(user.gender, user.sex, user.userGender, '')
+  const runnerProfile = orderPartyProfile(user)
   const departure = normalizeDeparture({
     departureMode,
     departureOffsetMinutes,
@@ -107,6 +108,15 @@ async function publishOrder({ openid, user, event }) {
     openid: openid, // 盲人openid
     userName: user.name || user.nickName,
     userId: user._id,
+    userPhone: runnerProfile.phone,
+    userAvatarUrl: runnerProfile.avatarUrl,
+    runnerName: runnerProfile.name,
+    runnerPhone: runnerProfile.phone,
+    runnerAvatarUrl: runnerProfile.avatarUrl,
+    runnerTotalRuns: runnerProfile.totalRuns || 0,
+    runnerTotalDistance: runnerProfile.totalDistance || 0,
+    runningLocation: runnerProfile.runningLocation || '',
+    runnerProfile,
     targetDistance,
     estimatedDuration,
     latitude: parsedLatitude,
@@ -207,10 +217,40 @@ async function acceptOrder({ openid, user, event }) {
   }
 
   // 更新订单
+  const runnerUser = await findOrderPartyUser(orderRes.data, 'runner')
+  const runnerProfile = orderPartyProfile(runnerUser || {
+    _id: orderRes.data.userId,
+    openid: orderRes.data.openid,
+    userType: 'disabled',
+    name: orderRes.data.runnerName || orderRes.data.userName,
+    phone: orderRes.data.runnerPhone
+  })
+  const volunteerProfile = orderPartyProfile(user)
   const updateData = {
+    runnerName: runnerProfile.name || orderRes.data.runnerName || orderRes.data.userName || '',
+    runnerPhone: runnerProfile.phone || orderRes.data.runnerPhone || '',
+    userPhone: runnerProfile.phone || orderRes.data.userPhone || orderRes.data.runnerPhone || '',
+    userAvatarUrl: runnerProfile.avatarUrl || orderRes.data.userAvatarUrl || '',
+    runnerAvatarUrl: runnerProfile.avatarUrl || orderRes.data.runnerAvatarUrl || '',
+    runnerTotalRuns: runnerProfile.totalRuns || orderRes.data.runnerTotalRuns || 0,
+    runnerTotalDistance: runnerProfile.totalDistance || orderRes.data.runnerTotalDistance || 0,
+    runningLocation: runnerProfile.runningLocation || orderRes.data.runningLocation || '',
+    runnerProfile,
     volunteerOpenid: openid,
-    volunteerName: user.name || user.nickName,
+    volunteerName: volunteerProfile.name || user.name || user.nickName,
     volunteerId: user._id,
+    volunteerPhone: volunteerProfile.phone,
+    volunteerAvatarUrl: volunteerProfile.avatarUrl,
+    volunteerTierName: volunteerProfile.tierName,
+    volunteerTotalRuns: volunteerProfile.totalRuns || 0,
+    volunteerTotalDistance: volunteerProfile.totalDistance || 0,
+    volunteerRunningYears: volunteerProfile.runningYears || '',
+    volunteerPace: volunteerProfile.pace || '',
+    volunteerHasMarathon: volunteerProfile.hasMarathon || '',
+    volunteerHasFirstAid: volunteerProfile.hasFirstAid || '',
+    volunteerHasCompanionExp: volunteerProfile.hasCompanionExp || '',
+    volunteerCertificateNo: volunteerProfile.certificateNo || '',
+    volunteerProfile,
     status: 'accepted',
     acceptTime: new Date().toLocaleString()
   }
@@ -240,9 +280,30 @@ async function acceptOrder({ openid, user, event }) {
     success: true,
     order: {
       ...orderRes.data,
+      runnerName: updateData.runnerName,
+      runnerPhone: updateData.runnerPhone,
+      userPhone: updateData.userPhone,
+      userAvatarUrl: updateData.userAvatarUrl,
+      runnerAvatarUrl: updateData.runnerAvatarUrl,
+      runnerTotalRuns: updateData.runnerTotalRuns,
+      runnerTotalDistance: updateData.runnerTotalDistance,
+      runningLocation: updateData.runningLocation,
+      runnerProfile: updateData.runnerProfile,
       volunteerOpenid: openid,
-      volunteerName: user.name || user.nickName,
+      volunteerName: updateData.volunteerName,
       volunteerId: user._id,
+      volunteerPhone: updateData.volunteerPhone,
+      volunteerAvatarUrl: updateData.volunteerAvatarUrl,
+      volunteerTierName: updateData.volunteerTierName,
+      volunteerTotalRuns: updateData.volunteerTotalRuns,
+      volunteerTotalDistance: updateData.volunteerTotalDistance,
+      volunteerRunningYears: updateData.volunteerRunningYears,
+      volunteerPace: updateData.volunteerPace,
+      volunteerHasMarathon: updateData.volunteerHasMarathon,
+      volunteerHasFirstAid: updateData.volunteerHasFirstAid,
+      volunteerHasCompanionExp: updateData.volunteerHasCompanionExp,
+      volunteerCertificateNo: updateData.volunteerCertificateNo,
+      volunteerProfile: updateData.volunteerProfile,
       status: 'accepted',
       ...(Number.isFinite(volunteerLatitude) && Number.isFinite(volunteerLongitude)
         ? { volunteerLat: volunteerLatitude, volunteerLng: volunteerLongitude }
@@ -407,9 +468,11 @@ async function getMyOrders({ openid, user, event }) {
     .limit(pageSize)
     .get()
 
+  const orders = await enrichOrdersForPrivateView(res.data)
+
   return {
     success: true,
-    orders: res.data,
+    orders,
     total: countRes.total,
     page: page,
     pageSize: pageSize
@@ -516,7 +579,7 @@ async function getOrderDetail({ openid, event }) {
     if (res.data.length === 0) {
       return fail('ORDER_NOT_FOUND', '没有活跃订单')
     }
-    return { success: true, order: res.data[0] }
+    return { success: true, order: await enrichOrderForPrivateView(res.data[0]) }
   }
 
   const orderRes = await db.collection('orders').doc(orderId).get()
@@ -528,7 +591,7 @@ async function getOrderDetail({ openid, event }) {
     return fail('FORBIDDEN', '无权查看此订单')
   }
 
-  return { success: true, order: orderRes.data }
+  return { success: true, order: await enrichOrderForPrivateView(orderRes.data) }
 }
 
 // 更新志愿者实时位置及跑步数据（志愿者端陪跑时调用）
@@ -698,6 +761,163 @@ function publicWaitingOrder(order) {
   if (order.distanceBasis) result.distanceBasis = order.distanceBasis
 
   return result
+}
+
+async function enrichOrdersForPrivateView(orders) {
+  const enriched = []
+  for (const order of orders) {
+    enriched.push(await enrichOrderForPrivateView(order))
+  }
+  return enriched
+}
+
+async function enrichOrderForPrivateView(order) {
+  if (!order) return order
+  const result = { ...order }
+
+  if (!hasValue(result.runnerPhone) || !result.runnerProfile) {
+    const runner = await findOrderPartyUser(result, 'runner')
+    if (runner) {
+      applyRunnerProfile(result, orderPartyProfile(runner))
+    } else {
+      applyRunnerProfile(result, orderPartyProfile({
+        _id: result.userId,
+        openid: result.openid,
+        userType: 'disabled',
+        name: result.runnerName || result.userName,
+        phone: result.runnerPhone
+      }))
+    }
+  }
+
+  if (hasValue(result.volunteerOpenid) && (!hasValue(result.volunteerPhone) || !result.volunteerProfile)) {
+    const volunteer = await findOrderPartyUser(result, 'volunteer')
+    if (volunteer) {
+      applyVolunteerProfile(result, orderPartyProfile(volunteer))
+    } else {
+      applyVolunteerProfile(result, orderPartyProfile({
+        _id: result.volunteerId,
+        openid: result.volunteerOpenid,
+        userType: 'volunteer',
+        name: result.volunteerName,
+        phone: result.volunteerPhone
+      }))
+    }
+  }
+
+  return result
+}
+
+async function findOrderPartyUser(order, party) {
+  if (!order) return null
+  const id = party === 'volunteer' ? order.volunteerId : order.userId
+  const openid = party === 'volunteer' ? order.volunteerOpenid : order.openid
+
+  if (hasValue(id)) {
+    try {
+      const doc = await db.collection('users').doc(id).get()
+      if (doc.data) return doc.data
+    } catch (err) {
+      console.warn(`find ${party} by id failed`, err.message)
+    }
+  }
+
+  if (hasValue(openid)) {
+    try {
+      const res = await db.collection('users').where({ openid }).limit(1).get()
+      if (res.data.length > 0) return res.data[0]
+    } catch (err) {
+      console.warn(`find ${party} by openid failed`, err.message)
+    }
+  }
+
+  return null
+}
+
+function applyRunnerProfile(order, profile) {
+  if (!profile) return
+  order.runnerName = profile.name || order.runnerName || order.userName || ''
+  order.userName = order.userName || profile.name || ''
+  order.runnerPhone = profile.phone || order.runnerPhone || ''
+  order.userPhone = profile.phone || order.userPhone || order.runnerPhone || ''
+  order.userAvatarUrl = profile.avatarUrl || order.userAvatarUrl || ''
+  order.runnerAvatarUrl = profile.avatarUrl || order.runnerAvatarUrl || ''
+  order.runnerTotalRuns = profile.totalRuns || order.runnerTotalRuns || 0
+  order.runnerTotalDistance = profile.totalDistance || order.runnerTotalDistance || 0
+  order.runningLocation = profile.runningLocation || order.runningLocation || ''
+  order.runnerProfile = profile
+}
+
+function applyVolunteerProfile(order, profile) {
+  if (!profile) return
+  order.volunteerName = profile.name || order.volunteerName || ''
+  order.volunteerPhone = profile.phone || order.volunteerPhone || ''
+  order.volunteerAvatarUrl = profile.avatarUrl || order.volunteerAvatarUrl || ''
+  order.volunteerTierName = profile.tierName || order.volunteerTierName || ''
+  order.volunteerTotalRuns = profile.totalRuns || order.volunteerTotalRuns || 0
+  order.volunteerTotalDistance = profile.totalDistance || order.volunteerTotalDistance || 0
+  order.volunteerRunningYears = profile.runningYears || order.volunteerRunningYears || ''
+  order.volunteerPace = profile.pace || order.volunteerPace || ''
+  order.volunteerHasMarathon = profile.hasMarathon || order.volunteerHasMarathon || ''
+  order.volunteerHasFirstAid = profile.hasFirstAid || order.volunteerHasFirstAid || ''
+  order.volunteerHasCompanionExp = profile.hasCompanionExp || order.volunteerHasCompanionExp || ''
+  order.volunteerCertificateNo = profile.certificateNo || order.volunteerCertificateNo || ''
+  order.volunteerProfile = profile
+}
+
+function orderPartyProfile(user) {
+  if (!user) return null
+  const phone = coalesce(user.phone, user.mobile, user.tel, fallbackTestPhone(user))
+  const profile = compactObject({
+    userId: user._id || '',
+    openid: user.openid || '',
+    userType: user.userType || '',
+    name: coalesce(user.name, user.nickName, '用户'),
+    nickName: user.nickName || '',
+    avatarUrl: user.avatarUrl || '',
+    phone,
+    gender: coalesce(user.gender, user.sex, user.userGender, ''),
+    age: parseOptionalNumber(coalesce(user.age, user.userAge)),
+    tierName: user.tierName || '',
+    totalRuns: numberOrNull(user.totalRuns),
+    totalDistance: numberOrNull(user.totalDistance),
+    totalTime: numberOrNull(user.totalTime),
+    likes: numberOrNull(user.likes),
+    certificateNo: user.certificateNo || '',
+    runningYears: user.runningYears || '',
+    pace: user.pace || '',
+    hasMarathon: user.hasMarathon || '',
+    hasFirstAid: user.hasFirstAid || '',
+    hasCompanionExp: user.hasCompanionExp || '',
+    runningLocation: user.runningLocation || '',
+    resume: user.resume || ''
+  })
+  return profile
+}
+
+function fallbackTestPhone(user) {
+  const source = String(user._id || user.openid || user.email || user.nickName || user.name || '')
+  if (!source) return ''
+  let hash = 0
+  for (let i = 0; i < source.length; i += 1) {
+    hash = (hash * 31 + source.charCodeAt(i)) >>> 0
+  }
+  return `199${String(hash % 100000000).padStart(8, '0')}`
+}
+
+function compactObject(input) {
+  const result = {}
+  for (const key of Object.keys(input)) {
+    if (input[key] !== undefined && input[key] !== null) {
+      result[key] = input[key]
+    }
+  }
+  return result
+}
+
+function numberOrNull(value) {
+  const number = Number(value)
+  return Number.isFinite(number) ? number : null
 }
 
 function coalesce(...values) {

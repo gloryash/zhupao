@@ -125,11 +125,53 @@ export interface OrderEndpoint {
   city?: string
 }
 
+export interface OrderPartyProfile {
+  _id?: string
+  openid?: string
+  userId?: string
+  nickName?: string
+  name?: string
+  userName?: string
+  phone?: string
+  mobile?: string
+  tel?: string
+  avatarUrl?: string
+  avatar?: string
+  gender?: string
+  age?: number | null
+  runningLocation?: string
+  totalRuns?: number
+  totalDistance?: number
+  tierName?: string
+  runningYears?: string
+  pace?: string
+  hasMarathon?: YesNo | boolean
+  hasFirstAid?: YesNo | boolean
+  hasCompanionExp?: YesNo | boolean
+  certificateNo?: string
+  [key: string]: unknown
+}
+
 export interface Order {
   _id: string
   openid?: string
   userName?: string
+  userNickName?: string
   userId?: string
+  userPhone?: string
+  userAvatarUrl?: string
+  runnerName?: string
+  runnerPhone?: string
+  runnerOpenid?: string
+  runnerAvatarUrl?: string
+  blindName?: string
+  blindPhone?: string
+  blindOpenid?: string
+  blindAvatarUrl?: string
+  disabledName?: string
+  disabledPhone?: string
+  disabledOpenid?: string
+  runnerProfile?: OrderPartyProfile
   targetDistance: string | number
   estimatedDuration: string | number
   latitude?: number
@@ -164,7 +206,22 @@ export interface Order {
 
   volunteerOpenid?: string
   volunteerName?: string
+  volunteerNickName?: string
   volunteerId?: string
+  volunteerPhone?: string
+  volunteerMobile?: string
+  volunteerAvatarUrl?: string
+  volunteerAvatar?: string
+  volunteerTierName?: string
+  volunteerTotalRuns?: number
+  volunteerTotalDistance?: number
+  volunteerRunningYears?: string
+  volunteerPace?: string
+  volunteerHasMarathon?: YesNo
+  volunteerHasFirstAid?: YesNo
+  volunteerHasCompanionExp?: YesNo
+  volunteerCertificateNo?: string
+  volunteerProfile?: OrderPartyProfile
   status: OrderStatus
   publishTime?: string
   acceptTime?: string
