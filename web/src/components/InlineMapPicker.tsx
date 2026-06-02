@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import L from 'leaflet'
 import type { LatLng } from '../types/location'
+import { addBaseTileLayer } from '../lib/mapTiles'
 
 /** Fallback centre (People's Square, Shanghai) when no value/geolocation. */
 const DEFAULT_CENTER: LatLng = { latitude: 31.2304, longitude: 121.4737 }
@@ -42,7 +43,7 @@ export function InlineMapPicker({
       attributionControl: false,
       scrollWheelZoom: false
     })
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map)
+    addBaseTileLayer(map)
     const initial = value ?? center ?? DEFAULT_CENTER
     map.setView([initial.latitude, initial.longitude], value ? 16 : 13)
     map.on('click', (e: L.LeafletMouseEvent) => {

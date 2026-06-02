@@ -7,6 +7,7 @@
  * the app can route back to login.
  */
 import { callFunction, CloudError } from './cloudbase'
+import { DEFAULT_DISTANCE_METERS } from '../lib/orderFilters'
 import type {
   Appointment,
   Certificate,
@@ -307,7 +308,7 @@ export interface WaitingOrderFilters {
 
 export async function getWaitingOrders(filters: WaitingOrderFilters = {}): Promise<Order[]> {
   const payload: Record<string, unknown> = {
-    maxDistance: filters.maxDistance ?? 5000,
+    maxDistance: filters.maxDistance ?? DEFAULT_DISTANCE_METERS,
     distanceBasis: filters.distanceBasis ?? 'origin',
     gender: filters.gender ?? 'all',
     ageRange: filters.ageRange ?? 'all',

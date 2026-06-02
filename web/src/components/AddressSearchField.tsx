@@ -1,11 +1,12 @@
 import { useEffect, useId, useRef, useState } from 'react'
-import { Clock3, Map as MapIcon, MapPin, Pencil, Search, X } from 'lucide-react'
+import { CheckCircle2, Clock3, Map as MapIcon, MapPin, Pencil, Search, X } from 'lucide-react'
 import type { AddressSearchResult, GeoAddress, LatLng } from '../types/location'
 import { reverseGeocodeAddress, searchAddress } from '../services/location'
 import { loadAddressHistory, pushAddressHistory } from '../services/addressHistory'
 import { formatAddressOptionLabel } from '../lib/addressLabels'
+import { speakVoiceCue } from '../lib/voiceCue'
 import { InlineMapPicker } from './InlineMapPicker'
-import { Spinner } from './ui'
+import { Sheet, Spinner } from './ui'
 
 type Mode = 'search' | 'map'
 
@@ -48,6 +49,7 @@ export function AddressSearchField({
   const [searched, setSearched] = useState(false)
   const [picking, setPicking] = useState(false)
   const [pinned, setPinned] = useState<LatLng | null>(null)
+  const [pendingMapAddress, setPendingMapAddress] = useState<GeoAddress | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -92,23 +94,36 @@ export function AddressSearchField({
     setResults([])
     setSearched(false)
     setPinned(null)
+    setPendingMapAddress(null)
   }
 
-  // Map tap → reverse geocode → GeoAddress (with a graceful blank-address fallback).
+  // Map tap → reverse geocode → speak + ask for confirmation before selecting.
   async function pick(latitude: number, longitude: number) {
     setPinned({ latitude, longitude })
     setPicking(true)
     try {
       const resolved = await reverseGeocodeAddress(latitude, longitude)
-      select({
+      const pending: GeoAddress = {
         latitude: resolved.latitude,
         longitude: resolved.longitude,
         address: resolved.address || '地图所选位置',
         city: resolved.city
-      })
+      }
+      speakVoiceCue(`已识别地址：${pending.address}。是否选择该地址？`)
+      setPendingMapAddress(pending)
     } finally {
       setPicking(false)
     }
+  }
+
+  function confirmPendingMapAddress() {
+    if (!pendingMapAddress) return
+    select(pendingMapAddress)
+  }
+
+  function cancelPendingMapAddress() {
+    setPendingMapAddress(null)
+    setPinned(null)
   }
 
   function clearSelection() {
@@ -117,7 +132,14 @@ export function AddressSearchField({
     setResults([])
     setSearched(false)
     setPinned(null)
+    setPendingMapAddress(null)
     if (mode === 'search') requestAnimationFrame(() => inputRef.current?.focus())
+  }
+
+  function switchMode(next: Mode) {
+    setMode(next)
+    setPendingMapAddress(null)
+    if (next === 'search') setPinned(null)
   }
 
   if (value) {
@@ -156,14 +178,14 @@ export function AddressSearchField({
           <button
             type="button"
             aria-pressed={mode === 'search'}
-            onClick={() => setMode('search')}
+            onClick={() => switchMode('search')}
           >
             <Search size={13} /> 搜索
           </button>
           <button
             type="button"
             aria-pressed={mode === 'map'}
-            onClick={() => setMode('map')}
+            onClick={() => switchMode('map')}
           >
             <MapIcon size={13} /> 地图
           </button>
@@ -259,8 +281,41 @@ export function AddressSearchField({
         <>
           <InlineMapPicker value={pinned} center={mapCenter} onPick={pick} busy={picking} />
           <p className="field__hint" aria-live="polite">
-            {picking ? '正在解析所选位置…' : '在地图上点击你想要的位置，我们会自动识别地址。'}
+            {picking
+              ? '正在解析所选位置…'
+              : pendingMapAddress
+                ? `已识别：${pendingMapAddress.address}`
+                : '在地图上点击你想要的位置，我们会自动识别地址。'}
           </p>
+          {pendingMapAddress && (
+            <Sheet title="是否选择该地址" onClose={cancelPendingMapAddress}>
+              <div className="map-confirm">
+                <div className="map-confirm__addr">
+                  <MapPin size={18} aria-hidden />
+                  <span>
+                    {pendingMapAddress.address}
+                    {pendingMapAddress.city ? <small>{pendingMapAddress.city}</small> : null}
+                  </span>
+                </div>
+                <div className="map-confirm__actions">
+                  <button
+                    type="button"
+                    className="btn btn--accent btn--block"
+                    onClick={confirmPendingMapAddress}
+                  >
+                    <CheckCircle2 size={18} /> 确认
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn--ghost btn--block"
+                    onClick={cancelPendingMapAddress}
+                  >
+                    <X size={18} /> 取消
+                  </button>
+                </div>
+              </div>
+            </Sheet>
+          )}
         </>
       )}
     </div>

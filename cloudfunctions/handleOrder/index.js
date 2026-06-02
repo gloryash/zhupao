@@ -423,7 +423,7 @@ async function getWaitingOrders({ user, event }) {
     pageSize = 20,
     latitude,
     longitude,
-    maxDistance = 5000,
+    maxDistance = 20000,
     distanceBasis = 'origin',
     gender = 'all',
     ageRange = 'all',
@@ -467,7 +467,7 @@ async function getWaitingOrders({ user, event }) {
   const parsedLongitude = Number(longitude)
   const parsedMaxDistance = Number(maxDistance)
 
-  // 如果提供了坐标，计算距离并默认保留方圆 5 公里内的需求
+  // 如果提供了坐标，计算距离并默认保留方圆 20 公里内的需求
   if (Number.isFinite(parsedLatitude) && Number.isFinite(parsedLongitude)) {
     orders = orders.map(order => {
       const point = orderPointForDistance(order, distanceBasis)

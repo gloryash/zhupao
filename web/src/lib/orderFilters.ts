@@ -1,8 +1,8 @@
 /**
  * Shared option sets for the order publish + waiting-board flows. Values match
  * what handleOrder stores/filters on (`runTimeWindow`, `runnerGender` =
- * male/female, `distanceBasis` = origin/runner, ageRange "min-max"); labels are
- * the Chinese strings shown in the phone UI.
+ * male/female, ageRange "min-max"); labels are the Chinese strings shown in
+ * the phone UI.
  */
 
 export interface Option {
@@ -24,10 +24,13 @@ export const TIME_WINDOWS: Option[] = [
 /** Same set, prefixed with an "all" entry for the volunteer filter. */
 export const TIME_WINDOW_FILTERS: Option[] = [{ value: 'all', label: '全部时段' }, ...TIME_WINDOWS]
 
-/** Which point the 5km radius is measured from. */
-export const DISTANCE_BASES: Option[] = [
-  { value: 'origin', label: '起点地址' },
-  { value: 'runner', label: '跑者位置' }
+export const DEFAULT_DISTANCE_METERS = 20_000
+
+export const DISTANCE_RANGE_OPTIONS: Option[] = [
+  { value: '1000', label: '1 公里' },
+  { value: '5000', label: '5 公里' },
+  { value: '10000', label: '10 公里' },
+  { value: '20000', label: '20 公里' }
 ]
 
 export const GENDER_FILTERS: Option[] = [
@@ -88,6 +91,13 @@ export const CITY_MODES: Option[] = [
 
 export function labelFor(options: Option[], value: string | undefined): string {
   return options.find((o) => o.value === value)?.label ?? ''
+}
+
+export function distanceRangeLabel(meters: number | string | undefined): string {
+  const value = Number(meters)
+  if (!Number.isFinite(value) || value <= 0) return '20 公里'
+  if (value >= 1000) return `${Math.round(value / 1000)} 公里`
+  return `${Math.round(value)} 米`
 }
 
 /** Human label for a stored time-window code (falls back to "立即出发"). */

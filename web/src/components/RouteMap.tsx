@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import L from 'leaflet'
 import type { LatLng } from '../types/location'
+import { addBaseTileLayer } from '../lib/mapTiles'
 
 export type { LatLng }
 
@@ -39,7 +40,7 @@ export function RouteMap({
       dragging: true,
       scrollWheelZoom: false
     })
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map)
+    addBaseTileLayer(map)
     layerRef.current = L.layerGroup().addTo(map)
     mapRef.current = map
     map.setView([31.2304, 121.4737], 13)

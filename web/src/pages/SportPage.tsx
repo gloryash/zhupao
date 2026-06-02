@@ -50,11 +50,13 @@ import {
   AGE_FILTERS,
   CITY_MODES,
   CITY_PRESETS,
+  DEFAULT_DISTANCE_METERS,
   DEPARTURE_FILTER_TYPES,
-  DISTANCE_BASES,
+  DISTANCE_RANGE_OPTIONS,
   DURATIONS,
   GENDER_FILTERS,
   WITHIN_MINUTES_OPTIONS,
+  distanceRangeLabel,
   genderLabel,
   timeWindowLabel,
   type CityMode,
@@ -262,6 +264,16 @@ function RunnerSport(_props: PageProps) {
           <span className="section-title" style={{ margin: '0 0 12px' }}>
             <CheckCircle2 size={17} /> 确认并发布
           </span>
+          <button
+            type="button"
+            className="btn btn--accent btn--block"
+            onClick={() => void submit()}
+            disabled={submitting}
+            style={{ marginBottom: 14 }}
+          >
+            {submitting ? <Spinner /> : <Send size={18} />}
+            {submitting ? '发布中…' : '确认发布陪跑需求'}
+          </button>
           <dl className="confirm__grid">
             <div>
               <dt>
@@ -287,16 +299,6 @@ function RunnerSport(_props: PageProps) {
               </span>
             </div>
           </dl>
-          <button
-            type="button"
-            className="btn btn--accent btn--block"
-            onClick={() => void submit()}
-            disabled={submitting}
-            style={{ marginTop: 14 }}
-          >
-            {submitting ? <Spinner /> : <Send size={18} />}
-            {submitting ? '发布中…' : '确认发布陪跑请求'}
-          </button>
         </section>
       ) : (
         <p className="faint" style={{ textAlign: 'center', fontSize: 13, padding: '2px 8px' }}>
@@ -339,7 +341,7 @@ function RunnerSport(_props: PageProps) {
 /* =========================== Volunteer (志愿者) =========================== */
 
 interface BoardFilters {
-  distanceBasis: 'origin' | 'runner'
+  maxDistance: number
   gender: string
   ageRange: string
   departureType: DepartureFilterType
@@ -351,7 +353,7 @@ interface BoardFilters {
 }
 
 const DEFAULT_FILTERS: BoardFilters = {
-  distanceBasis: 'origin',
+  maxDistance: DEFAULT_DISTANCE_METERS,
   gender: 'all',
   ageRange: 'all',
   departureType: 'all',
@@ -428,8 +430,8 @@ function VolunteerSport({ onNavigate }: PageProps) {
       const query: WaitingOrderFilters = {
         latitude: pos.latitude,
         longitude: pos.longitude,
-        maxDistance: 5000,
-        distanceBasis: filters.distanceBasis,
+        maxDistance: filters.maxDistance,
+        distanceBasis: 'origin',
         gender: filters.gender,
         ageRange: filters.ageRange,
         city: resolveCityFilter(filters, currentCity),
@@ -481,6 +483,7 @@ function VolunteerSport({ onNavigate }: PageProps) {
   }
 
   const activeFilterCount = countActiveFilters(filters)
+  const selectedDistanceLabel = distanceRangeLabel(filters.maxDistance)
 
   return (
     <div className="stack stagger">
@@ -489,11 +492,11 @@ function VolunteerSport({ onNavigate }: PageProps) {
           <Radio size={20} />
         </div>
         <div>
-          <p className="callout__title">附近陪跑需求 · 5 公里内</p>
+          <p className="callout__title">附近陪跑需求 · {selectedDistanceLabel}内</p>
           <p className="callout__text">
             {posFallback
               ? '未获取到定位，已使用上海市中心作为参考位置。'
-              : '已按你的当前位置筛选方圆 5 公里内的陪跑请求。'}
+              : `已按你的当前位置筛选方圆 ${selectedDistanceLabel}内的陪跑请求，距离默认按起点地址计算。`}
           </p>
         </div>
       </section>
@@ -588,7 +591,7 @@ function VolunteerSport({ onNavigate }: PageProps) {
           <EmptyState
             icon={<Footprints size={26} />}
             title="附近暂无匹配需求"
-            text="放宽筛选条件，或稍后再来看看 5 公里内的陪跑请求。"
+            text={`放宽筛选条件，或稍后再来看看 ${selectedDistanceLabel}内的陪跑请求。`}
           />
         )}
       </div>
@@ -610,7 +613,7 @@ function VolunteerSport({ onNavigate }: PageProps) {
 /** Count of non-default filters, shown as a badge on the 筛选 button. */
 function countActiveFilters(f: BoardFilters): number {
   let n = 0
-  if (f.distanceBasis !== 'origin') n += 1
+  if (f.maxDistance !== DEFAULT_DISTANCE_METERS) n += 1
   if (f.gender !== 'all') n += 1
   if (f.ageRange !== 'all') n += 1
   if (f.departureType !== 'all') n += 1
@@ -642,14 +645,17 @@ function VolunteerFilterPanel({
     <section className="card filter-panel">
       <div className="filter-panel__field">
         <span className="field__label">
-          <Navigation size={13} /> 距离基准
+          <Navigation size={13} /> 距离范围
         </span>
-        <Segmented
-          ariaLabel="距离基准"
-          value={filters.distanceBasis}
-          options={DISTANCE_BASES}
-          onChange={(v) => set('distanceBasis', v as BoardFilters['distanceBasis'])}
+        <ChipGroup
+          ariaLabel="距离范围筛选"
+          value={String(filters.maxDistance)}
+          options={DISTANCE_RANGE_OPTIONS}
+          onChange={(v) => set('maxDistance', Number(v))}
         />
+        <p className="filter-panel__note">
+          <MapPin size={12} /> 默认按陪跑起点地址计算距离
+        </p>
       </div>
 
       <div className="filter-panel__field">
@@ -784,7 +790,6 @@ function VolunteerFilterPanel({
 /** Shared meta chips (distance / duration / time-window / gender / age). */
 function DemandMeta({ order }: { order: Order }) {
   const distance = Number.isFinite(order.distance) ? formatMeters(order.distance) : ''
-  const basis = order.distanceBasis === 'runner' ? '距跑者' : '距起点'
   const gender = genderLabel(order.runnerGender)
   const ageNum = Number(order.runnerAge)
   const age = Number.isFinite(ageNum) && ageNum > 0 ? `${ageNum}岁` : ''
@@ -792,7 +797,7 @@ function DemandMeta({ order }: { order: Order }) {
     <div className="demand-row__meta">
       {distance && (
         <span className="chip chip--pine">
-          <Navigation size={12} /> {basis} {distance}
+          <Navigation size={12} /> 距起点 {distance}
         </span>
       )}
       <span className="chip">

@@ -2,6 +2,7 @@ import type { MouseEvent, ReactNode } from 'react'
 import { BottomNav, type NavItem } from './BottomNav'
 import type { UserType } from '../types'
 import { getSpokenLabel, speakVoiceCue } from '../lib/voiceCue'
+import brandLogo from '../assets/xinban-run-logo.jpg'
 
 export function AppShell({
   role,
@@ -36,6 +37,12 @@ export function AppShell({
     <div className="app" data-role={role} onClickCapture={onClickCapture}>
       <header className="app__header">
         <div className="app__header-titles">
+          <div className="app__brand" aria-label="助跑精灵">
+            <span className="app__brand-mark" aria-hidden>
+              <img src={brandLogo} alt="" />
+            </span>
+            <span className="app__brand-name">助跑精灵</span>
+          </div>
           <p className="app__eyebrow">{eyebrow}</p>
           <h1 className="app__title">{title}</h1>
         </div>

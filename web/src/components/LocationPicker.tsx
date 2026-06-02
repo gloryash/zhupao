@@ -4,6 +4,7 @@ import { Crosshair, MapPin, Pencil } from 'lucide-react'
 import type { SelectedLocation } from '../types/location'
 import { isValidLatLng } from '../types/location'
 import { getCurrentPosition, reverseGeocode, round6 } from '../services/location'
+import { addBaseTileLayer } from '../lib/mapTiles'
 
 const DEFAULT_CENTER: [number, number] = [39.9042, 116.4074] // Beijing
 const DEFAULT_ZOOM = 14
@@ -48,10 +49,7 @@ export function LocationPicker({
       zoomControl: true,
       attributionControl: true
     })
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-      attribution: '© OpenStreetMap'
-    }).addTo(map)
+    addBaseTileLayer(map, true)
 
     map.on('click', async (e: L.LeafletMouseEvent) => {
       const lat = round6(e.latlng.lat)
