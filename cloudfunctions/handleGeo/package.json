@@ -1,0 +1,9 @@
+{
+  "name": "handleGeo",
+  "version": "1.0.0",
+  "description": "高德地图地理编码代理",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

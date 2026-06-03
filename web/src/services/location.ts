@@ -1,5 +1,6 @@
 import type { AddressSearchResult, GeoAddress, SelectedLocation } from '../types/location'
 import { isValidLatLng } from '../types/location'
+import { callFunction } from './cloudbase'
 
 /** Browser geolocation, wrapped as a promise with a friendly Chinese error. */
 export function getCurrentPosition(timeoutMs = 10_000): Promise<SelectedLocation> {
@@ -31,15 +32,17 @@ export function getCurrentPosition(timeoutMs = 10_000): Promise<SelectedLocation
   })
 }
 
-/** Best-effort reverse geocode via OpenStreetMap Nominatim (no API key). */
+/** Best-effort reverse geocode via the backend AMap Web Service proxy. */
 export async function reverseGeocode(latitude: number, longitude: number): Promise<string> {
   if (!isValidLatLng(latitude, longitude)) return ''
   try {
-    const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}&accept-language=zh-CN&zoom=18`
-    const res = await fetch(url, { headers: { Accept: 'application/json' } })
-    if (!res.ok) return ''
-    const data = (await res.json()) as { display_name?: string }
-    return data.display_name || ''
+    const res = await callFunction('handleGeo', {
+      action: 'reverse',
+      latitude,
+      longitude
+    }) as GeoCloudResponse
+    if (res?.success !== true) return ''
+    return res.address?.address || ''
   } catch {
     return ''
   }
@@ -50,24 +53,28 @@ export function round6(value: number): number {
 }
 
 /**
- * Reverse geocode a coordinate (from a map tap) into a {@link GeoAddress}. The
- * human-readable `address` comes from Nominatim's `display_name`; `city` is the
- * best Nominatim candidate, falling back to {@link inferCity} on the address
- * text so it lines up with the backend's city filter. Failures resolve to a
- * blank-address GeoAddress rather than throwing so the picker stays usable.
+ * Reverse geocode a coordinate (from a map tap) into a {@link GeoAddress}.
+ * Failures resolve to a blank-address GeoAddress rather than throwing so the
+ * picker stays usable.
  */
 export async function reverseGeocodeAddress(latitude: number, longitude: number): Promise<GeoAddress> {
   const fallback: GeoAddress = { latitude: round6(latitude), longitude: round6(longitude), address: '', city: '' }
   if (!isValidLatLng(latitude, longitude)) return fallback
   try {
-    const url =
-      `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}` +
-      `&accept-language=zh-CN&zoom=18&addressdetails=1`
-    const res = await fetch(url, { headers: { Accept: 'application/json' } })
-    if (!res.ok) return fallback
-    const data = (await res.json()) as NominatimResult
-    const address = data.display_name || ''
-    return { ...fallback, address, city: pickCity(data.address) || inferCity(address) }
+    const res = await callFunction('handleGeo', {
+      action: 'reverse',
+      latitude,
+      longitude
+    }) as GeoCloudResponse
+    if (res?.success !== true || !res.address) return fallback
+    const address = res.address.address || ''
+    return {
+      ...fallback,
+      latitude: round6(Number(res.address.latitude)),
+      longitude: round6(Number(res.address.longitude)),
+      address,
+      city: res.address.city || inferCity(address)
+    }
   } catch {
     return fallback
   }
@@ -89,60 +96,43 @@ export function formatLatLng(lat: number, lng: number): string {
   return `${lat.toFixed(5)}, ${lng.toFixed(5)}`
 }
 
-/** Nominatim address-detail shape we read for the city field. */
-interface NominatimAddress {
-  city?: string
-  town?: string
-  village?: string
-  county?: string
-  state?: string
-  municipality?: string
-}
-
-interface NominatimResult {
-  lat: string
-  lon: string
-  display_name?: string
-  name?: string
-  address?: NominatimAddress
-}
-
-/** Pull the best "city" candidate out of a Nominatim address block. */
-function pickCity(addr?: NominatimAddress): string {
-  if (!addr) return ''
-  return addr.city || addr.municipality || addr.town || addr.county || addr.state || addr.village || ''
-}
-
 /**
- * Fuzzy address search via OpenStreetMap Nominatim (no API key). Accepts free
- * text — district names, landmarks, partial streets — and returns up to eight
- * candidates with coordinates, a short display name and a city. Network/parse
- * failures resolve to an empty list so callers can show "no results" cleanly.
+ * Fuzzy address search via the backend AMap Web Service proxy. Accepts free
+ * text and returns up to eight candidates. Network/parse failures resolve to
+ * an empty list so callers can show "no results" cleanly.
  */
 export async function searchAddress(query: string): Promise<AddressSearchResult[]> {
   const q = query.trim()
   if (q.length < 2) return []
   try {
-    const url =
-      `https://nominatim.openstreetmap.org/search?format=jsonv2&q=${encodeURIComponent(q)}` +
-      `&accept-language=zh-CN&limit=8&addressdetails=1&countrycodes=cn`
-    const res = await fetch(url, { headers: { Accept: 'application/json' } })
-    if (!res.ok) return []
-    const data = (await res.json()) as NominatimResult[]
-    if (!Array.isArray(data)) return []
-    return data
-      .map((item): AddressSearchResult | null => {
-        const latitude = round6(Number(item.lat))
-        const longitude = round6(Number(item.lon))
-        if (!isValidLatLng(latitude, longitude)) return null
-        const detail = item.display_name || ''
-        const name = (item.name && item.name.trim()) || detail.split(',')[0]?.trim() || detail
-        return { latitude, longitude, address: detail || name, city: pickCity(item.address), name, detail }
-      })
-      .filter((r): r is AddressSearchResult => r !== null)
+    const res = await callFunction('handleGeo', {
+      action: 'search',
+      query: q,
+      limit: 8
+    }) as GeoCloudResponse
+    if (res?.success !== true || !Array.isArray(res.results)) return []
+    return res.results.filter(isAddressSearchResult)
   } catch {
     return []
   }
+}
+
+interface GeoCloudResponse {
+  success: boolean
+  address?: GeoAddress
+  results?: AddressSearchResult[]
+}
+
+function isAddressSearchResult(item: unknown): item is AddressSearchResult {
+  const value = item as Partial<AddressSearchResult>
+  return Boolean(
+    value &&
+    typeof value.name === 'string' &&
+    typeof value.detail === 'string' &&
+    typeof value.address === 'string' &&
+    typeof value.city === 'string' &&
+    isValidLatLng(Number(value.latitude), Number(value.longitude))
+  )
 }
 
 /** Straight-line (great-circle) distance in kilometres, rounded to 2 dp. */
