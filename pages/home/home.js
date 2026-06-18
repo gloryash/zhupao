@@ -37,6 +37,8 @@ const WITHIN_MINUTES = [
   { value: 60, label: '1 小时内' },
   { value: 120, label: '2 小时内' }
 ];
+const ADDRESS_HISTORY_PREFIX = 'blindrun_address_history_';
+const ADDRESS_HISTORY_LIMIT = 8;
 const CITY_MODES = [
   { value: 'all', label: '全部城市' },
   { value: 'current', label: '当前城市' },
@@ -86,6 +88,12 @@ Page({
     destinationQuery: '',
     startResults: [],
     destinationResults: [],
+    startHistory: [],
+    destinationHistory: [],
+    startSearching: false,
+    destinationSearching: false,
+    startSearched: false,
+    destinationSearched: false,
     duration: 45,
     durationOptions: DURATIONS,
     departureMode: 'immediate',
@@ -167,12 +175,23 @@ Page({
   },
 
   onLoad() {
+    this.addressSearchTimers = {};
+    this.addressSearchSeq = { start: 0, destination: 0 };
     this.setData({ shellStyle: safeArea.getSafeAreaStyle() });
+    this.loadAddressHistories();
     this.bootstrap();
   },
 
   onShow() {
     if (!this.data.user) this.bootstrap();
+  },
+
+  onHide() {
+    this.clearAddressSearchTimers();
+  },
+
+  onUnload() {
+    this.clearAddressSearchTimers();
   },
 
   async bootstrap() {
@@ -215,6 +234,10 @@ Page({
   goMine() {
     this.syncChrome('mine');
     this.loadCurrentTab();
+  },
+
+  openLightMap() {
+    wx.navigateTo({ url: '/pages/light-map/light-map' });
   },
 
   async loadCurrentTab() {
@@ -291,29 +314,92 @@ Page({
 
   onAddressInput(e) {
     const field = e.currentTarget.dataset.field;
-    this.setData({ [`${field}Query`]: e.detail.value });
+    const query = e.detail.value || '';
+    this.setData({ [`${field}Query`]: query });
+    this.scheduleAddressSearch(field);
   },
 
   async searchEndpoint(e) {
     const field = e.currentTarget.dataset.field;
-    const query = this.data[`${field}Query`];
-    if (!query || query.trim().length < 2) {
-      wx.showToast({ title: '请输入至少两个字', icon: 'none' });
+    if (!field) return;
+    await this.runAddressSearch(field, { notify: true });
+  },
+
+  scheduleAddressSearch(field) {
+    if (!field) return;
+    if (!this.addressSearchTimers) this.addressSearchTimers = {};
+    if (!this.addressSearchSeq) this.addressSearchSeq = {};
+    if (this.addressSearchTimers && this.addressSearchTimers[field]) {
+      clearTimeout(this.addressSearchTimers[field]);
+    }
+    const query = (this.data[`${field}Query`] || '').trim();
+    if (query.length < 2) {
+      this.setData({
+        [`${field}Results`]: [],
+        [`${field}Searching`]: false,
+        [`${field}Searched`]: false
+      });
       return;
     }
-    wx.showLoading({ title: '搜索中...' });
-    const results = await loc.searchAddress(query);
-    wx.hideLoading();
-    this.setData({ [`${field}Results`]: results });
-    if (results.length === 0) wx.showToast({ title: '没有找到匹配地点', icon: 'none' });
+    this.setData({ [`${field}Searching`]: true });
+    this.addressSearchTimers[field] = setTimeout(() => {
+      this.runAddressSearch(field, { notify: false });
+    }, 350);
+  },
+
+  clearAddressSearchTimers() {
+    if (!this.addressSearchTimers) return;
+    Object.values(this.addressSearchTimers).forEach((timer) => clearTimeout(timer));
+    this.addressSearchTimers = {};
+  },
+
+  async runAddressSearch(field, options = {}) {
+    const query = this.data[`${field}Query`];
+    if (!query || query.trim().length < 2) {
+      this.setData({
+        [`${field}Results`]: [],
+        [`${field}Searching`]: false,
+        [`${field}Searched`]: false
+      });
+      if (options.notify) wx.showToast({ title: '请输入至少两个字', icon: 'none' });
+      return;
+    }
+    const seq = (this.addressSearchSeq[field] || 0) + 1;
+    this.addressSearchSeq[field] = seq;
+    if (options.notify) wx.showLoading({ title: '搜索中...' });
+    this.setData({ [`${field}Searching`]: true });
+    try {
+      const results = await loc.searchAddress(query, this.data.currentCity || '');
+      if (this.addressSearchSeq[field] !== seq) return;
+      this.setData({
+        [`${field}Results`]: results,
+        [`${field}Searching`]: false,
+        [`${field}Searched`]: true
+      });
+      if (options.notify && results.length === 0) wx.showToast({ title: '没有找到匹配地点', icon: 'none' });
+    } catch (err) {
+      if (this.addressSearchSeq[field] !== seq) return;
+      this.setData({
+        [`${field}Results`]: [],
+        [`${field}Searching`]: false,
+        [`${field}Searched`]: true
+      });
+      if (options.notify) wx.showToast({ title: err.message || '搜索失败', icon: 'none' });
+    } finally {
+      if (options.notify) wx.hideLoading();
+    }
   },
 
   async chooseCurrentEndpoint(e) {
     const field = e.currentTarget.dataset.field;
-    wx.showLoading({ title: '定位中...' });
-    const current = await loc.resolveCurrentAddress();
-    wx.hideLoading();
-    this.setEndpoint(field, current);
+    try {
+      const selected = await loc.chooseAddress();
+      this.setEndpoint(field, selected);
+    } catch (err) {
+      if (!err || !String(err.errMsg || err.message || '').includes('cancel')) {
+        wx.showToast({ title: '未能打开地图选点', icon: 'none' });
+      }
+    }
   },
 
   selectEndpoint(e) {
@@ -323,21 +409,37 @@ Page({
     this.setEndpoint(field, item);
   },
 
+  selectHistoryEndpoint(e) {
+    const field = e.currentTarget.dataset.field;
+    const index = Number(e.currentTarget.dataset.index);
+    const item = this.data[`${field}History`][index];
+    this.setEndpoint(field, item);
+  },
+
   clearEndpoint(e) {
     const field = e.currentTarget.dataset.field;
     this.setData({
       [field]: null,
       [`${field}Query`]: '',
       [`${field}Results`]: [],
+      [`${field}Searched`]: false,
+      [`${field}Searching`]: false,
       targetDistance: field === 'start' || field === 'destination' ? 0 : this.data.targetDistance
     });
   },
 
   setEndpoint(field, item) {
+    if (!field || !item) return;
+    const display = buildEndpointDisplay(item);
     const value = {
       latitude: item.latitude,
       longitude: item.longitude,
-      address: item.address || item.detail || item.name,
+      name: display.name,
+      address: display.address,
+      detail: display.detail,
+      displayName: display.displayName,
+      displayDetail: display.displayDetail,
+      displayAddress: display.displayAddress,
       city: item.city || ''
     };
     const next = {
@@ -349,6 +451,19 @@ Page({
     const destination = field === 'destination' ? value : this.data.destination;
     if (start && destination) next.targetDistance = loc.straightLineDistanceKm(start, destination);
     this.setData(next);
+    this.pushAddressHistory(field, value);
+  },
+
+  loadAddressHistories() {
+    this.setData({
+      startHistory: readAddressHistory('start'),
+      destinationHistory: readAddressHistory('destination')
+    });
+  },
+
+  pushAddressHistory(field, item) {
+    const next = pushAddressHistory(field, item);
+    this.setData({ [`${field}History`]: next });
   },
 
   setDuration(e) {
@@ -397,9 +512,11 @@ Page({
     try {
       const dep = departure.buildDeparturePayload(this.buildDepartureValue());
       const targetDistance = loc.straightLineDistanceKm(start, destination);
+      const readableStart = endpointForPublish(start);
+      const readableDestination = endpointForPublish(destination);
       const order = await api.publishOrder({
-        origin: start,
-        destination,
+        origin: readableStart,
+        destination: readableDestination,
         targetDistance,
         estimatedDuration: this.data.duration,
         ...dep,
@@ -1013,4 +1130,77 @@ function mapVolunteers(volunteers) {
 function formatHour(hour) {
   const n = Math.max(0, Math.min(23, Number(hour) || 0));
   return `${String(n).padStart(2, '0')}:00`;
+}
+
+function addressHistoryKey(field) {
+  return `${ADDRESS_HISTORY_PREFIX}${field}`;
+}
+
+function readAddressHistory(field) {
+  try {
+    const raw = wx.getStorageSync(addressHistoryKey(field));
+    if (!Array.isArray(raw)) return [];
+    return raw
+      .filter((item) => item && item.address && Number.isFinite(Number(item.latitude)) && Number.isFinite(Number(item.longitude)))
+      .slice(0, ADDRESS_HISTORY_LIMIT);
+  } catch (err) {
+    return [];
+  }
+}
+
+function pushAddressHistory(field, item) {
+  const display = buildEndpointDisplay(item);
+  const entry = {
+    latitude: Number(item.latitude),
+    longitude: Number(item.longitude),
+    name: display.name,
+    address: display.address,
+    detail: display.detail,
+    displayName: display.displayName,
+    displayDetail: display.displayDetail,
+    displayAddress: display.displayAddress,
+    city: item.city || ''
+  };
+  if (!entry.address || !Number.isFinite(entry.latitude) || !Number.isFinite(entry.longitude)) {
+    return readAddressHistory(field);
+  }
+  const existing = readAddressHistory(field)
+    .filter((old) => old.address !== entry.address);
+  const next = [entry, ...existing].slice(0, ADDRESS_HISTORY_LIMIT);
+  try {
+    wx.setStorageSync(addressHistoryKey(field), next);
+  } catch (err) {
+    /* storage failures should not block selecting an address */
+  }
+  return next;
+}
+
+function buildEndpointDisplay(item) {
+  item = item || {};
+  const name = String(item.name || '').trim();
+  const rawAddress = String(item.address || '').trim();
+  const rawDetail = String(item.detail || '').trim();
+  const address = rawAddress || rawDetail || name;
+  const detail = rawDetail || rawAddress || '';
+  const displayName = name || address || '已选择位置';
+  const displayDetail = detail && detail !== displayName ? detail : '';
+  const displayAddress = displayDetail ? `${displayName} · ${displayDetail}` : displayName;
+  return {
+    name,
+    address,
+    detail,
+    displayName,
+    displayDetail,
+    displayAddress
+  };
+}
+
+function endpointForPublish(endpoint) {
+  const display = buildEndpointDisplay(endpoint);
+  return {
+    ...endpoint,
+    name: display.displayName,
+    address: display.displayAddress,
+    detail: display.displayDetail || display.detail
+  };
 }

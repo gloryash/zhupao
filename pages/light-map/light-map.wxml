@@ -1,0 +1,144 @@
+<view class="light-page role-volunteer terrain-shell terrain-shell--{{displayStage.theme}}" style="{{shellStyle}}">
+  <view class="game-hud">
+    <view class="hud-left">
+      <view class="round-btn" bindtap="openHome">‹</view>
+      <view class="hud-copy">
+        <text class="hud-kicker">志愿者成长地图</text>
+        <text class="hud-title">光的地图</text>
+        <text class="hud-sub">已点亮 {{mapState.completedRuns}} 次陪跑</text>
+      </view>
+    </view>
+    <view class="hud-stats">
+      <view class="hud-stat">
+        <text class="hud-stat-value">{{displayStage.level}}</text>
+        <text class="hud-stat-label">LEVEL</text>
+      </view>
+      <view class="hud-stat">
+        <text class="hud-stat-value">{{mapState.totalLight}}</text>
+        <text class="hud-stat-label">LIGHT</text>
+      </view>
+      <view class="hud-stat">
+        <text class="hud-stat-value">{{returnStops.length}}</text>
+        <text class="hud-stat-label">STAGE</text>
+      </view>
+      <view class="round-btn round-btn--home" bindtap="toggleStagePicker">房</view>
+    </view>
+  </view>
+
+  <view wx:if="{{loading}}" class="state-block state-block--overlay">
+    <view class="spinner"></view>
+    <text>正在点亮地图...</text>
+  </view>
+
+  <view wx:elif="{{loadError}}" class="state-block state-block--overlay">
+    <text class="state-title">地图暂时没有亮起来</text>
+    <text class="state-text">{{loadError}}</text>
+    <view class="map-action" bindtap="retryLoad">重新加载</view>
+  </view>
+
+  <view wx:else class="map-stage">
+    <view class="hex-grid hex-grid--dark"></view>
+    <view class="hex-grid hex-grid--light" style="opacity: {{displayStage.lightOpacity}};"></view>
+    <view class="terrain-shadow terrain-shadow--left"></view>
+    <view class="terrain-shadow terrain-shadow--right"></view>
+
+    <view class="terrain-island">
+      <view class="ground-ring ground-ring--outer"></view>
+      <view class="ground-ring ground-ring--middle"></view>
+      <view class="ground-ring ground-ring--inner"></view>
+      <view class="road-main"><view class="road-highlight"></view></view>
+      <view class="road-branch road-branch--top"></view>
+      <view class="road-branch road-branch--right"></view>
+      <view class="road-branch road-branch--bottom"></view>
+      <view class="route-node route-node--start">1</view>
+      <view class="route-node route-node--mid">2</view>
+      <view class="route-node route-node--end {{displayStage.completed ? 'is-complete' : ''}}">{{displayStage.completed ? '5' : '3'}}</view>
+
+      <view
+        wx:for="{{displayStage.landmarks}}"
+        wx:key="id"
+        class="landmark landmark--{{item.visual}} {{item.revealed ? 'is-lit' : 'is-muted'}}"
+        style="left: {{item.x}}%; top: {{item.y}}%;"
+      >
+        <view class="landmark-shadow"></view>
+        <view class="landmark-shape landmark-shape--{{item.visual}}">
+          <view class="park-path"></view>
+          <view class="tree-crown tree-crown--a"></view>
+          <view class="tree-crown tree-crown--b"></view>
+          <view class="tree-trunk"></view>
+          <view class="lake-shape"></view>
+          <view class="lake-shine"></view>
+          <view class="lake-bridge"></view>
+          <view class="shop-base"></view>
+          <view class="shop-roof building-roof"></view>
+          <view class="shop-window"></view>
+          <view class="shop-sign"></view>
+          <view class="bridge-arch"></view>
+          <view class="bridge-road"></view>
+          <view class="windmill-tower"></view>
+          <view class="windmill-hub"></view>
+          <view class="windmill-blades"></view>
+          <view class="tower-body"></view>
+          <view class="tower-top building-roof"></view>
+          <view class="plaza-base"></view>
+          <view class="person-board"></view>
+          <view class="person-body"></view>
+          <view class="person-head"></view>
+          <view class="lamp-post"></view>
+          <view class="lamp-light"></view>
+        </view>
+      </view>
+
+      <view class="fog-edge fog-edge--top"></view>
+      <view class="fog-edge fog-edge--bottom"></view>
+      <view class="fog-edge fog-edge--left"></view>
+      <view class="fog-edge fog-edge--right"></view>
+    </view>
+
+    <view class="stage-toast">
+      <view class="stage-toast-line">
+        <text class="stage-toast-title">{{displayStage.name}}</text>
+        <text class="stage-toast-meta">Lv.{{displayStage.level}} / {{displayStage.maxLevel}}</text>
+      </view>
+      <text class="stage-toast-desc">{{mapState.nextUnlockText}}</text>
+      <view class="stage-toast-track">
+        <view class="stage-toast-fill" style="width: {{displayStage.progressPct}}%;"></view>
+      </view>
+    </view>
+
+    <view class="stage-switch">
+      <view
+        wx:for="{{mapState.stages}}"
+        wx:key="id"
+        class="stage-switch-item {{item.status === 'locked' ? 'is-locked' : ''}} {{stageIndex === index ? 'is-current' : ''}}"
+        bindtap="jumpToStage"
+        data-index="{{index}}"
+      >
+        <text class="stage-switch-dot">{{item.stageNo}}</text>
+        <text class="stage-switch-label">{{item.shortName}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view wx:if="{{showStagePicker}}" class="stage-sheet" catchtap="toggleStagePicker">
+    <view class="stage-sheet-panel" catchtap="noop">
+      <view class="sheet-head">
+        <text class="sheet-title">回到已点亮的地图</text>
+        <text class="sheet-sub">点击后自动跳转，不需要手动拖地图寻找。</text>
+      </view>
+      <view class="return-grid">
+        <view
+          wx:for="{{returnStops}}"
+          wx:key="id"
+          class="return-stop {{item.current ? 'is-current' : ''}}"
+          bindtap="jumpToStage"
+          data-index="{{item.index}}"
+        >
+          <view class="return-mini-map return-mini-map--{{item.id}}"></view>
+          <text class="return-name">{{item.label}}</text>
+          <text class="return-meta">{{item.current ? '当前所在' : '已点亮'}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>
