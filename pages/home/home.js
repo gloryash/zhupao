@@ -1,553 +1,1016 @@
-const app = getApp();
+const api = require('../../utils/api');
+const session = require('../../utils/session');
+const fmt = require('../../utils/format');
+const loc = require('../../utils/location');
+const departure = require('../../utils/departure');
+const safeArea = require('../../utils/safe-area');
+
+const DURATIONS = [30, 45, 60, 90];
+const DISTANCE_FILTERS = [
+  { value: 1000, label: '1 公里' },
+  { value: 5000, label: '5 公里' },
+  { value: 10000, label: '10 公里' },
+  { value: 20000, label: '20 公里' }
+];
+const GENDER_FILTERS = [
+  { value: 'all', label: '性别不限' },
+  { value: 'male', label: '男生' },
+  { value: 'female', label: '女生' }
+];
+const AGE_FILTERS = [
+  { value: 'all', label: '年龄不限' },
+  { value: '18-30', label: '18-30 岁' },
+  { value: '31-45', label: '31-45 岁' },
+  { value: '46-60', label: '46-60 岁' },
+  { value: '60-120', label: '60 岁以上' }
+];
+const DEPARTURE_FILTERS = [
+  { value: 'all', label: '不限' },
+  { value: 'immediate', label: '立即出发' },
+  { value: 'within', label: '即将出发' },
+  { value: 'hour', label: '按整点' },
+  { value: 'date', label: '按日期' }
+];
+const WITHIN_MINUTES = [
+  { value: 15, label: '15 分钟内' },
+  { value: 30, label: '30 分钟内' },
+  { value: 60, label: '1 小时内' },
+  { value: 120, label: '2 小时内' }
+];
+const CITY_MODES = [
+  { value: 'all', label: '全部城市' },
+  { value: 'current', label: '当前城市' },
+  { value: 'custom', label: '指定城市' }
+];
+const CITY_PRESETS = [
+  { value: '上海', label: '上海' },
+  { value: '北京', label: '北京' },
+  { value: '广州', label: '广州' },
+  { value: '深圳', label: '深圳' },
+  { value: '杭州', label: '杭州' },
+  { value: '成都', label: '成都' }
+];
 
 Page({
   data: {
-    userInfo: null,
-    userType: 'disabled', // disabled 或 volunteer
-    userName: '',
-    greeting: '',
-    stats: {
-      totalRuns: 0,
-      totalDistance: 0,
-      totalTime: 0
-    },
-    tier: null, // 段位信息
-    userPoints: 0, // 积分
-    userExp: 0, // 经验值
-    checkInDays: 0, // 连续打卡天数
-    todayCheckedIn: false, // 今日是否已打卡
-    showCertificateGuide: false, // 是否显示证书引导弹窗
-    isTakingOrders: false, // 志愿者是否正在接单
-    examPassed: false, // 志愿者是否已通过考试
-    videoWatched: false, // 志愿者是否已观看视频
-    trainingCompleted: false // 志愿者培训是否完成
+    user: null,
+    avatarText: '?',
+    role: 'disabled',
+    isVolunteer: false,
+    activeTab: 'home',
+    navItems: [],
+    headerTitle: '向光奔跑',
+    eyebrow: '视障跑者',
+    loading: true,
+    loadError: '',
+
+    stats: null,
+    expPct: 0,
+    expToNext: 100,
+    homeStats: [],
+
+    activeOrder: null,
+    activeOrderView: null,
+    orders: [],
+    orderFilter: 'all',
+    orderFilters: [
+      { key: 'all', label: '全部' },
+      { key: 'active', label: '进行中' },
+      { key: 'completed', label: '已完成' }
+    ],
+    filteredOrders: [],
+
+    start: null,
+    destination: null,
+    startQuery: '',
+    destinationQuery: '',
+    startResults: [],
+    destinationResults: [],
+    duration: 45,
+    durationOptions: DURATIONS,
+    departureMode: 'immediate',
+    departureHour: new Date().getHours(),
+    departureMinute: (new Date().getMinutes() + 30) % 60,
+    departureLabel: '立即出发',
+    targetDistance: 0,
+    publishing: false,
+    cancelling: false,
+
+    position: null,
+    positionFallback: false,
+    currentCity: '',
+    waitingOrders: [],
+    activeVolunteerOrders: [],
+    volunteerFilters: DISTANCE_FILTERS,
+    genderFilters: GENDER_FILTERS,
+    ageFilters: AGE_FILTERS,
+    departureFilters: DEPARTURE_FILTERS,
+    withinMinutesOptions: WITHIN_MINUTES,
+    cityModes: CITY_MODES,
+    cityPresets: CITY_PRESETS,
+    maxDistance: 20000,
+    maxDistanceLabel: '20 公里',
+    showFilters: false,
+    activeFilterCount: 0,
+    genderFilter: 'all',
+    ageRangeFilter: 'all',
+    departureFilterType: 'all',
+    departureWithinMinutes: 30,
+    departureHourFilter: new Date().getHours(),
+    departureHourLabel: formatHour(new Date().getHours()),
+    departureDateFilter: '',
+    cityMode: 'all',
+    cityValue: '',
+    selectedDemand: null,
+    refreshingBoard: false,
+    trainingRequired: false,
+    completingOrderId: '',
+    completeDistance: '',
+    completeDuration: '',
+
+    trainingStatus: null,
+    certificate: null,
+    trainingPct: 0,
+    questions: null,
+    passScore: 80,
+    answeredCount: 0,
+    examResult: null,
+    certInput: '',
+    certVerify: null,
+
+    appointments: [],
+    volunteers: [],
+    selectedVolunteerId: '',
+    apDate: '',
+    apTime: '',
+    today: fmt.todayISO(),
+    apDistance: '',
+    apDuration: '',
+    apNote: '',
+    apAddress: '',
+    apDateLabel: '请选择日期',
+    apTimeLabel: '请选择时间',
+    appointmentNearbyMode: false,
+    apRating: 5,
+    ratingOptions: [1, 2, 3, 4, 5],
+    apComment: '',
+    completingAppointmentId: '',
+
+    mineNickName: '',
+    mineName: '',
+    emergencyName: '',
+    emergencyPhone: '',
+    emergencyRelation: '',
+    savingProfile: false,
+    savingEmergency: false,
+    shellStyle: ''
   },
 
   onLoad() {
-    this.loadUserInfo();
+    this.setData({ shellStyle: safeArea.getSafeAreaStyle() });
+    this.bootstrap();
   },
 
   onShow() {
-    this.loadUserInfo();
+    if (!this.data.user) this.bootstrap();
   },
 
-  /**
-   * 加载用户信息（优先本地缓存，异步同步云端）
-   */
-  loadUserInfo() {
-    const isLoggedIn = wx.getStorageSync('isLoggedIn');
-    if (!isLoggedIn) {
-      wx.reLaunch({ url: '/pages/login/login' });
-      return;
-    }
-
-    const currentUserType = wx.getStorageSync('currentUserType');
-    const storageKey = `userInfo_${currentUserType}`;
-    const userInfo = wx.getStorageSync(storageKey);
-
-    if (!userInfo || !currentUserType) {
-      wx.reLaunch({ url: '/pages/login/login' });
-      return;
-    }
-
-    // 先用本地缓存快速渲染
-    const localStats = app.getUserStats(currentUserType);
-    const today = new Date().toLocaleDateString();
-    const todayCheckedIn = localStats.lastCheckInDate === today;
-
+  async bootstrap() {
+    const current = session.requireSession();
+    if (!current) return;
+    const user = current.user;
+    const role = user.userType || 'disabled';
     this.setData({
-      userInfo: userInfo,
-      userType: currentUserType,
-      userName: userInfo.name || '用户',
-      userPoints: localStats.points || 0,
-      userExp: localStats.exp || 0,
-      checkInDays: localStats.checkInDays || 0,
-      todayCheckedIn: todayCheckedIn,
-      isTakingOrders: currentUserType === 'volunteer' ? (wx.getStorageSync('volunteerTakingOrders') || false) : false
+      user,
+      role,
+      isVolunteer: role === 'volunteer',
+      navItems: buildTabs(role),
+      avatarText: initial(user.nickName),
+      mineNickName: user.nickName || '',
+      mineName: user.name || '',
+      emergencyName: user.emergencyName || '',
+      emergencyPhone: user.emergencyPhone || '',
+      emergencyRelation: user.emergencyRelation || ''
     });
+    this.syncChrome('home');
+    await this.loadCurrentTab();
+  },
 
-    // 计算段位（先用本地数据）
-    const localRecords = wx.getStorageSync('companion_records') || [];
-    const tier = app.calculateTier(currentUserType, localRecords.length);
-    this.setData({ tier });
-    this.setGreeting();
-
-    // 异步从云端获取最新数据
-    app.getCloudUserStats().then(res => {
-      if (res.success) {
-        const s = res.stats;
-        const cloudCheckedIn = s.lastCheckInDate === today;
-        this.setData({
-          userPoints: s.points || 0,
-          userExp: s.exp || 0,
-          checkInDays: s.checkInDays || 0,
-          todayCheckedIn: cloudCheckedIn,
-          examPassed: s.examPassed || false,
-          videoWatched: s.videoWatched || false,
-          trainingCompleted: s.examPassed || false,
-          trainingStep: currentUserType === 'volunteer' ? (s.examPassed ? 3 : (s.videoWatched ? 2 : 1)) : 0,
-          stats: {
-            totalRuns: s.totalRuns || 0,
-            totalDistance: (s.totalDistance || 0).toFixed ? (s.totalDistance || 0).toFixed(1) : s.totalDistance || 0,
-            totalTime: s.totalTime || 0
-          }
-        });
-        // 更新段位
-        const cloudTier = app.calculateTier(currentUserType, s.totalRuns || 0);
-        this.setData({ tier: cloudTier });
-        // 同步到本地缓存
-        const stats = app.getUserStats(currentUserType);
-        stats.points = s.points || 0;
-        stats.exp = s.exp || 0;
-        stats.checkInDays = s.checkInDays || 0;
-        stats.lastCheckInDate = s.lastCheckInDate || '';
-        app.saveUserStats(currentUserType, stats);
-      }
-    }).catch(() => {
-      // 云端不可用时使用本地培训状态
-      if (currentUserType === 'volunteer') {
-        const examPassed = wx.getStorageSync('exam_passed');
-        const videoWatched = wx.getStorageSync('volunteer_video_watched');
-        this.setData({
-          examPassed: !!examPassed,
-          videoWatched: !!videoWatched,
-          trainingCompleted: !!examPassed,
-          trainingStep: examPassed ? 3 : (videoWatched ? 2 : 1)
-        });
-      }
+  syncChrome(tabKey) {
+    const tab = buildTabs(this.data.role).find((item) => item.key === tabKey) || buildTabs(this.data.role)[0];
+    this.setData({
+      activeTab: tab.key,
+      headerTitle: tab.title,
+      eyebrow: tab.eyebrow,
+      navItems: buildTabs(this.data.role).map((item) => ({ ...item, active: item.key === tab.key }))
     });
   },
 
-  /**
-   * 检查志愿者证书状态并显示引导弹窗
-   */
-  checkCertificateGuide() {
-    const currentUserType = this.data.userType;
-
-    // 只对志愿者检查证书状态
-    if (currentUserType !== 'volunteer') {
-      return;
-    }
-
-    // 检查是否已显示过引导（避免每次都弹）
-    const guideShown = wx.getStorageSync('certificateGuideShown');
-    if (guideShown) {
-      return;
-    }
-
-    // 检查证书状态
-    const hasCertificate = wx.getStorageSync('exam_passed');
-    if (!hasCertificate) {
-      this.setData({ showCertificateGuide: true });
-    }
+  async switchTab(e) {
+    const key = e.currentTarget.dataset.key;
+    this.syncChrome(key);
+    await this.loadCurrentTab();
   },
 
-  /**
-   * 关闭证书引导弹窗
-   */
-  closeCertificateGuide() {
-    this.setData({ showCertificateGuide: false });
-    wx.setStorageSync('certificateGuideShown', true);
+  goMine() {
+    this.syncChrome('mine');
+    this.loadCurrentTab();
   },
 
-  /**
-   * 前往完成考核
-   */
-  goToCompleteTraining() {
-    this.closeCertificateGuide();
-    wx.navigateTo({
-      url: '/pages/training-flow/training-flow'
-    });
+  async loadCurrentTab() {
+    const key = this.data.activeTab;
+    if (key === 'home') return this.loadHome();
+    if (key === 'sport') return this.loadSport();
+    if (key === 'orders') return this.loadOrders();
+    if (key === 'training') return this.loadTraining();
+    if (key === 'appointments') return this.loadAppointments();
+    if (key === 'mine') return this.loadMine();
   },
 
-  /**
-   * 切换接单状态（志愿者，同步到云端）
-   */
-  toggleTakingOrders() {
-    const { userType, isTakingOrders } = this.data;
-    if (userType !== 'volunteer') return;
-
-    // 检查是否已通过考核（优先云端数据）
-    if (!this.data.examPassed) {
-      const hasCertificate = wx.getStorageSync('exam_passed');
-      if (!hasCertificate) {
-        wx.showModal({
-          title: '暂未通过考核',
-          content: '您尚未通过志愿者考核，请先完成培训教程并领取证书后方可接单。',
-          confirmText: '去考核',
-          success: (res) => {
-            if (res.confirm) {
-              wx.navigateTo({ url: '/pages/training-flow/training-flow' });
-            }
-          }
-        });
-        return;
-      }
-    }
-
-    wx.showModal({
-      title: isTakingOrders ? '停止接单' : '开始接单',
-      content: isTakingOrders ? '确定要停止接单吗？' : '确定要开始接单吗？开始后盲人可以给您下单。',
-      confirmText: isTakingOrders ? '停止' : '开始',
-      success: (res) => {
-        if (res.confirm) {
-          const newStatus = !isTakingOrders;
-
-          // 获取位置并同步到云端
-          wx.getLocation({
-            type: 'gcj02',
-            success: (locationRes) => {
-              app.updateVolunteerAvailability(newStatus, locationRes.latitude, locationRes.longitude).then(() => {
-                this.setData({ isTakingOrders: newStatus });
-                wx.setStorageSync('volunteerTakingOrders', newStatus);
-                wx.showToast({ title: newStatus ? '已开始接单' : '已停止接单', icon: 'success' });
-              }).catch(() => {
-                // 降级到本地
-                this.setData({ isTakingOrders: newStatus });
-                wx.setStorageSync('volunteerTakingOrders', newStatus);
-                wx.showToast({ title: newStatus ? '已开始接单' : '已停止接单', icon: 'success' });
-              });
-            },
-            fail: () => {
-              app.updateVolunteerAvailability(newStatus, 0, 0).catch(() => {});
-              this.setData({ isTakingOrders: newStatus });
-              wx.setStorageSync('volunteerTakingOrders', newStatus);
-              wx.showToast({ title: newStatus ? '已开始接单' : '已停止接单', icon: 'success' });
-            }
-          });
-        }
-      }
-    });
-  },
-
-  /**
-   * 前往接单页面（志愿者端）
-   */
-  goToTakeOrder() {
-    // 检查是否已完成培训
-    const examPassed = wx.getStorageSync('exam_passed');
-    if (!examPassed) {
-      wx.showModal({
-        title: '提示',
-        content: '请先完成培训教程才能接单',
-        confirmText: '去培训',
-        success: (res) => {
-          if (res.confirm) {
-            wx.navigateTo({
-              url: '/pages/training-flow/training-flow'
-            });
-          }
-        }
-      });
-      return;
-    }
-    wx.navigateTo({
-      url: '/pages/take-order/take-order'
-    });
-  },
-
-  /**
-   * 前往培训教程（志愿者端）
-   */
-  goToTraining() {
-    wx.navigateTo({
-      url: '/pages/training-flow/training-flow'
-    });
-  },
-
-  /**
-   * 获取当前培训步骤
-   */
-  getTrainingStep() {
-    const { videoWatched, examPassed } = this.data;
-    if (examPassed) return 3; // 已完成（可领证/已领证）
-    if (videoWatched) return 2; // 已观看视频，去考试
-    return 1; // 还未观看视频
-  },
-
-  /**
-   * 设置问候语
-   */
-  setGreeting() {
-    const hour = new Date().getHours();
-    let greeting = '';
-
-    if (hour < 6) {
-      greeting = '夜深了';
-    } else if (hour < 9) {
-      greeting = '早上好';
-    } else if (hour < 12) {
-      greeting = '上午好';
-    } else if (hour < 14) {
-      greeting = '中午好';
-    } else if (hour < 18) {
-      greeting = '下午好';
-    } else if (hour < 22) {
-      greeting = '晚上好';
-    } else {
-      greeting = '夜深了';
-    }
-
-    this.setData({ greeting });
-  },
-
-  /**
-   * 加载陪跑记录
-   * @returns {object} 统计数据
-   */
-  loadRecords() {
-    const records = wx.getStorageSync('companion_records') || [];
-    let stats = {
-      totalRuns: records.length,
-      totalDistance: 0,
-      totalTime: 0
-    };
-
-    if (records.length > 0) {
-      const totalDistance = records.reduce((sum, r) => sum + parseFloat(r.actualDistance || 0), 0);
-      const totalTime = (records.reduce((sum, r) => sum + parseInt(r.duration || 0), 0) / 60).toFixed(1);
-
-      stats = {
-        totalRuns: records.length,
-        totalDistance: totalDistance.toFixed(1),
-        totalTime: totalTime
-      };
-
-      this.setData({ stats });
-    }
-
-    return stats;
-  },
-
-  /**
-   * 返回首页（切换账号）
-   */
-  goToLogin() {
-    wx.showModal({
-      title: '切换账号',
-      content: '确定要返回登录页面吗？',
-      confirmText: '确定',
-      success: (res) => {
-        if (res.confirm) {
-          wx.reLaunch({
-            url: '/pages/quick-login/quick-login'
-          });
-        }
-      }
-    });
-  },
-
-  /**
-   * 视障人士：发布需求
-   */
-  goToPublish() {
-    wx.navigateTo({
-      url: '/pages/publish-need/publish-need'
-    });
-  },
-
-  /**
-   * 每日打卡（云端）
-   */
-  handleCheckIn() {
-    if (this.data.userType !== 'disabled') return;
-
-    if (this.data.todayCheckedIn) {
-      wx.showToast({ title: '今日已打卡', icon: 'none' });
-      return;
-    }
-
-    wx.showLoading({ title: '打卡中...' });
-    app.cloudCheckIn().then(res => {
-      wx.hideLoading();
-      if (res.success) {
-        this.setData({
-          userExp: (this.data.userExp || 0) + res.earnedExp,
-          checkInDays: res.checkInDays,
-          todayCheckedIn: true
-        });
-        // 同步本地缓存
-        const stats = app.getUserStats('disabled');
-        stats.exp += res.earnedExp;
-        stats.checkInDays = res.checkInDays;
-        stats.lastCheckInDate = new Date().toLocaleDateString();
-        app.saveUserStats('disabled', stats);
-
-        wx.showModal({
-          title: '打卡成功',
-          content: res.message,
-          showCancel: false,
-          confirmText: '知道了'
-        });
-      }
-    }).catch(err => {
-      wx.hideLoading();
-      // 降级到本地打卡
-      const result = app.addPointsAndExp('disabled', 'checkin');
-      if (result.message === '今日已打卡') {
-        this.setData({ todayCheckedIn: true });
-        wx.showToast({ title: '今日已打卡', icon: 'none' });
-        return;
-      }
-      const userStats = app.getUserStats('disabled');
+  async loadHome() {
+    this.setData({ loading: true, loadError: '' });
+    try {
+      const [fresh, stats] = await Promise.all([api.getUserProfile(), api.getUserStats()]);
+      session.updateUser(fresh);
+      const progress = fmt.expProgress((stats && stats.exp) || fresh.exp || 0);
       this.setData({
-        userExp: userStats.exp,
-        checkInDays: userStats.checkInDays,
-        todayCheckedIn: true
+        user: fresh,
+        avatarText: initial(fresh.nickName),
+        stats,
+        expPct: progress.pct,
+        expToNext: progress.toNext,
+        homeStats: buildHomeStats(fresh, stats),
+        mineNickName: fresh.nickName || '',
+        mineName: fresh.name || '',
+        emergencyName: fresh.emergencyName || '',
+        emergencyPhone: fresh.emergencyPhone || '',
+        emergencyRelation: fresh.emergencyRelation || '',
+        loading: false
       });
-      wx.showModal({
-        title: '打卡成功',
-        content: result.message,
-        showCancel: false,
-        confirmText: '知道了'
-      });
-    });
+    } catch (err) {
+      this.setData({ loading: false, loadError: err.message || '没能加载你的数据' });
+    }
   },
 
-  /**
-   * 志愿者：接单
-   */
-  goToTakeOrder() {
-    // 检查志愿者证书状态
-    const hasCertificate = wx.getStorageSync('exam_passed');
+  async toggleAvailability() {
+    if (!this.data.isVolunteer) return;
+    const next = !this.data.user.isAvailable;
+    wx.showLoading({ title: next ? '上线中...' : '下线中...' });
+    try {
+      const pos = next ? await loc.getCurrentPosition() : null;
+      await api.updateAvailability(next, pos ? pos.latitude : undefined, pos ? pos.longitude : undefined);
+      const user = { ...this.data.user, isAvailable: next, ...(pos || {}) };
+      session.updateUser(user);
+      this.setData({ user, avatarText: initial(user.nickName) });
+      wx.showToast({ title: next ? '已上线' : '已下线', icon: 'success' });
+    } catch (err) {
+      wx.showToast({ title: err.message || '更新失败', icon: 'none' });
+    } finally {
+      wx.hideLoading();
+    }
+  },
 
-    if (!hasCertificate) {
-      wx.showModal({
-        title: '暂未通过考核',
-        content: '您尚未通过志愿者考核，请先完成培训教程并领取证书后方可接单。',
-        confirmText: '去考核',
-        success: (res) => {
-          if (res.confirm) {
-            wx.navigateTo({
-              url: '/pages/training-flow/training-flow'
-            });
-          }
-        }
+  async loadSport() {
+    if (this.data.isVolunteer) return this.loadVolunteerBoard();
+    return this.loadRunnerSport();
+  },
+
+  async loadRunnerSport() {
+    this.setData({ loading: true, loadError: '' });
+    try {
+      const order = await api.getOrderDetail();
+      this.setData({
+        activeOrder: order,
+        activeOrderView: order ? fmt.decorateOrder(order, 'disabled') : null,
+        loading: false
       });
+    } catch (err) {
+      this.setData({ loading: false, loadError: err.message || '订单加载失败' });
+    }
+  },
+
+  onAddressInput(e) {
+    const field = e.currentTarget.dataset.field;
+    this.setData({ [`${field}Query`]: e.detail.value });
+  },
+
+  async searchEndpoint(e) {
+    const field = e.currentTarget.dataset.field;
+    const query = this.data[`${field}Query`];
+    if (!query || query.trim().length < 2) {
+      wx.showToast({ title: '请输入至少两个字', icon: 'none' });
       return;
     }
+    wx.showLoading({ title: '搜索中...' });
+    const results = await loc.searchAddress(query);
+    wx.hideLoading();
+    this.setData({ [`${field}Results`]: results });
+    if (results.length === 0) wx.showToast({ title: '没有找到匹配地点', icon: 'none' });
+  },
 
-    wx.navigateTo({
-      url: '/pages/take-order/take-order'
+  async chooseCurrentEndpoint(e) {
+    const field = e.currentTarget.dataset.field;
+    wx.showLoading({ title: '定位中...' });
+    const current = await loc.resolveCurrentAddress();
+    wx.hideLoading();
+    this.setEndpoint(field, current);
+  },
+
+  selectEndpoint(e) {
+    const field = e.currentTarget.dataset.field;
+    const index = Number(e.currentTarget.dataset.index);
+    const item = this.data[`${field}Results`][index];
+    this.setEndpoint(field, item);
+  },
+
+  clearEndpoint(e) {
+    const field = e.currentTarget.dataset.field;
+    this.setData({
+      [field]: null,
+      [`${field}Query`]: '',
+      [`${field}Results`]: [],
+      targetDistance: field === 'start' || field === 'destination' ? 0 : this.data.targetDistance
     });
   },
 
-  /**
-   * 查看个人信息
-   */
-  goToProfile() {
-    wx.navigateTo({
-      url: '/pages/user-info/user-info'
+  setEndpoint(field, item) {
+    const value = {
+      latitude: item.latitude,
+      longitude: item.longitude,
+      address: item.address || item.detail || item.name,
+      city: item.city || ''
+    };
+    const next = {
+      [field]: value,
+      [`${field}Query`]: '',
+      [`${field}Results`]: []
+    };
+    const start = field === 'start' ? value : this.data.start;
+    const destination = field === 'destination' ? value : this.data.destination;
+    if (start && destination) next.targetDistance = loc.straightLineDistanceKm(start, destination);
+    this.setData(next);
+  },
+
+  setDuration(e) {
+    this.setData({ duration: Number(e.currentTarget.dataset.value) });
+  },
+
+  setDepartureMode(e) {
+    const mode = e.currentTarget.dataset.mode;
+    this.setData({ departureMode: mode }, () => this.updateDepartureLabel());
+  },
+
+  onDepartureInput(e) {
+    const key = e.currentTarget.dataset.key;
+    this.setData({ [key]: Number(e.detail.value) }, () => this.updateDepartureLabel());
+  },
+
+  updateDepartureLabel() {
+    const value = this.buildDepartureValue();
+    this.setData({ departureLabel: departure.buildDeparturePayload(value).departureLabel });
+  },
+
+  buildDepartureValue() {
+    if (this.data.departureMode === 'delayed') {
+      return departure.createClockDeparture(this.data.departureHour, this.data.departureMinute);
+    }
+    return departure.DEFAULT_DEPARTURE;
+  },
+
+  async publishRunnerOrder() {
+    if (this.data.publishing) return;
+    let { start, destination } = this.data;
+    if (!start && this.data.startQuery.trim()) {
+      const found = await loc.searchAddress(this.data.startQuery);
+      start = found[0] || { ...loc.SHANGHAI, address: this.data.startQuery.trim() };
+    }
+    if (!destination && this.data.destinationQuery.trim()) {
+      const found = await loc.searchAddress(this.data.destinationQuery);
+      destination = found[0] || { ...loc.SHANGHAI, address: this.data.destinationQuery.trim(), longitude: loc.SHANGHAI.longitude + 0.02 };
+    }
+    if (!start || !destination) {
+      wx.showToast({ title: '请先选择起点和终点', icon: 'none' });
+      return;
+    }
+    this.setData({ publishing: true });
+    wx.showLoading({ title: '发布中...' });
+    try {
+      const dep = departure.buildDeparturePayload(this.buildDepartureValue());
+      const targetDistance = loc.straightLineDistanceKm(start, destination);
+      const order = await api.publishOrder({
+        origin: start,
+        destination,
+        targetDistance,
+        estimatedDuration: this.data.duration,
+        ...dep,
+        city: start.city || destination.city
+      });
+      this.setData({
+        start,
+        destination: null,
+        destinationQuery: '',
+        targetDistance,
+        activeOrder: order,
+        activeOrderView: fmt.decorateOrder(order, 'disabled')
+      });
+      wx.showToast({ title: '陪跑需求已发布', icon: 'success' });
+    } catch (err) {
+      wx.showToast({ title: err.message || '发布失败', icon: 'none' });
+    } finally {
+      wx.hideLoading();
+      this.setData({ publishing: false });
+    }
+  },
+
+  async cancelOrder(e) {
+    const orderId = (e && e.currentTarget && e.currentTarget.dataset && e.currentTarget.dataset.id) || (this.data.activeOrder && this.data.activeOrder._id);
+    if (!orderId || this.data.cancelling) return;
+    this.setData({ cancelling: true });
+    try {
+      await api.cancelOrder(orderId);
+      wx.showToast({ title: '已取消', icon: 'success' });
+      await this.loadCurrentTab();
+    } catch (err) {
+      wx.showToast({ title: err.message || '取消失败', icon: 'none' });
+    } finally {
+      this.setData({ cancelling: false });
+    }
+  },
+
+  async loadVolunteerBoard() {
+    this.setData({ loading: true, loadError: '' });
+    const pos = await loc.bestEffortPosition();
+    const currentCity = await this.resolveCurrentCity(pos);
+    try {
+      const query = this.buildWaitingOrderQuery(pos, currentCity);
+      const [mine, waiting] = await Promise.all([
+        api.getMyOrders(),
+        api.getWaitingOrders(query)
+      ]);
+      this.setData({
+        position: pos,
+        positionFallback: pos && pos.source === 'fallback',
+        currentCity,
+        activeVolunteerOrders: mine.filter((o) => ['accepted', 'arrived', 'running'].indexOf(o.status) >= 0).map((o) => fmt.decorateOrder(o, 'volunteer')),
+        waitingOrders: waiting.map((o) => fmt.decorateOrder(o, 'volunteer')),
+        trainingRequired: false,
+        loading: false
+      });
+    } catch (err) {
+      this.setData({
+        position: pos,
+        positionFallback: pos && pos.source === 'fallback',
+        currentCity,
+        waitingOrders: [],
+        trainingRequired: err.code === 'TRAINING_REQUIRED',
+        loading: false,
+        loadError: err.code === 'TRAINING_REQUIRED' ? '' : (err.message || '加载失败')
+      });
+    }
+  },
+
+  async refreshVolunteerBoard() {
+    this.setData({ refreshingBoard: true });
+    await this.loadVolunteerBoard();
+    this.setData({ refreshingBoard: false });
+  },
+
+  async resolveCurrentCity(pos) {
+    if (!pos || !pos.latitude || !pos.longitude) return this.data.currentCity || '';
+    if (this.data.currentCity && this.data.position && this.data.position.latitude === pos.latitude && this.data.position.longitude === pos.longitude) {
+      return this.data.currentCity;
+    }
+    try {
+      const address = await api.reverseGeocode(pos.latitude, pos.longitude);
+      return address.city || '';
+    } catch (err) {
+      return this.data.currentCity || '';
+    }
+  },
+
+  buildWaitingOrderQuery(pos, currentCity) {
+    const d = this.data;
+    const query = {
+      latitude: pos.latitude,
+      longitude: pos.longitude,
+      maxDistance: d.maxDistance,
+      gender: d.genderFilter,
+      ageRange: d.ageRangeFilter,
+      city: resolveCityFilter(d.cityMode, d.cityValue, currentCity),
+      departureFilterType: d.departureFilterType,
+      distanceBasis: 'origin'
+    };
+    if (d.departureFilterType === 'within') query.departureWithinMinutes = d.departureWithinMinutes;
+    if (d.departureFilterType === 'hour') query.departureHour = d.departureHourFilter;
+    if (d.departureFilterType === 'date' && d.departureDateFilter) query.departureDate = d.departureDateFilter;
+    return query;
+  },
+
+  toggleFilters() {
+    this.setData({ showFilters: !this.data.showFilters });
+  },
+
+  setMaxDistance(e) {
+    const value = Number(e.currentTarget.dataset.value);
+    const option = DISTANCE_FILTERS.find((item) => item.value === value);
+    this.setData({
+      maxDistance: value,
+      maxDistanceLabel: option ? option.label : '20 公里',
+      activeFilterCount: countActiveFilters({ ...this.data, maxDistance: value })
+    }, () => this.loadVolunteerBoard());
+  },
+
+  setBoardFilter(e) {
+    const key = e.currentTarget.dataset.key;
+    let value = e.currentTarget.dataset.value;
+    if (key === 'departureWithinMinutes' || key === 'departureHourFilter') value = Number(value);
+    this.setData({ [key]: value }, () => {
+      this.setData({ activeFilterCount: countActiveFilters(this.data) });
+      this.loadVolunteerBoard();
     });
   },
 
-  /**
-   * 查看我的证书
-   */
-  goToCertificate() {
-    wx.navigateTo({
-      url: '/pages/certificate/certificate'
+  stepDepartureHour(e) {
+    const delta = Number(e.currentTarget.dataset.delta);
+    const next = Math.max(0, Math.min(23, Number(this.data.departureHourFilter) + delta));
+    this.setData({
+      departureHourFilter: next,
+      departureHourLabel: formatHour(next),
+      activeFilterCount: countActiveFilters({ ...this.data, departureHourFilter: next })
+    }, () => this.loadVolunteerBoard());
+  },
+
+  onDepartureDateFilter(e) {
+    const value = e.detail.value;
+    this.setData({ departureDateFilter: value, activeFilterCount: countActiveFilters({ ...this.data, departureDateFilter: value }) }, () => this.loadVolunteerBoard());
+  },
+
+  onCityFilterInput(e) {
+    const value = e.detail.value;
+    this.setData({ cityValue: value, activeFilterCount: countActiveFilters({ ...this.data, cityValue: value }) }, () => this.loadVolunteerBoard());
+  },
+
+  resetBoardFilters() {
+    this.setData({
+      maxDistance: 20000,
+      maxDistanceLabel: '20 公里',
+      genderFilter: 'all',
+      ageRangeFilter: 'all',
+      departureFilterType: 'all',
+      departureWithinMinutes: 30,
+      departureHourFilter: new Date().getHours(),
+      departureHourLabel: formatHour(new Date().getHours()),
+      departureDateFilter: '',
+      cityMode: 'all',
+      cityValue: '',
+      activeFilterCount: 0
+    }, () => this.loadVolunteerBoard());
+  },
+
+  openDemandDetail(e) {
+    const index = Number(e.currentTarget.dataset.index);
+    const selectedDemand = this.data.waitingOrders[index] || null;
+    this.setData({ selectedDemand, showFilters: false });
+  },
+
+  closeDemandDetail() {
+    this.setData({ selectedDemand: null });
+  },
+
+  async acceptWaitingOrder(e) {
+    const id = e.currentTarget.dataset.id;
+    try {
+      await api.acceptOrder(id, this.data.position || undefined);
+      this.setData({ selectedDemand: null });
+      wx.showToast({ title: '已接单', icon: 'success' });
+      await this.loadVolunteerBoard();
+    } catch (err) {
+      wx.showToast({ title: err.message || '接单失败', icon: 'none' });
+    }
+  },
+
+  async updateActiveOrderStatus(e) {
+    const id = e.currentTarget.dataset.id;
+    const status = e.currentTarget.dataset.status;
+    try {
+      await api.updateOrderStatus(id, status);
+      wx.showToast({ title: status === 'arrived' ? '已标记到达' : '已开始陪跑', icon: 'success' });
+      await this.loadVolunteerBoard();
+    } catch (err) {
+      wx.showToast({ title: err.message || '操作失败', icon: 'none' });
+    }
+  },
+
+  async uploadVolunteerLocation(e) {
+    const id = e.currentTarget.dataset.id;
+    const pos = await loc.bestEffortPosition();
+    try {
+      await api.updateVolunteerLocation({
+        orderId: id,
+        latitude: pos.latitude,
+        longitude: pos.longitude,
+        runningStats: { distance: 0.5, duration: 4, pace: '8\'00"/km' }
+      });
+      wx.showToast({ title: '定位已上传', icon: 'success' });
+      await this.loadVolunteerBoard();
+    } catch (err) {
+      wx.showToast({ title: err.message || '上传失败', icon: 'none' });
+    }
+  },
+
+  onCompleteInput(e) {
+    const key = e.currentTarget.dataset.key;
+    this.setData({ [key]: e.detail.value });
+  },
+
+  async completeActiveOrder(e) {
+    const id = e.currentTarget.dataset.id;
+    const dist = Number(this.data.completeDistance);
+    const dur = Number(this.data.completeDuration);
+    if (!dist || !dur) {
+      wx.showToast({ title: '请填写距离和时长', icon: 'none' });
+      return;
+    }
+    try {
+      await api.completeOrder(id, dist, dur);
+      this.setData({ completeDistance: '', completeDuration: '' });
+      wx.showToast({ title: '已完成陪跑', icon: 'success' });
+      await this.loadVolunteerBoard();
+    } catch (err) {
+      wx.showToast({ title: err.message || '完成失败', icon: 'none' });
+    }
+  },
+
+  async loadOrders() {
+    this.setData({ loading: true, loadError: '' });
+    try {
+      const orders = await api.getMyOrders();
+      this.setData({ orders: orders.map((o) => fmt.decorateOrder(o, this.data.role)), loading: false }, () => this.applyOrderFilter());
+    } catch (err) {
+      this.setData({ loading: false, loadError: err.message || '订单加载失败' });
+    }
+  },
+
+  setOrderFilter(e) {
+    this.setData({ orderFilter: e.currentTarget.dataset.key }, () => this.applyOrderFilter());
+  },
+
+  applyOrderFilter() {
+    const filter = this.data.orderFilter;
+    const filtered = this.data.orders.filter((order) => {
+      if (filter === 'all') return true;
+      if (filter === 'completed') return order.status === 'completed';
+      return fmt.isActiveOrder(order.status);
+    });
+    this.setData({ filteredOrders: filtered });
+  },
+
+  async loadTraining() {
+    if (!this.data.isVolunteer) {
+      this.setData({ loading: false });
+      return;
+    }
+    this.setData({ loading: true, loadError: '' });
+    try {
+      const [status, cert] = await Promise.all([api.getTrainingStatus(), api.getCertificate()]);
+      const flags = [!!(status && status.videoWatched), status && status.examPassed === true, !!(status && status.certificateNo)];
+      this.setData({
+        trainingStatus: status,
+        certificate: cert,
+        certInput: status && status.certificateNo ? status.certificateNo : '',
+        trainingPct: Math.round(flags.filter(Boolean).length / flags.length * 100),
+        loading: false
+      });
+    } catch (err) {
+      this.setData({ loading: false, loadError: err.message || '培训进度加载失败' });
+    }
+  },
+
+  async markVideoWatched() {
+    try {
+      await api.markVideoWatched();
+      wx.showToast({ title: '已记录视频观看', icon: 'success' });
+      await this.loadTraining();
+    } catch (err) {
+      wx.showToast({ title: err.message || '操作失败', icon: 'none' });
+    }
+  },
+
+  async startExam() {
+    wx.showLoading({ title: '加载题目...' });
+    try {
+      const res = await api.getExamQuestions();
+      this.setData({
+        questions: (res.questions || []).sort((a, b) => (a.order || 0) - (b.order || 0)).map((q) => ({
+          ...q,
+          optionsView: (q.options || []).map((text, index) => ({ text, index, selected: false }))
+        })),
+        passScore: res.passScore || 80,
+        answeredCount: 0,
+        examResult: null
+      });
+    } catch (err) {
+      wx.showToast({ title: err.message || '题目加载失败', icon: 'none' });
+    } finally {
+      wx.hideLoading();
+    }
+  },
+
+  chooseExamOption(e) {
+    const qi = Number(e.currentTarget.dataset.qi);
+    const oi = Number(e.currentTarget.dataset.oi);
+    const questions = this.data.questions.map((q, index) => {
+      if (index !== qi) return q;
+      return { ...q, selectedIndex: oi, optionsView: q.optionsView.map((opt) => ({ ...opt, selected: opt.index === oi })) };
+    });
+    this.setData({
+      questions,
+      answeredCount: questions.filter((q) => q.selectedIndex !== undefined).length
     });
   },
 
-  /**
-   * 查看跑步历史
-   */
-  goToRecords() {
-    wx.navigateTo({
-      url: '/pages/records-manage/records-manage'
-    });
+  async submitExam() {
+    const questions = this.data.questions || [];
+    if (questions.some((q) => q.selectedIndex === undefined)) {
+      wx.showToast({ title: '请回答全部题目后再提交', icon: 'none' });
+      return;
+    }
+    wx.showLoading({ title: '提交中...' });
+    try {
+      const result = await api.submitExam(questions.map((q) => ({ questionId: q._id, selectedIndex: q.selectedIndex })));
+      this.setData({ examResult: result });
+      wx.showToast({ title: result.passed ? '考核通过' : '未通过，可再试', icon: result.passed ? 'success' : 'none' });
+      if (result.passed) await this.loadTraining();
+    } catch (err) {
+      wx.showToast({ title: err.message || '提交失败', icon: 'none' });
+    } finally {
+      wx.hideLoading();
+    }
   },
 
-  /**
-   * 查看我的日程
-   */
-  goToSchedule() {
-    wx.navigateTo({
-      url: '/pages/schedule/schedule'
-    });
+  retryExam() {
+    this.setData({ examResult: null, questions: null, answeredCount: 0 });
   },
 
-  /**
-   * 修改密码
-   */
-  goToChangePassword() {
-    wx.navigateTo({
-      url: '/pages/change-password/change-password'
-    });
+  onCertInput(e) {
+    this.setData({ certInput: e.detail.value });
   },
 
-  /**
-   * 使用教程
-   */
-  goToTutorial() {
-    wx.navigateTo({
-      url: '/pages/tutorial/tutorial?force=true'
-    });
+  async verifyCert() {
+    if (!this.data.certInput.trim()) {
+      wx.showToast({ title: '请输入证书编号', icon: 'none' });
+      return;
+    }
+    try {
+      const res = await api.verifyCertificate(this.data.certInput.trim());
+      this.setData({ certVerify: res });
+    } catch (err) {
+      wx.showToast({ title: err.message || '核验失败', icon: 'none' });
+    }
   },
 
-  /**
-   * 客服与帮助
-   */
-  goToHelp() {
-    wx.showModal({
-      title: '客服与帮助',
-      content: '如需帮助，请联系客服热线：400-123-4567\n\n或发送邮件至：support@blindrun.com',
-      confirmText: '我知道了'
-    });
-  },
-
-  /**
-   * 关于我们
-   */
-  goToAbout() {
-    wx.showModal({
-      title: '关于我们',
-      content: '助盲跑平台\n\n' +
-        '产品愿景：用科技连接光明，让每一位视障人士都能享受奔跑的自由。\n\n' +
-        '创始人故事：在宋海峰教练的指导下，我们看到了视障人士对奔跑的渴望。' +
-        '10年来，宋教练帮助了600多位视障人士完成马拉松梦想，却从未帮助过一个盲人孩子。\n\n' +
-        '我们的使命：让每一个热爱奔跑的视障人士都能找到属于自己的光。\n\n' +
-        '© 2026 助盲跑平台 · 爱心出品',
-      showCancel: false,
-      confirmText: '我知道了'
-    });
-  },
-
-  /**
-   * 退出登录
-   */
-  handleLogout() {
-    wx.showModal({
-      title: '确认退出',
-      content: '退出后需要重新登录才能继续使用',
-      confirmText: '退出',
-      confirmColor: '#ef4444',
-      success: (res) => {
-        if (res.confirm) {
-          // 清除登录状态
-          wx.removeStorageSync('isLoggedIn');
-          wx.removeStorageSync('isRegistered');
-          wx.removeStorageSync('currentUserType');
-
-          // 清除全局用户信息
-          app.globalData.userInfo = null;
-          app.globalData.isLoggedIn = false;
-
-          wx.showToast({
-            title: '已退出登录',
-            icon: 'success',
-            duration: 1500
-          });
-
-          // 跳转到登录页
-          setTimeout(() => {
-            wx.reLaunch({
-              url: '/pages/login/login'
-            });
-          }, 1500);
-        }
+  async loadAppointments() {
+    this.setData({ loading: true, loadError: '' });
+    try {
+      const list = await api.getAppointments();
+      const next = { appointments: list.map((a) => fmt.decorateAppointment(a, this.data.role)), loading: false };
+      if (!this.data.isVolunteer) {
+        const volunteers = await api.getVolunteers();
+        next.volunteers = mapVolunteers(volunteers);
+        next.appointmentNearbyMode = false;
       }
-    });
+      this.setData(next);
+    } catch (err) {
+      this.setData({ loading: false, loadError: err.message || '约跑加载失败' });
+    }
+  },
+
+  onAppointmentInput(e) {
+    this.setData({ [e.currentTarget.dataset.key]: e.detail.value });
+  },
+
+  onAppointmentPicker(e) {
+    const key = e.currentTarget.dataset.key;
+    const value = e.detail.value;
+    const labelKey = key === 'apDate' ? 'apDateLabel' : 'apTimeLabel';
+    this.setData({ [key]: value, [labelKey]: value || (key === 'apDate' ? '请选择日期' : '请选择时间') });
+  },
+
+  selectVolunteer(e) {
+    this.setData({ selectedVolunteerId: e.currentTarget.dataset.id });
+  },
+
+  async useAppointmentLocation() {
+    let current = null;
+    try {
+      current = await loc.chooseAddress();
+    } catch (err) {
+      current = await loc.resolveCurrentAddress();
+    }
+    const next = { apAddress: current.address || '' };
+    if (current.latitude && current.longitude) {
+      try {
+        const nearby = await api.getAvailableVolunteers(current.latitude, current.longitude, 50000);
+        if (nearby.length > 0) {
+          next.volunteers = mapVolunteers(nearby);
+          next.appointmentNearbyMode = true;
+        }
+      } catch (err) {
+        /* keep the existing volunteer roster */
+      }
+    }
+    this.setData(next);
+  },
+
+  async submitAppointment() {
+    if (!this.data.selectedVolunteerId || !this.data.apDate || !this.data.apTime) {
+      wx.showToast({ title: '请选择志愿者、日期和时间', icon: 'none' });
+      return;
+    }
+    try {
+      const created = await api.createAppointment({
+        volunteerId: this.data.selectedVolunteerId,
+        appointmentDate: this.data.apDate,
+        appointmentTime: this.data.apTime,
+        address: this.data.apAddress || undefined,
+        targetDistance: this.data.apDistance || undefined,
+        estimatedDuration: this.data.apDuration || undefined,
+        note: this.data.apNote.trim() || undefined
+      });
+      const appointments = [fmt.decorateAppointment(created, this.data.role), ...this.data.appointments];
+      this.setData({
+        appointments,
+        selectedVolunteerId: '',
+        apDate: '',
+        apTime: '',
+        apDistance: '',
+        apDuration: '',
+        apNote: '',
+        apAddress: '',
+        apDateLabel: '请选择日期',
+        apTimeLabel: '请选择时间'
+      });
+      wx.showToast({ title: '约跑邀请已发送', icon: 'success' });
+    } catch (err) {
+      wx.showToast({ title: err.message || '预约失败', icon: 'none' });
+    }
+  },
+
+  async appointmentAction(e) {
+    const id = e.currentTarget.dataset.id;
+    const action = e.currentTarget.dataset.action;
+    try {
+      if (action === 'confirm') await api.confirmAppointment(id);
+      if (action === 'cancel') await api.cancelAppointment(id);
+      if (action === 'complete') {
+        await api.completeAppointment(id, this.data.apRating, this.data.apComment.trim() || undefined);
+        this.setData({ completingAppointmentId: '', apComment: '', apRating: 5 });
+      }
+      wx.showToast({ title: '操作成功', icon: 'success' });
+      await this.loadAppointments();
+    } catch (err) {
+      wx.showToast({ title: err.message || '操作失败', icon: 'none' });
+    }
+  },
+
+  openCompleteAppointment(e) {
+    this.setData({ completingAppointmentId: e.currentTarget.dataset.id });
+  },
+
+  closeCompleteAppointment() {
+    this.setData({ completingAppointmentId: '', apComment: '', apRating: 5 });
+  },
+
+  setRating(e) {
+    this.setData({ apRating: Number(e.currentTarget.dataset.value) });
+  },
+
+  async loadMine() {
+    await this.loadHome();
+    this.setData({ loading: false });
+  },
+
+  onMineInput(e) {
+    this.setData({ [e.currentTarget.dataset.key]: e.detail.value });
+  },
+
+  async saveProfile() {
+    if (!this.data.mineNickName.trim()) {
+      wx.showToast({ title: '昵称不能为空', icon: 'none' });
+      return;
+    }
+    this.setData({ savingProfile: true });
+    try {
+      const updated = await api.updateProfile({ nickName: this.data.mineNickName.trim(), name: this.data.mineName.trim() });
+      session.updateUser(updated);
+      this.setData({ user: updated, avatarText: initial(updated.nickName) });
+      wx.showToast({ title: '资料已更新', icon: 'success' });
+    } catch (err) {
+      wx.showToast({ title: err.message || '保存失败', icon: 'none' });
+    } finally {
+      this.setData({ savingProfile: false });
+    }
+  },
+
+  async saveEmergency() {
+    if (!this.data.emergencyName.trim() || !this.data.emergencyPhone.trim()) {
+      wx.showToast({ title: '请填写联系人姓名和电话', icon: 'none' });
+      return;
+    }
+    this.setData({ savingEmergency: true });
+    try {
+      await api.updateEmergencyContact({
+        emergencyName: this.data.emergencyName.trim(),
+        emergencyPhone: this.data.emergencyPhone.trim(),
+        emergencyRelation: this.data.emergencyRelation.trim()
+      });
+      const user = {
+        ...this.data.user,
+        emergencyName: this.data.emergencyName.trim(),
+        emergencyPhone: this.data.emergencyPhone.trim(),
+        emergencyRelation: this.data.emergencyRelation.trim()
+      };
+      session.updateUser(user);
+      this.setData({ user, avatarText: initial(user.nickName) });
+      wx.showToast({ title: '联系人已更新', icon: 'success' });
+    } catch (err) {
+      wx.showToast({ title: err.message || '保存失败', icon: 'none' });
+    } finally {
+      this.setData({ savingEmergency: false });
+    }
+  },
+
+  async logout() {
+    const token = session.getToken();
+    session.clearSession();
+    wx.reLaunch({ url: '/pages/login/login' });
+    try {
+      await api.logoutAccount(token);
+    } catch (err) {
+      /* best-effort */
+    }
+  },
+
+  noop() {
+    /* used by catchtap */
   }
-})
+});
+
+function initial(name) {
+  return String(name || '?').trim().slice(0, 1).toUpperCase();
+}
+
+function buildTabs(role) {
+  const isVolunteer = role === 'volunteer';
+  const eyebrow = isVolunteer ? '陪跑志愿者' : '视障跑者';
+  const third = isVolunteer
+    ? { key: 'training', label: '培训', icon: '培', eyebrow, title: '陪跑培训' }
+    : { key: 'orders', label: '订单', icon: '单', eyebrow, title: '我的订单' };
+  return [
+    { key: 'home', label: '首页', icon: '首', eyebrow, title: '向光奔跑' },
+    { key: 'sport', label: isVolunteer ? '接单' : '陪跑', icon: '跑', eyebrow, title: isVolunteer ? '接单广场' : '发起陪跑' },
+    third,
+    { key: 'appointments', label: '约跑', icon: '约', eyebrow, title: '约跑日程' },
+    { key: 'mine', label: '我的', icon: '我', eyebrow, title: '个人中心' }
+  ];
+}
+
+function buildHomeStats(user, stats) {
+  return [
+    { label: '累计陪跑', value: stats && stats.totalRuns !== undefined ? stats.totalRuns : (user.totalRuns || 0) },
+    { label: '总里程', value: fmt.formatDistance(stats && stats.totalDistance !== undefined ? stats.totalDistance : user.totalDistance) },
+    { label: '总时长', value: fmt.formatDuration(stats && stats.totalTime !== undefined ? stats.totalTime : user.totalTime) },
+    { label: '积分', value: stats && stats.points !== undefined ? stats.points : (user.points || 0) },
+    { label: '经验值', value: stats && stats.exp !== undefined ? stats.exp : (user.exp || 0) },
+    { label: '完成订单', value: stats && stats.completedOrders !== undefined ? stats.completedOrders : 0 }
+  ];
+}
+
+function resolveCityFilter(mode, value, currentCity) {
+  if (mode === 'current') return currentCity || 'all';
+  if (mode === 'custom') return String(value || '').trim() || 'all';
+  return 'all';
+}
+
+function countActiveFilters(data) {
+  let count = 0;
+  if (Number(data.maxDistance) !== 20000) count += 1;
+  if (data.genderFilter !== 'all') count += 1;
+  if (data.ageRangeFilter !== 'all') count += 1;
+  if (data.departureFilterType !== 'all') count += 1;
+  if (data.cityMode !== 'all') count += 1;
+  return count;
+}
+
+function mapVolunteers(volunteers) {
+  return (volunteers || []).map((v) => ({
+    ...v,
+    nickNameInitial: initial(v.nickName) || '志',
+    distanceText: v.distance ? fmt.formatMeters(v.distance) : ''
+  }));
+}
+
+function formatHour(hour) {
+  const n = Math.max(0, Math.min(23, Number(hour) || 0));
+  return `${String(n).padStart(2, '0')}:00`;
+}

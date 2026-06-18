@@ -1,83 +1,23 @@
 {
   "pages": [
     "pages/login/login",
-    "pages/quick-login/quick-login",
-    "pages/user-info/user-info",
-    "pages/change-password/change-password",
-    "pages/training-flow/training-flow",
-    "pages/home/home",
-    "pages/sport/sport",
-    "pages/circle/circle",
-    "pages/mine/mine",
-    "pages/publish-need/publish-need",
-    "pages/take-order/take-order",
-    "pages/training-manage/training-manage",
-    "pages/training-course/training-course",
-    "pages/exam-edit/exam-edit",
-    "pages/exam/exam",
-    "pages/certificate/certificate",
-    "pages/certificate-verify/certificate-verify",
-    "pages/records-manage/records-manage",
-    "pages/shop/shop",
-    "pages/shop-orders/shop-orders",
-    "pages/schedule/schedule",
-    "pages/volunteer-list/volunteer-list",
-    "pages/frequently-contacted/frequently-contacted",
-    "pages/find-volunteers/find-volunteers",
-    "pages/blind-order-track/blind-order-track",
-    "pages/appointment/appointment",
-    "pages/appointment-square/appointment-square",
-    "pages/volunteer-order-track/volunteer-order-track",
-    "pages/tutorial/tutorial"
+    "pages/home/home"
   ],
   "window": {
+    "navigationStyle": "custom",
     "backgroundTextStyle": "light",
-    "navigationBarBackgroundColor": "#FF6B00",
-    "navigationBarTitleText": "助盲跑",
-    "navigationBarTextStyle": "white",
-    "backgroundColor": "#FFFFFF"
+    "backgroundColor": "#F4EDDD"
   },
   "cloud": true,
-  "tabBar": {
-    "color": "#999999",
-    "selectedColor": "#FF6B00",
-    "backgroundColor": "#ffffff",
-    "borderStyle": "black",
-    "list": [
-      {
-        "pagePath": "pages/home/home",
-        "text": "首页",
-        "iconPath": "images/tabbar/home.png",
-        "selectedIconPath": "images/tabbar/home-active.png"
-      },
-      {
-        "pagePath": "pages/sport/sport",
-        "text": "运动",
-        "iconPath": "images/tabbar/sport.png",
-        "selectedIconPath": "images/tabbar/sport-active.png"
-      },
-      {
-        "pagePath": "pages/circle/circle",
-        "text": "跑友圈",
-        "iconPath": "images/tabbar/circle.png",
-        "selectedIconPath": "images/tabbar/circle-active.png"
-      },
-      {
-        "pagePath": "pages/mine/mine",
-        "text": "我的",
-        "iconPath": "images/tabbar/mine.png",
-        "selectedIconPath": "images/tabbar/mine-active.png"
-      }
-    ]
-  },
   "permission": {
     "scope.userLocation": {
-      "desc": "你的位置信息将用于寻找附近的陪跑志愿者"
+      "desc": "你的位置信息将用于寻找附近的陪跑志愿者和标记陪跑路线"
     }
   },
   "plugins": {},
   "requiredPrivateInfos": [
-    "getLocation"
+    "getLocation",
+    "chooseLocation"
   ],
   "requiredBackgroundModes": [
     "location"

@@ -1,352 +1,616 @@
-<view class="home-container">
-  <!-- 1. 顶部：个人名片区 + 段位展示 -->
-  <view class="profile-section">
-    <view class="profile-card">
-      <view class="profile-header">
-        <view class="avatar-wrapper">
-          <view class="avatar" wx:if="{{userInfo.avatarUrl}}">
-            <image class="avatar-img" src="{{userInfo.avatarUrl}}" mode="aspectFill"></image>
-          </view>
-          <view class="avatar-placeholder" wx:else>
-            <text class="avatar-emoji">{{userName ? userName[0] : '我'}}</text>
-          </view>
-          <view class="role-indicator" wx:if="{{userType === 'volunteer'}}">志愿者</view>
-          <view class="role-indicator disabled" wx:else>视障跑者</view>
-        </view>
-        <view class="profile-info">
-          <view class="name-row">
-            <text class="user-name">{{userName}}</text>
-            <!-- 段位徽章 - 胶囊形状 -->
-            <view class="tier-badge" wx:if="{{tier}}">
-              <view class="tier-badge-bg"></view>
-              <image class="tier-icon" src="{{tier.svg}}"></image>
-              <text class="tier-name">{{tier.name}}</text>
-              <view class="tier-sparkle"></view>
+<view class="app-page {{isVolunteer ? 'role-volunteer' : 'role-runner'}}" style="{{shellStyle}}">
+  <view class="app-header">
+    <view class="header-titles">
+      <view class="app-brand">
+        <image class="brand-mark brand-mark--small" src="/images/brand/xinban-run-logo.jpg" mode="aspectFill"></image>
+        <text class="brand-name brand-name--dark">助跑精灵</text>
+      </view>
+      <text class="app-eyebrow">{{eyebrow}}</text>
+      <text class="app-title">{{headerTitle}}</text>
+    </view>
+    <view class="avatar-button" bindtap="goMine">
+      <image wx:if="{{user.avatarUrl}}" class="avatar-img" src="{{user.avatarUrl}}" mode="aspectFill"></image>
+      <text wx:else>{{avatarText}}</text>
+    </view>
+  </view>
+
+  <scroll-view class="app-content" scroll-y enhanced show-scrollbar="{{false}}">
+    <view wx:if="{{loading}}" class="loading-block">
+      <view class="spinner"></view>
+      <text>加载中...</text>
+    </view>
+
+    <view wx:elif="{{loadError}}" class="stack">
+      <view class="card empty-card">
+        <text class="empty-title">没能加载数据</text>
+        <text class="empty-text">{{loadError}}</text>
+        <view class="btn btn--accent btn--block" bindtap="loadCurrentTab">刷新重试</view>
+      </view>
+    </view>
+
+    <view wx:else class="stack stagger">
+      <!-- Home -->
+      <block wx:if="{{activeTab === 'home'}}">
+        <view class="card card--ink">
+          <view class="row top-row">
+            <view class="avatar avatar--large">
+              <image wx:if="{{user.avatarUrl}}" class="avatar-img" src="{{user.avatarUrl}}" mode="aspectFill"></image>
+              <text wx:else>{{avatarText}}</text>
+            </view>
+            <view class="flex-1 min-0">
+              <text class="eyebrow-on-dark">{{isVolunteer ? '陪跑志愿者' : '视障跑者'}}</text>
+              <text class="hero-name">你好，{{user.nickName || '用户'}}</text>
+              <text class="hero-meta">{{stats.tierName || user.tierName || (isVolunteer ? '启明之星' : '初心跑者')}} · Lv.{{stats.tierLevel || user.tierLevel || 1}}</text>
             </view>
           </view>
-          <text class="user-tag">{{userInfo.city || '上海'}} · 已完成 {{stats.totalRuns}} 次陪跑</text>
+          <view class="progress-head">
+            <text>经验值 {{stats.exp || user.exp || 0}}</text>
+            <text>距下一级 {{expToNext}}</text>
+          </view>
+          <view class="progress"><view class="progress-fill" style="width: {{expPct}}%;"></view></view>
+        </view>
 
-          <!-- 段位进度条 -->
-          <view class="tier-progress" wx:if="{{tier}}">
-            <view class="progress-bar">
-              <view class="progress-fill" style="width: {{tier.progress}}%; background: {{tier.color}};"></view>
+        <view class="grid-3">
+          <view class="stat" wx:for="{{homeStats}}" wx:key="label">
+            <text class="stat-value">{{item.value}}</text>
+            <text class="stat-label">{{item.label}}</text>
+          </view>
+        </view>
+
+        <block wx:if="{{isVolunteer}}">
+          <view class="list-row" bindtap="toggleAvailability">
+            <view class="callout-icon {{user.isAvailable ? 'bg-pine' : ''}}">接</view>
+            <view class="list-body">
+              <text class="list-title">接单状态</text>
+              <text class="list-meta">{{user.isAvailable ? '在线 · 可接收附近求助' : '离线 · 暂不接收求助'}}</text>
             </view>
-            <view class="progress-info">
-              <text class="progress-text">{{tier.progress}}%</text>
-              <text class="next-level" wx:if="{{tier.nextLevelRuns}}">还差 {{tier.nextLevelRuns - tier.currentRuns}} 次升级</text>
-              <text class="max-level" wx:else>已满级</text>
+            <view class="chip {{user.isAvailable ? 'chip--pine' : ''}}">{{user.isAvailable ? '在线' : '离线'}}</view>
+          </view>
+          <view class="list-row" bindtap="switchTab" data-key="training">
+            <view class="callout-icon bg-accent-light">培</view>
+            <view class="list-body">
+              <text class="list-title">培训认证</text>
+              <text class="list-meta">视频{{stats.videoWatched || user.videoWatched ? '已完成' : '未完成'}} · 考核{{stats.examPassed || user.examPassed ? '已通过' : '未通过'}}</text>
+            </view>
+            <view class="chip {{stats.examPassed || user.examPassed ? 'chip--pine' : ''}}">{{stats.examPassed || user.examPassed ? '已认证' : '待认证'}}</view>
+          </view>
+        </block>
+
+        <block wx:else>
+          <view class="callout callout--sky">
+            <view class="callout-icon bg-sky">位</view>
+            <view class="callout-body">
+              <text class="callout-title">发起陪跑</text>
+              <text class="callout-text">选择起点与目标距离，系统会为你匹配附近经过认证的志愿者。</text>
+            </view>
+          </view>
+        </block>
+
+        <view class="btn btn--accent btn--block" bindtap="switchTab" data-key="sport">{{isVolunteer ? '前往接单广场' : '发起一次陪跑'}} →</view>
+        <view class="btn btn--ghost btn--block" bindtap="switchTab" data-key="appointments">{{isVolunteer ? '查看约跑日程' : '预约约跑'}}</view>
+      </block>
+
+      <!-- Sport: runner -->
+      <block wx:if="{{activeTab === 'sport' && !isVolunteer}}">
+        <view class="callout callout--sky">
+          <view class="callout-icon bg-sky">位</view>
+          <view class="callout-body">
+            <text class="callout-title">发起陪跑</text>
+            <text class="callout-text">像打车一样，搜索起点与终点地址，我们会匹配附近的认证志愿者。</text>
+          </view>
+        </view>
+
+        <view class="card">
+          <text class="section-title">陪跑请求</text>
+          <view class="field">
+            <view class="field-head">
+              <text class="field-label"><text class="addr-dot addr-dot--start"></text>起点</text>
+              <view class="seg-mini">
+                <view class="seg-mini-item is-active" bindtap="searchEndpoint" data-field="start">搜索</view>
+                <view class="seg-mini-item" bindtap="chooseCurrentEndpoint" data-field="start">地图</view>
+              </view>
+            </view>
+            <view wx:if="{{start}}" class="addr-chosen">
+              <text class="addr-chosen-text">{{start.address}}</text>
+              <view class="btn btn--ghost btn--sm" bindtap="clearEndpoint" data-field="start">更改</view>
+            </view>
+            <block wx:else>
+              <input class="input" value="{{startQuery}}" placeholder="搜索小区 / 地标 / 街道，如「世纪公园」" bindinput="onAddressInput" data-field="start" confirm-type="search" bindconfirm="searchEndpoint" />
+              <view wx:if="{{startResults.length}}" class="addr-list">
+                <view class="addr-list-item" wx:for="{{startResults}}" wx:key="id" bindtap="selectEndpoint" data-field="start" data-index="{{index}}">
+                  <text class="addr-name">{{item.name}}</text>
+                  <text class="addr-detail">{{item.detail || item.address}}</text>
+                </view>
+              </view>
+              <text class="field-hint">输入小区、地标或街道名称，从下方结果中选择。</text>
+            </block>
+          </view>
+
+          <view class="field">
+            <view class="field-head">
+              <text class="field-label"><text class="addr-dot addr-dot--destination"></text>终点</text>
+              <view class="seg-mini">
+                <view class="seg-mini-item is-active" bindtap="searchEndpoint" data-field="destination">搜索</view>
+                <view class="seg-mini-item" bindtap="chooseCurrentEndpoint" data-field="destination">地图</view>
+              </view>
+            </view>
+            <view wx:if="{{destination}}" class="addr-chosen">
+              <text class="addr-chosen-text">{{destination.address}}</text>
+              <view class="btn btn--ghost btn--sm" bindtap="clearEndpoint" data-field="destination">更改</view>
+            </view>
+            <block wx:else>
+              <input class="input" value="{{destinationQuery}}" placeholder="搜索目的地，如「徐家汇」" bindinput="onAddressInput" data-field="destination" confirm-type="search" bindconfirm="searchEndpoint" />
+              <view wx:if="{{destinationResults.length}}" class="addr-list">
+                <view class="addr-list-item" wx:for="{{destinationResults}}" wx:key="id" bindtap="selectEndpoint" data-field="destination" data-index="{{index}}">
+                  <text class="addr-name">{{item.name}}</text>
+                  <text class="addr-detail">{{item.detail || item.address}}</text>
+                </view>
+              </view>
+              <text class="field-hint">输入小区、地标或街道名称，从下方结果中选择。</text>
+            </block>
+          </view>
+
+          <view class="field">
+            <text class="field-label">预计时长</text>
+            <view class="segmented">
+              <view wx:for="{{durationOptions}}" wx:key="*this" class="segmented-item {{duration === item ? 'is-active' : ''}}" bindtap="setDuration" data-value="{{item}}">{{item}} 分钟</view>
+            </view>
+          </view>
+
+          <view class="field">
+            <text class="field-label">出发时间</text>
+            <view class="segmented">
+              <view class="segmented-item {{departureMode === 'immediate' ? 'is-active' : ''}}" bindtap="setDepartureMode" data-mode="immediate">立即出发</view>
+              <view class="segmented-item {{departureMode === 'delayed' ? 'is-active' : ''}}" bindtap="setDepartureMode" data-mode="delayed">延后出发</view>
+            </view>
+            <view wx:if="{{departureMode === 'delayed'}}" class="delay-panel">
+              <view class="grid-2">
+                <view class="field">
+                  <text class="field-label">小时</text>
+                  <input class="input" type="number" value="{{departureHour}}" bindinput="onDepartureInput" data-key="departureHour" />
+                </view>
+                <view class="field">
+                  <text class="field-label">分钟</text>
+                  <input class="input" type="number" value="{{departureMinute}}" bindinput="onDepartureInput" data-key="departureMinute" />
+                </view>
+              </view>
+            </view>
+            <text class="field-hint">{{departureLabel}}</text>
+          </view>
+        </view>
+
+        <view wx:if="{{start && destination}}" class="card">
+          <text class="section-title">确认并发布</text>
+          <view class="btn btn--accent btn--block" bindtap="publishRunnerOrder">{{publishing ? '发布中...' : '确认发布陪跑需求'}}</view>
+          <view class="confirm-grid">
+            <view><text class="confirm-label">起点</text><text class="confirm-value">{{start.address}}</text></view>
+            <view><text class="confirm-label">终点</text><text class="confirm-value">{{destination.address}}</text></view>
+            <view class="confirm-row"><text>直线距离 {{targetDistance}} km</text><text>{{duration}} 分钟</text><text>{{departureLabel}}</text></view>
+          </view>
+        </view>
+        <text wx:else class="center-hint">选择起点与终点后即可确认并发布陪跑请求。</text>
+
+        <text class="section-title">最近的订单</text>
+        <view wx:if="{{activeOrderView}}" class="card order-card">
+          <view class="row row-between"><view class="chip chip--{{activeOrderView.statusTone}}">{{activeOrderView.statusLabel}}</view></view>
+          <view class="route-pair">
+            <text><text class="addr-dot addr-dot--start"></text>{{activeOrderView.startAddress}}</text>
+            <text wx:if="{{activeOrderView.destinationAddress}}"><text class="addr-dot addr-dot--destination"></text>{{activeOrderView.destinationAddress}}</text>
+          </view>
+          <view class="meta-row"><text>目标 {{activeOrderView.targetDistanceText}}</text><text>预计 {{activeOrderView.durationText}}</text></view>
+          <view wx:if="{{activeOrderView.status !== 'completed' && activeOrderView.status !== 'cancelled'}}" class="btn btn--coral btn--block btn--sm" bindtap="cancelOrder" data-id="{{activeOrderView._id}}">取消请求</view>
+        </view>
+        <view wx:else class="empty">
+          <text class="empty-title">还没有进行中的请求</text>
+          <text class="empty-text">搜索起点与终点即可发起一次陪跑。</text>
+        </view>
+      </block>
+
+      <!-- Sport: volunteer -->
+      <block wx:if="{{activeTab === 'sport' && isVolunteer}}">
+        <view class="callout callout--pine">
+          <view class="callout-icon bg-pine">接</view>
+          <view class="callout-body">
+            <text class="callout-title">附近陪跑需求 · {{maxDistanceLabel}}内</text>
+            <text class="callout-text">{{positionFallback ? '未获取到定位，已使用上海市中心作为参考位置。' : '已按你的当前位置筛选陪跑请求，距离默认按起点地址计算。'}}</text>
+          </view>
+        </view>
+
+        <view wx:if="{{activeVolunteerOrders.length}}" class="stack-sm">
+          <text class="section-title">进行中的陪跑</text>
+          <view class="card order-card" wx:for="{{activeVolunteerOrders}}" wx:key="_id">
+            <view class="row row-between"><view class="chip chip--{{item.statusTone}}">{{item.statusLabel}}</view></view>
+            <view class="route-pair">
+              <text><text class="addr-dot addr-dot--start"></text>{{item.startAddress}}</text>
+              <text wx:if="{{item.destinationAddress}}"><text class="addr-dot addr-dot--destination"></text>{{item.destinationAddress}}</text>
+            </view>
+            <view class="meta-row"><text>{{item.partyLabel}} · {{item.partyName}}</text><text>目标 {{item.targetDistanceText}}</text></view>
+            <view wx:if="{{item.status === 'accepted'}}" class="btn btn--accent btn--block btn--sm" bindtap="updateActiveOrderStatus" data-id="{{item._id}}" data-status="arrived">标记已到达</view>
+            <view wx:if="{{item.status === 'arrived'}}" class="btn btn--pine btn--block btn--sm" bindtap="updateActiveOrderStatus" data-id="{{item._id}}" data-status="running">开始陪跑</view>
+            <block wx:if="{{item.status === 'running'}}">
+              <view class="btn btn--ghost btn--block btn--sm" bindtap="uploadVolunteerLocation" data-id="{{item._id}}">上传定位 / 配速</view>
+              <view class="grid-2">
+                <input class="input" placeholder="实际距离 km" value="{{completeDistance}}" bindinput="onCompleteInput" data-key="completeDistance" />
+                <input class="input" placeholder="陪跑时长 分钟" value="{{completeDuration}}" bindinput="onCompleteInput" data-key="completeDuration" />
+              </view>
+              <view class="btn btn--accent btn--block btn--sm" bindtap="completeActiveOrder" data-id="{{item._id}}">完成陪跑</view>
+            </block>
+            <view class="btn btn--ghost btn--block btn--sm" bindtap="cancelOrder" data-id="{{item._id}}">取消订单</view>
+          </view>
+        </view>
+
+        <view class="row row-between">
+          <text class="section-title">等待接单</text>
+          <view class="row compact-actions">
+            <view class="btn btn--ghost btn--sm filter-btn" bindtap="toggleFilters">筛选<text wx:if="{{activeFilterCount}}" class="filter-count">{{activeFilterCount}}</text></view>
+            <view class="btn btn--ghost btn--sm" bindtap="refreshVolunteerBoard">{{refreshingBoard ? '刷新中...' : '刷新'}}</view>
+          </view>
+        </view>
+
+        <view wx:if="{{showFilters}}" class="card filter-panel">
+          <view class="filter-field">
+            <text class="field-label">距离范围</text>
+            <view class="chip-group">
+              <view wx:for="{{volunteerFilters}}" wx:key="value" class="chip chip-toggle {{maxDistance === item.value ? 'chip-toggle--on' : ''}}" bindtap="setMaxDistance" data-value="{{item.value}}">{{item.label}}</view>
+            </view>
+            <text class="field-hint">默认按陪跑起点地址计算距离。</text>
+          </view>
+
+          <view class="filter-field">
+            <text class="field-label">出发时间</text>
+            <view class="chip-group">
+              <view wx:for="{{departureFilters}}" wx:key="value" class="chip chip-toggle {{departureFilterType === item.value ? 'chip-toggle--on' : ''}}" bindtap="setBoardFilter" data-key="departureFilterType" data-value="{{item.value}}">{{item.label}}</view>
+            </view>
+            <view wx:if="{{departureFilterType === 'within'}}" class="filter-sub">
+              <text class="field-hint">即将出发范围</text>
+              <view class="chip-group">
+                <view wx:for="{{withinMinutesOptions}}" wx:key="value" class="chip chip-toggle {{departureWithinMinutes === item.value ? 'chip-toggle--on' : ''}}" bindtap="setBoardFilter" data-key="departureWithinMinutes" data-value="{{item.value}}">{{item.label}}</view>
+              </view>
+            </view>
+            <view wx:if="{{departureFilterType === 'hour'}}" class="filter-sub">
+              <text class="field-hint">整点时段</text>
+              <view class="stepper">
+                <view class="stepper-btn {{departureHourFilter <= 0 ? 'is-disabled' : ''}}" bindtap="stepDepartureHour" data-delta="-1">-</view>
+                <text class="stepper-value">{{departureHourLabel}}</text>
+                <view class="stepper-btn {{departureHourFilter >= 23 ? 'is-disabled' : ''}}" bindtap="stepDepartureHour" data-delta="1">+</view>
+              </view>
+            </view>
+            <view wx:if="{{departureFilterType === 'date'}}" class="filter-sub">
+              <picker mode="date" value="{{departureDateFilter}}" bindchange="onDepartureDateFilter">
+                <view class="picker-field">{{departureDateFilter || '选择出发日期'}}</view>
+              </picker>
+            </view>
+          </view>
+
+          <view class="filter-field">
+            <text class="field-label">性别</text>
+            <view class="segmented">
+              <view wx:for="{{genderFilters}}" wx:key="value" class="segmented-item {{genderFilter === item.value ? 'is-active' : ''}}" bindtap="setBoardFilter" data-key="genderFilter" data-value="{{item.value}}">{{item.label}}</view>
+            </view>
+          </view>
+
+          <view class="filter-field">
+            <text class="field-label">年龄段</text>
+            <view class="chip-group">
+              <view wx:for="{{ageFilters}}" wx:key="value" class="chip chip-toggle {{ageRangeFilter === item.value ? 'chip-toggle--on' : ''}}" bindtap="setBoardFilter" data-key="ageRangeFilter" data-value="{{item.value}}">{{item.label}}</view>
+            </view>
+          </view>
+
+          <view class="filter-field">
+            <text class="field-label">城市</text>
+            <view class="segmented">
+              <view wx:for="{{cityModes}}" wx:key="value" class="segmented-item {{cityMode === item.value ? 'is-active' : ''}}" bindtap="setBoardFilter" data-key="cityMode" data-value="{{item.value}}">{{item.label}}</view>
+            </view>
+            <text wx:if="{{cityMode === 'current'}}" class="field-hint">{{currentCity ? '当前定位城市：' + currentCity : '正在识别当前城市...'}}</text>
+            <view wx:if="{{cityMode === 'custom'}}" class="filter-sub">
+              <view class="chip-group">
+                <view wx:for="{{cityPresets}}" wx:key="value" class="chip chip-toggle {{cityValue === item.value ? 'chip-toggle--on' : ''}}" bindtap="setBoardFilter" data-key="cityValue" data-value="{{item.value}}">{{item.label}}</view>
+              </view>
+              <input class="input" value="{{cityValue}}" placeholder="或输入城市名，如「苏州」" bindinput="onCityFilterInput" />
+            </view>
+          </view>
+
+          <view class="btn btn--ghost btn--block btn--sm" bindtap="resetBoardFilters">重置筛选</view>
+        </view>
+
+        <view wx:if="{{trainingRequired}}" class="callout callout--coral">
+          <view class="callout-icon bg-coral">培</view>
+          <view class="callout-body">
+            <text class="callout-title">需完成陪跑认证</text>
+            <text class="callout-text">完成培训视频与在线考核后即可接单。</text>
+            <view class="btn btn--coral btn--sm" bindtap="switchTab" data-key="training">前往培训认证</view>
+          </view>
+        </view>
+        <view wx:elif="{{waitingOrders.length}}" class="stack-sm">
+          <view class="demand-row" wx:for="{{waitingOrders}}" wx:key="_id" bindtap="openDemandDetail" data-index="{{index}}">
+            <view class="route-pair">
+              <text><text class="addr-dot addr-dot--start"></text>{{item.startAddress}}</text>
+              <text wx:if="{{item.destinationAddress}}"><text class="addr-dot addr-dot--destination"></text>{{item.destinationAddress}}</text>
+            </view>
+            <view class="demand-meta">
+              <view wx:if="{{item.distanceText}}" class="chip chip--pine">距起点 {{item.distanceText}}</view>
+              <view class="chip">{{item.durationText}}</view>
+              <view class="chip">{{item.departureLabel || '立即出发'}}</view>
+              <view wx:if="{{item.city}}" class="chip">{{item.city}}</view>
+            </view>
+            <text class="field-hint">点击查看路线与详情</text>
+          </view>
+        </view>
+        <view wx:else class="empty">
+          <text class="empty-title">附近暂无匹配需求</text>
+          <text class="empty-text">放宽筛选条件，或稍后再来看看。</text>
+        </view>
+
+        <view wx:if="{{selectedDemand}}" class="sheet-backdrop" bindtap="closeDemandDetail">
+          <view class="sheet" catchtap="noop">
+            <view class="sheet-handle"></view>
+            <text class="sheet-title">陪跑需求详情</text>
+            <view class="route-summary">
+              <view class="route-pair">
+                <text><text class="addr-dot addr-dot--start"></text>{{selectedDemand.startAddress}}</text>
+                <text wx:if="{{selectedDemand.destinationAddress}}"><text class="addr-dot addr-dot--destination"></text>{{selectedDemand.destinationAddress}}</text>
+              </view>
+            </view>
+            <view class="demand-meta">
+              <view wx:if="{{selectedDemand.distanceText}}" class="chip chip--pine">距起点 {{selectedDemand.distanceText}}</view>
+              <view class="chip">目标 {{selectedDemand.targetDistanceText}}</view>
+              <view class="chip">{{selectedDemand.durationText}}</view>
+              <view class="chip">{{selectedDemand.departureLabel || '立即出发'}}</view>
+              <view wx:if="{{selectedDemand.city}}" class="chip">{{selectedDemand.city}}</view>
+            </view>
+            <view class="btn btn--pine btn--block" bindtap="acceptWaitingOrder" data-id="{{selectedDemand._id}}">接受订单并出发</view>
+            <view class="btn btn--ghost btn--block" bindtap="closeDemandDetail">先看看别的</view>
+          </view>
+        </view>
+      </block>
+
+      <!-- Orders -->
+      <block wx:if="{{activeTab === 'orders'}}">
+        <view class="row row-between">
+          <text class="section-title">我的订单</text>
+          <view class="btn btn--ghost btn--sm" bindtap="loadOrders">刷新</view>
+        </view>
+        <view class="segmented">
+          <view wx:for="{{orderFilters}}" wx:key="key" class="segmented-item {{orderFilter === item.key ? 'is-active' : ''}}" bindtap="setOrderFilter" data-key="{{item.key}}">{{item.label}}</view>
+        </view>
+        <view wx:if="{{filteredOrders.length}}" class="stack-sm">
+          <view class="card order-card" wx:for="{{filteredOrders}}" wx:key="_id">
+            <view class="row row-between"><view class="chip chip--{{item.statusTone}}">{{item.statusLabel}}</view></view>
+            <view class="route-pair">
+              <text><text class="addr-dot addr-dot--start"></text>{{item.startAddress}}</text>
+              <text wx:if="{{item.destinationAddress}}"><text class="addr-dot addr-dot--destination"></text>{{item.destinationAddress}}</text>
+            </view>
+            <view class="meta-row"><text>目标 {{item.targetDistanceText}}</text><text>预计 {{item.durationText}}</text></view>
+            <text class="party-line">{{item.partyLabel}} · {{item.partyName}}</text>
+            <view wx:if="{{item.status !== 'completed' && item.status !== 'cancelled'}}" class="btn btn--coral btn--block btn--sm" bindtap="cancelOrder" data-id="{{item._id}}">取消请求</view>
+          </view>
+        </view>
+        <view wx:else class="empty">
+          <text class="empty-title">{{orderFilter === 'all' ? '还没有陪跑订单' : '该分类下暂无订单'}}</text>
+          <text class="empty-text">发起一次陪跑后，订单与实时状态会显示在这里。</text>
+          <view class="btn btn--accent btn--block" bindtap="switchTab" data-key="sport">发起一次陪跑</view>
+        </view>
+      </block>
+
+      <!-- Training -->
+      <block wx:if="{{activeTab === 'training'}}">
+        <view wx:if="{{!isVolunteer}}" class="callout callout--sky">
+          <view class="callout-icon bg-sky">培</view>
+          <view class="callout-body">
+            <text class="callout-title">陪跑认证仅面向志愿者</text>
+            <text class="callout-text">作为视障跑者，你可以直接发起陪跑或预约熟悉的志愿者。</text>
+          </view>
+        </view>
+        <block wx:else>
+          <view class="card">
+            <view class="row row-between"><text class="section-title">培训进度</text><view class="chip chip--pine">{{trainingPct}}%</view></view>
+            <view class="progress"><view class="progress-fill progress-fill--pine" style="width: {{trainingPct}}%;"></view></view>
+            <view class="stack-sm space-top">
+              <view class="list-row"><view class="callout-icon bg-pine-light">播</view><view class="list-body"><text class="list-title">观看培训视频</text><text class="list-meta">了解陪跑安全与引导技巧</text></view><view class="chip {{trainingStatus.videoWatched ? 'chip--pine' : ''}}">{{trainingStatus.videoWatched ? '已完成' : '待完成'}}</view></view>
+              <view class="list-row"><view class="callout-icon bg-accent-light">考</view><view class="list-body"><text class="list-title">在线考核</text><text class="list-meta">{{trainingStatus.examPassed ? '已通过 · ' + trainingStatus.examScore + ' 分' : '通过后可获得认证'}}</text></view><view class="chip {{trainingStatus.examPassed ? 'chip--pine' : ''}}">{{trainingStatus.examPassed ? '已通过' : '待考核'}}</view></view>
+              <view class="list-row"><view class="callout-icon bg-sky-light">证</view><view class="list-body"><text class="list-title">陪跑认证证书</text><text class="list-meta">{{trainingStatus.certificateNo ? '证书编号 ' + trainingStatus.certificateNo : '完成考核后自动签发'}}</text></view><view class="chip {{trainingStatus.certificateNo ? 'chip--pine' : ''}}">{{trainingStatus.certificateNo ? '已认证' : '未认证'}}</view></view>
+            </view>
+          </view>
+
+          <view wx:if="{{!trainingStatus.videoWatched}}" class="card">
+            <text class="section-title">第一步 · 观看培训视频</text>
+            <text class="body-text">请完整观看陪跑培训视频，了解引导手势、路线选择与突发情况处理，观看后点击下方按钮记录进度。</text>
+            <view class="btn btn--pine btn--block" bindtap="markVideoWatched">我已完整观看视频</view>
+          </view>
+
+          <view wx:if="{{trainingStatus.videoWatched && !trainingStatus.examPassed && !questions}}" class="card">
+            <text class="section-title">第二步 · 在线考核</text>
+            <text class="body-text">考核为单选题，全部作答后提交。达到通过分数即可自动获得陪跑认证证书。</text>
+            <view class="btn btn--accent btn--block" bindtap="startExam">开始考核</view>
+          </view>
+
+          <view wx:if="{{questions && !examResult}}" class="card">
+            <view class="row row-between"><text class="section-title">在线考核</text><view class="chip">{{answeredCount}}/{{questions.length}}</view></view>
+            <view wx:for="{{questions}}" wx:key="_id" wx:for-index="qi" class="exam-q">
+              <text class="exam-title">{{qi + 1}}. {{item.question}}</text>
+              <view wx:for="{{item.optionsView}}" wx:key="index" wx:for-item="opt" class="exam-opt {{opt.selected ? 'is-selected' : ''}}" bindtap="chooseExamOption" data-qi="{{qi}}" data-oi="{{opt.index}}">
+                <text>{{opt.text}}</text>
+              </view>
+            </view>
+            <view class="btn btn--accent btn--block" bindtap="submitExam">提交答卷</view>
+          </view>
+
+          <view wx:if="{{examResult}}" class="card">
+            <view class="row row-between"><text class="section-title">考核结果</text><view class="chip {{examResult.passed ? 'chip--pine' : 'chip--coral'}}">{{examResult.passed ? '已通过' : '未通过'}}</view></view>
+            <view class="grid-2">
+              <view class="stat"><text class="stat-value">{{examResult.score}}</text><text class="stat-label">得分（通过线 {{passScore}}）</text></view>
+              <view class="stat"><text class="stat-value">{{examResult.correctCount}}/{{examResult.totalQuestions}}</text><text class="stat-label">答对题数</text></view>
+            </view>
+            <view wx:if="{{!examResult.passed}}" class="btn btn--accent btn--block" bindtap="retryExam">再考一次</view>
+          </view>
+
+          <view wx:if="{{certificate}}" class="card card--pop">
+            <text class="section-title">陪跑认证证书</text>
+            <view class="cert">
+              <view class="cert-seal">盾</view>
+              <text class="cert-name">{{certificate.userName || user.name || user.nickName}}</text>
+              <text class="cert-sub">已通过助盲陪跑认证</text>
+              <view class="cert-grid">
+                <view><text class="cert-label">证书编号</text><text class="cert-value">{{certificate.certificateNo}}</text></view>
+                <view><text class="cert-label">考核成绩</text><text class="cert-value">{{certificate.score}} 分</text></view>
+                <view><text class="cert-label">认证日期</text><text class="cert-value">{{certificate.examDate}}</text></view>
+              </view>
+            </view>
+            <view class="field">
+              <text class="field-label">证书核验</text>
+              <input class="input" value="{{certInput}}" placeholder="输入证书编号核验真伪" bindinput="onCertInput" />
+            </view>
+            <view class="btn btn--ghost btn--block" bindtap="verifyCert">核验证书</view>
+            <view wx:if="{{certVerify}}" class="callout {{certVerify.valid ? 'callout--pine' : 'callout--coral'}}">
+              <view class="callout-icon {{certVerify.valid ? 'bg-pine' : 'bg-coral'}}">{{certVerify.valid ? '真' : '误'}}</view>
+              <view class="callout-body"><text class="callout-title">{{certVerify.valid ? '证书有效' : '证书无效'}}</text><text class="callout-text">{{certVerify.valid ? '已找到该编号对应的有效证书。' : '未找到该编号对应的有效证书。'}}</text></view>
+            </view>
+          </view>
+        </block>
+      </block>
+
+      <!-- Appointments -->
+      <block wx:if="{{activeTab === 'appointments'}}">
+        <view class="callout {{isVolunteer ? 'callout--pine' : 'callout--sky'}}">
+          <view class="callout-icon {{isVolunteer ? 'bg-pine' : 'bg-sky'}}">约</view>
+          <view class="callout-body">
+            <text class="callout-title">{{isVolunteer ? '约跑邀请' : '预约志愿者'}}</text>
+            <text class="callout-text">{{isVolunteer ? '跑者向你发起的约跑邀请会出现在这里，确认后请准时赴约。' : '挑选认证志愿者并约定时间，确认后即可如约出发。'}}</text>
+          </view>
+        </view>
+
+        <view wx:if="{{!isVolunteer}}" class="card">
+          <text class="section-title">发起约跑</text>
+          <view class="field">
+            <view class="row row-between">
+              <text class="field-label">选择志愿者</text>
+              <text class="field-hint">{{appointmentNearbyMode ? '按距离排序' : '认证志愿者'}}</text>
+            </view>
+            <view class="vol-option {{selectedVolunteerId === item._id ? 'is-selected' : ''}}" wx:for="{{volunteers}}" wx:key="_id" bindtap="selectVolunteer" data-id="{{item._id}}">
+            <view class="avatar"><text>{{item.nickNameInitial || '志'}}</text></view>
+              <view class="list-body"><text class="list-title">{{item.nickName || '志愿者'}}</text><text class="list-meta">{{item.distanceText ? '距你 ' + item.distanceText + ' · ' : ''}}{{item.tierName || '认证志愿者'}} · {{item.totalRuns || 0}} 次陪跑</text></view>
+              <view wx:if="{{selectedVolunteerId === item._id}}" class="chip chip--pine">已选</view>
+            </view>
+          </view>
+          <view class="grid-2">
+            <view class="field">
+              <text class="field-label">约跑日期</text>
+              <picker mode="date" value="{{apDate}}" start="{{today}}" bindchange="onAppointmentPicker" data-key="apDate">
+                <view class="picker-field">{{apDateLabel}}</view>
+              </picker>
+            </view>
+            <view class="field">
+              <text class="field-label">约跑时间</text>
+              <picker mode="time" value="{{apTime}}" bindchange="onAppointmentPicker" data-key="apTime">
+                <view class="picker-field">{{apTimeLabel}}</view>
+              </picker>
+            </view>
+          </view>
+          <view class="grid-2">
+            <view class="field"><text class="field-label">目标距离（公里）</text><input class="input" type="digit" value="{{apDistance}}" placeholder="例如：5" bindinput="onAppointmentInput" data-key="apDistance" /></view>
+            <view class="field"><text class="field-label">预计时长（分钟）</text><input class="input" type="number" value="{{apDuration}}" placeholder="例如：40" bindinput="onAppointmentInput" data-key="apDuration" /></view>
+          </view>
+          <view class="field"><text class="field-label">集合地点</text><view class="input-action"><input class="input input--bare" value="{{apAddress}}" placeholder="例如：奥林匹克森林公园南门" bindinput="onAppointmentInput" data-key="apAddress" /><view class="btn btn--ghost btn--sm" bindtap="useAppointmentLocation">选点</view></view><text class="field-hint">选择集合地点后，会优先展示附近正在接单的志愿者。</text></view>
+          <view class="field"><text class="field-label">备注</text><textarea class="textarea" value="{{apNote}}" placeholder="希望陪跑节奏轻松一些，集合后电话联系。" bindinput="onAppointmentInput" data-key="apNote"></textarea></view>
+          <view class="btn btn--accent btn--block" bindtap="submitAppointment">发送约跑邀请</view>
+        </view>
+
+        <view class="row row-between"><text class="section-title">我的约跑</text><view class="btn btn--ghost btn--sm" bindtap="loadAppointments">刷新</view></view>
+        <view wx:if="{{appointments.length}}" class="stack-sm">
+          <view class="card order-card" wx:for="{{appointments}}" wx:key="_id">
+            <view class="row row-between"><view class="chip chip--{{item.statusTone}}">{{item.statusLabel}}</view><text class="metric-tag">{{item.appointmentDate || '待定'}}</text></view>
+            <view class="meta-row"><text>{{item.appointmentTime || '待定'}}</text><text wx:if="{{item.distanceText}}">目标 {{item.distanceText}}</text><text wx:if="{{item.durationText}}">预计 {{item.durationText}}</text></view>
+            <text wx:if="{{item.address}}" class="party-line">{{item.address}}</text>
+            <text class="party-line">{{item.partyLabel}} · {{item.partyName}}</text>
+            <text wx:if="{{item.note}}" class="party-line">{{item.note}}</text>
+            <block wx:if="{{isVolunteer}}">
+              <view wx:if="{{item.status === 'pending'}}" class="btn btn--pine btn--block btn--sm" bindtap="appointmentAction" data-id="{{item._id}}" data-action="confirm">确认邀请</view>
+              <view wx:if="{{item.status === 'pending' || item.status === 'confirmed'}}" class="btn btn--ghost btn--block btn--sm" bindtap="appointmentAction" data-id="{{item._id}}" data-action="cancel">{{item.status === 'pending' ? '拒绝邀请' : '取消约跑'}}</view>
+            </block>
+            <block wx:else>
+              <view wx:if="{{item.status === 'confirmed'}}" class="btn btn--accent btn--block btn--sm" bindtap="openCompleteAppointment" data-id="{{item._id}}">完成并评价</view>
+              <view wx:if="{{item.status === 'pending' || item.status === 'confirmed'}}" class="btn btn--ghost btn--block btn--sm" bindtap="appointmentAction" data-id="{{item._id}}" data-action="cancel">取消约跑</view>
+            </block>
+          </view>
+        </view>
+        <view wx:else class="empty"><text class="empty-title">{{isVolunteer ? '暂无约跑邀请' : '暂无约跑安排'}}</text><text class="empty-text">{{isVolunteer ? '跑者向你发起的约跑邀请会出现在这里。' : '在上方挑选志愿者并约定时间。'}}</text></view>
+
+        <view wx:if="{{completingAppointmentId}}" class="sheet-backdrop" bindtap="closeCompleteAppointment">
+          <view class="sheet" catchtap="noop">
+            <view class="sheet-handle"></view>
+            <text class="sheet-title">完成并评价</text>
+            <view class="chip-group rating-group">
+              <view wx:for="{{ratingOptions}}" wx:key="*this" class="chip chip-toggle {{apRating === item ? 'chip-toggle--on' : ''}}" bindtap="setRating" data-value="{{item}}">{{item}} 分</view>
+            </view>
+            <textarea class="textarea" value="{{apComment}}" placeholder="说说这次陪跑的体验吧。" bindinput="onAppointmentInput" data-key="apComment"></textarea>
+            <view class="btn btn--accent btn--block" bindtap="appointmentAction" data-id="{{completingAppointmentId}}" data-action="complete">提交评价</view>
+          </view>
+        </view>
+      </block>
+
+      <!-- Mine -->
+      <block wx:if="{{activeTab === 'mine'}}">
+        <view class="card">
+          <view class="row">
+            <view class="avatar avatar--large"><image wx:if="{{user.avatarUrl}}" class="avatar-img" src="{{user.avatarUrl}}" mode="aspectFill"></image><text wx:else>{{avatarText}}</text></view>
+            <view class="list-body">
+              <text class="hero-name hero-name--dark">{{user.nickName || '未设置昵称'}}</text>
+              <text class="list-meta">{{isVolunteer ? '陪跑志愿者' : '视障跑者'}} · Lv.{{user.tierLevel || 1}}{{user.tierName ? ' · ' + user.tierName : ''}}</text>
             </view>
           </view>
         </view>
-      </view>
-    </view>
-  </view>
 
-  <!-- 积分与经验值展示 -->
-  <view class="points-section">
-    <view class="points-card">
-      <!-- 积分展示 -->
-      <view class="points-row">
-        <view class="points-item">
-          <text class="points-icon">⭐</text>
-          <view class="points-info">
-            <text class="points-value">{{userPoints}}</text>
-            <text class="points-label">当前积分</text>
+        <view class="grid-3">
+          <view class="stat"><text class="stat-value">{{user.totalRuns || 0}}</text><text class="stat-label">陪跑次数</text></view>
+          <view class="stat"><text class="stat-value">{{stats && stats.totalDistance ? stats.totalDistance : '—'}}</text><text class="stat-label">总里程</text></view>
+          <view class="stat"><text class="stat-value">{{user.points || 0}}</text><text class="stat-label">积分</text></view>
+        </view>
+
+        <view class="card">
+          <text class="section-title">账号资料</text>
+          <view class="field"><text class="field-label">昵称</text><input class="input" value="{{mineNickName}}" placeholder="他人看到的称呼" bindinput="onMineInput" data-key="mineNickName" /></view>
+          <view class="field"><text class="field-label">真实姓名<text class="field-hint">（用于陪跑身份核对）</text></text><input class="input" value="{{mineName}}" placeholder="选填" bindinput="onMineInput" data-key="mineName" /></view>
+          <view class="btn btn--accent btn--block" bindtap="saveProfile">{{savingProfile ? '保存中...' : '保存资料'}}</view>
+        </view>
+
+        <view wx:if="{{!isVolunteer}}" class="card">
+          <text class="section-title">紧急联系人</text>
+          <text class="body-text">陪跑过程中如遇突发情况，志愿者可第一时间联系到 TA。</text>
+          <view class="field"><text class="field-label">联系人姓名</text><input class="input" value="{{emergencyName}}" placeholder="联系人姓名" bindinput="onMineInput" data-key="emergencyName" /></view>
+          <view class="grid-2">
+            <view class="field"><text class="field-label">联系电话</text><input class="input" type="number" value="{{emergencyPhone}}" placeholder="手机号" bindinput="onMineInput" data-key="emergencyPhone" /></view>
+            <view class="field"><text class="field-label">关系</text><input class="input" value="{{emergencyRelation}}" placeholder="如：家人" bindinput="onMineInput" data-key="emergencyRelation" /></view>
           </view>
+          <view class="btn btn--accent btn--block" bindtap="saveEmergency">{{savingEmergency ? '保存中...' : '保存联系人'}}</view>
         </view>
-        <view class="points-divider"></view>
-        <view class="points-item">
-          <text class="points-icon exp">📈</text>
-          <view class="points-info">
-            <text class="points-value">{{userExp}}</text>
-            <text class="points-label">累计经验</text>
-          </view>
+
+        <view wx:else class="card">
+          <text class="section-title">陪跑资料</text>
+          <view class="detail-row"><text>接单状态</text><text>{{user.isAvailable ? '在线 · 可接单' : '离线'}}</text></view>
+          <view class="detail-row"><text>跑龄</text><text>{{user.runningYears || '未填写'}}</text></view>
+          <view class="detail-row"><text>平均配速</text><text>{{user.pace || '未填写'}}</text></view>
+          <view class="detail-row"><text>马拉松经历</text><text>{{user.hasMarathon === 'yes' ? '有' : '无'}}</text></view>
+          <view class="detail-row"><text>急救证书</text><text>{{user.hasFirstAid === 'yes' ? '有' : '无'}}</text></view>
+          <text class="field-hint">陪跑资料在注册时填写，如需修改请联系平台管理员。</text>
         </view>
-      </view>
-      <!-- 连续打卡提示（仅视障人士） -->
-      <view class="checkin-tip" wx:if="{{userType === 'disabled'}}">
-        <text class="checkin-icon">📅</text>
-        <text class="checkin-text" wx:if="{{todayCheckedIn}}">今日已打卡</text>
-        <text class="checkin-text" wx:else>连续打卡3天可获得额外50经验</text>
-      </view>
+
+        <view class="card">
+          <text class="section-title">账号信息</text>
+          <view wx:if="{{user.phone}}" class="detail-row"><text>手机号</text><text>{{user.phone}}</text></view>
+          <view wx:if="{{user.email}}" class="detail-row"><text>邮箱</text><text>{{user.email}}</text></view>
+          <view class="detail-row"><text>身份</text><text>{{isVolunteer ? '陪跑志愿者' : '视障跑者'}}</text></view>
+          <view wx:if="{{isVolunteer}}" class="detail-row"><text>陪跑认证</text><text>{{user.certificateNo ? '已认证 · ' + user.certificateNo : (user.examPassed ? '考核已通过' : '未开始认证')}}</text></view>
+        </view>
+
+        <view class="btn btn--ghost btn--block" bindtap="logout">退出登录</view>
+      </block>
     </view>
-    <!-- 打卡按钮（仅视障人士） -->
-    <button class="checkin-btn" wx:if="{{userType === 'disabled' && !todayCheckedIn}}" bindtap="handleCheckIn">
-      每日打卡 +5经验
-    </button>
-  </view>
+  </scroll-view>
 
-  <!-- 视障用户：使用教程入口 -->
-  <view class="tutorial-entry" wx:if="{{userType === 'disabled'}}" bindtap="goToTutorial">
-    <view class="tutorial-entry-icon">📖</view>
-    <view class="tutorial-entry-content">
-      <text class="tutorial-entry-title">使用教程</text>
-      <text class="tutorial-entry-desc">了解如何寻找志愿者、发布需求、设置紧急联系人等</text>
+  <view class="bottom-nav">
+    <view wx:for="{{navItems}}" wx:key="key" class="bottom-nav-item {{item.active ? 'is-active' : ''}}" bindtap="switchTab" data-key="{{item.key}}">
+      <view class="bottom-nav-icon">{{item.icon}}</view>
+      <text class="bottom-nav-label">{{item.label}}</text>
     </view>
-    <text class="tutorial-entry-arrow">›</text>
-  </view>
-
-  <!-- 志愿者专属：培训教程（未完成时显示） -->
-  <view class="training-section" wx:if="{{userType === 'volunteer' && !examPassed && !trainingCompleted}}">
-    <view class="section-header-row">
-      <text class="section-main-title">TRAINING</text>
-    </view>
-    <view class="training-card">
-      <view class="training-steps">
-        <!-- 步骤1：观看视频 -->
-        <view class="step-item {{trainingStep >= 1 ? 'completed' : (trainingStep === 1 ? 'active' : '')}}">
-          <view class="step-icon">
-            <text wx:if="{{trainingStep > 1}}">✓</text>
-            <text wx:else>1</text>
-          </view>
-          <view class="step-content">
-            <text class="step-name">观看培训视频</text>
-            <text class="step-status" wx:if="{{trainingStep > 1}}">已完成</text>
-            <text class="step-status pending" wx:else>待完成</text>
-          </view>
-        </view>
-        <view class="step-line {{trainingStep >= 2 ? 'completed' : ''}}"></view>
-        <!-- 步骤2：在线考试 -->
-        <view class="step-item {{trainingStep >= 2 ? 'completed' : (trainingStep === 2 ? 'active' : '')}}">
-          <view class="step-icon">
-            <text wx:if="{{trainingStep > 2}}">✓</text>
-            <text wx:else>2</text>
-          </view>
-          <view class="step-content">
-            <text class="step-name">在线考试</text>
-            <text class="step-status" wx:if="{{trainingStep > 2}}">已通过</text>
-            <text class="step-status pending" wx:else>待完成</text>
-          </view>
-        </view>
-        <view class="step-line {{trainingStep >= 3 ? 'completed' : ''}}"></view>
-        <!-- 步骤3：领取证书 -->
-        <view class="step-item {{trainingStep >= 3 ? 'completed' : (trainingStep === 3 ? 'active' : '')}}">
-          <view class="step-icon">
-            <text wx:if="{{trainingStep === 4}}">🏆</text>
-            <text wx:else>3</text>
-          </view>
-          <view class="step-content">
-            <text class="step-name">领取志愿者证书</text>
-            <text class="step-status" wx:if="{{trainingStep === 4}}">已获得</text>
-            <text class="step-status pending" wx:else>待完成</text>
-          </view>
-        </view>
-      </view>
-      <button class="training-btn" bindtap="goToTraining">
-        {{trainingStep === 1 ? '开始学习视频' : (trainingStep === 2 ? '继续考试' : '去领证')}}
-      </button>
-    </view>
-  </view>
-
-  <!-- 志愿者已完成培训 -->
-  <view class="training-completed-section" wx:if="{{userType === 'volunteer' && examPassed && trainingCompleted}}">
-    <view class="completed-badge">
-      <text class="completed-icon">🎉</text>
-      <text class="completed-text">您已完成培训，可以开始接单了！</text>
-    </view>
-    <button class="retrain-btn" bindtap="goToTraining">
-      <text class="retrain-icon">📚</text>
-      <text class="retrain-text">复习培训</text>
-    </button>
-  </view>
-
-  <!-- 2. 中间：数据看板 -->
-  <view class="stats-section">
-    <view class="section-header-row">
-      <text class="section-main-title">STATS · 数据看板</text>
-    </view>
-    <view class="stats-grid">
-      <view class="stat-item" wx:if="{{userType === 'volunteer'}}">
-        <view class="stat-icon-gradient">
-          <text class="stat-icon-text">🏃</text>
-        </view>
-        <view class="stat-content">
-          <text class="stat-number">{{stats.totalRuns}}</text>
-          <text class="stat-label">累计陪跑</text>
-        </view>
-      </view>
-      <view class="stat-item" wx:if="{{userType === 'volunteer'}}">
-        <view class="stat-icon-gradient">
-          <text class="stat-icon-text">👥</text>
-        </view>
-        <view class="stat-content">
-          <text class="stat-number">{{stats.totalRuns}}</text>
-          <text class="stat-label">服务人数</text>
-        </view>
-      </view>
-      <view class="stat-item" wx:if="{{userType === 'volunteer'}}">
-        <view class="stat-icon-gradient">
-          <text class="stat-icon-text">👍</text>
-        </view>
-        <view class="stat-content">
-          <text class="stat-number">{{userInfo.likes || 0}}</text>
-          <text class="stat-label">获得点赞</text>
-        </view>
-      </view>
-      <view class="stat-item" wx:if="{{userType === 'volunteer'}}">
-        <view class="stat-icon-gradient">
-          <text class="stat-icon-text">📏</text>
-        </view>
-        <view class="stat-content">
-          <text class="stat-number">{{stats.totalDistance}}</text>
-          <text class="stat-label">总里程(km)</text>
-        </view>
-      </view>
-
-      <!-- 视障人士数据 -->
-      <view class="stat-item" wx:if="{{userType === 'disabled'}}">
-        <view class="stat-icon-gradient">
-          <text class="stat-icon-text">🏃</text>
-        </view>
-        <view class="stat-content">
-          <text class="stat-number">{{stats.totalDistance}}</text>
-          <text class="stat-label">累计跑量</text>
-        </view>
-      </view>
-      <view class="stat-item" wx:if="{{userType === 'disabled'}}">
-        <view class="stat-icon-gradient">
-          <text class="stat-icon-text">⏱️</text>
-        </view>
-        <view class="stat-content">
-          <text class="stat-number">{{stats.totalTime}}</text>
-          <text class="stat-label">安全时长(h)</text>
-        </view>
-      </view>
-      <view class="stat-item" wx:if="{{userType === 'disabled'}}">
-        <view class="stat-icon-gradient">
-          <text class="stat-icon-text">🏆</text>
-        </view>
-        <view class="stat-content">
-          <text class="stat-number">{{stats.totalRuns}}</text>
-          <text class="stat-label">陪跑次数</text>
-        </view>
-      </view>
-      <view class="stat-item" wx:if="{{userType === 'disabled'}}">
-        <view class="stat-icon-gradient">
-          <text class="stat-icon-text">🛡️</text>
-        </view>
-        <view class="stat-content">
-          <text class="stat-number">{{userInfo.medals || 0}}</text>
-          <text class="stat-label">我的勋章</text>
-        </view>
-      </view>
-    </view>
-  </view>
-
-  <!-- 3. 列表：功能操作区 -->
-  <view class="menu-section">
-    <view class="section-header-row">
-      <text class="section-main-title">ACTIONS · 功能操作</text>
-    </view>
-    <view class="menu-list">
-      <view class="menu-item" bindtap="goToProfile">
-        <view class="menu-icon-wrap">
-          <text class="menu-icon">👤</text>
-        </view>
-        <view class="menu-content">
-          <text class="menu-title">个人信息</text>
-          <text class="menu-desc">完善您的个人资料</text>
-        </view>
-        <text class="menu-arrow">›</text>
-      </view>
-
-      <!-- 志愿者专属：证书（视障人士不需要证书） -->
-      <view class="menu-item" wx:if="{{userType === 'volunteer'}}" bindtap="goToCertificate">
-        <view class="menu-icon-wrap">
-          <text class="menu-icon">📜</text>
-        </view>
-        <view class="menu-content">
-          <text class="menu-title">我的证书</text>
-          <text class="menu-desc">查看培训合格证</text>
-        </view>
-        <text class="menu-arrow">›</text>
-      </view>
-
-      <!-- 志愿者专属：去接单 -->
-      <view class="menu-item" wx:if="{{userType === 'volunteer'}}" bindtap="goToTakeOrder">
-        <view class="menu-icon-wrap">
-          <text class="menu-icon">🎯</text>
-        </view>
-        <view class="menu-content">
-          <text class="menu-title">去接单</text>
-          <text class="menu-desc">接收盲人的陪跑请求</text>
-        </view>
-        <text class="menu-arrow">›</text>
-      </view>
-
-      <view class="menu-item" bindtap="goToRecords">
-        <view class="menu-icon-wrap">
-          <text class="menu-icon">📋</text>
-        </view>
-        <view class="menu-content">
-          <text class="menu-title">跑步历史</text>
-          <text class="menu-desc">查看过去的陪跑记录</text>
-        </view>
-        <text class="menu-arrow">›</text>
-      </view>
-
-      <view class="menu-item" bindtap="goToSchedule">
-        <view class="menu-icon-wrap">
-          <text class="menu-icon">📅</text>
-        </view>
-        <view class="menu-content">
-          <text class="menu-title">我的日程</text>
-          <text class="menu-desc">查看和管理预约</text>
-        </view>
-        <text class="menu-arrow">›</text>
-      </view>
-
-      <!-- 视障人士专属：紧急联系人 -->
-      <view class="menu-item" wx:if="{{userType === 'disabled'}}" bindtap="goToProfile">
-        <view class="menu-icon-wrap">
-          <text class="menu-icon">🚨</text>
-        </view>
-        <view class="menu-content">
-          <text class="menu-title">紧急联系人</text>
-          <text class="menu-desc">{{userInfo.emergencyPhone || '未设置'}}</text>
-        </view>
-        <text class="menu-arrow">›</text>
-      </view>
-    </view>
-  </view>
-
-  <!-- 4. 底部：系统支持 -->
-  <view class="footer-section">
-    <view class="section-header-row">
-      <text class="section-main-title">SYSTEM · 系统支持</text>
-    </view>
-    <view class="footer-menu">
-      <view class="footer-item" bindtap="goToChangePassword">
-        <text class="footer-icon">🔑</text>
-        <text class="footer-text">修改密码</text>
-      </view>
-      <view class="footer-item" bindtap="goToTutorial">
-        <text class="footer-icon">📖</text>
-        <text class="footer-text">使用教程</text>
-      </view>
-      <view class="footer-item" bindtap="goToHelp">
-        <text class="footer-icon">💬</text>
-        <text class="footer-text">客服与帮助</text>
-      </view>
-      <view class="footer-item" bindtap="goToAbout">
-        <text class="footer-icon">ℹ️</text>
-        <text class="footer-text">关于我们</text>
-      </view>
-      <view class="footer-item logout" bindtap="handleLogout">
-        <text class="footer-icon">🚪</text>
-        <text class="footer-text">退出登录</text>
-      </view>
-    </view>
-
-    <!-- 关于我们预览 -->
-    <view class="about-preview" bindtap="goToAbout">
-      <view class="about-logo">👁️</view>
-      <view class="about-text">
-        <text class="about-title">助盲跑 · 平台</text>
-        <text class="about-slogan">用科技连接光明，让每一位视障人士都能享受奔跑的自由</text>
-      </view>
-      <text class="about-arrow">›</text>
-    </view>
-
   </view>
 </view>

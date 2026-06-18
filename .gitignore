@@ -4,6 +4,8 @@ dist/
 *.tsbuildinfo
 .DS_Store
 tmp/
+docs/migration-screenshots/
+docs/superpowers/specs/2026-06-18-react-to-wechat-miniprogram-skill-upgrade-design.md
 project.private.config.json
 .claude/
 .superpowers/

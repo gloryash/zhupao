@@ -1,6 +1,4 @@
 {
-  "navigationBarTitleText": "助盲跑",
-  "navigationBarBackgroundColor": "#1890ff",
-  "navigationBarTextStyle": "white",
-  "enablePullDownRefresh": false
+  "navigationStyle": "custom",
+  "disableScroll": true
 }

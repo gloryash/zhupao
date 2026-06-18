@@ -7,11 +7,15 @@
     "cloudbase:login": "node scripts/cloudbase/run-tcb-isolated.js login -k",
     "cloudbase:env": "node scripts/cloudbase/run-tcb-isolated.js env detail --json",
     "cloudbase:functions": "node scripts/cloudbase/run-tcb-isolated.js fn list --json",
+    "cloudbase:mcp:verify": "node scripts/cloudbase/verify-mcp.js",
+    "cloudbase:mcp:stdio": "node scripts/cloudbase/run-mcp-isolated.js",
     "cloudbase:sync-shared": "node scripts/cloudbase/sync-shared.js",
     "cloudbase:verify-auth": "node scripts/cloudbase/verify-web-auth.js",
     "cloudbase:verify-core": "node scripts/cloudbase/verify-core-flow.js"
   },
   "devDependencies": {
-    "@cloudbase/cli": "^3.5.3"
+    "@cloudbase/cli": "^3.5.3",
+    "@cloudbase/cloudbase-mcp": "^2.20.2",
+    "miniprogram-automator": "^0.12.1"
   }
 }

@@ -1,6 +1,6 @@
 {
   "miniprogramRoot": "",
-  "cloudfunctionRoot": "./cloudfunctions",
+  "cloudfunctionRoot": "cloudfunctions/",
   "setting": {
     "urlCheck": false,
     "es6": true,
@@ -46,7 +46,22 @@
   "condition": {},
   "compileType": "miniprogram",
   "packOptions": {
-    "ignore": [],
+    "ignore": [
+      { "type": "folder", "value": "web" },
+      { "type": "folder", "value": "docs" },
+      { "type": "folder", "value": "scripts" },
+      { "type": "folder", "value": "node_modules" },
+      { "type": "folder", "value": "cloudfunctions" },
+      { "type": "folder", "value": ".cloudbase-home" },
+      { "type": "folder", "value": "tmp" },
+      { "type": "file", "value": "package.json" },
+      { "type": "file", "value": "package-lock.json" },
+      { "type": "file", "value": "cloudbase.project.json" },
+      { "type": "file", "value": "AGENTS.md" },
+      { "type": "file", "value": "CLOUD_DEPLOYMENT.md" },
+      { "type": "file", "value": "PRD.md" },
+      { "type": "file", "value": "gloryash-shop-qr.png" }
+    ],
     "include": []
   },
   "editorSetting": {

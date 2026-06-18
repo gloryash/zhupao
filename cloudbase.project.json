@@ -1,0 +1,9 @@
+{
+  "envId": "cloud1-d8gbfzr7t6c5dc8bc",
+  "region": "ap-shanghai",
+  "profileHome": ".cloudbase-home",
+  "mcp": {
+    "credentialMode": "projectProfile",
+    "pluginsEnabled": ["env", "functions", "database"]
+  }
+}

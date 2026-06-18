@@ -1,78 +1,139 @@
-<view class="login-container">
-  <!-- 顶部插画区域 -->
-  <view class="hero-section">
-    <!-- 3D运动人物插画 -->
-    <view class="illustration">
-      <image class="illustration-img" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'%3E%3Cdefs%3E%3ClinearGradient id='bgGrad' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%23E0F7FA'/%3E%3Cstop offset='100%25' style='stop-color:%23E8F5E9'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect fill='url(%23bgGrad)' width='400' height='300'/%3E%3Ccircle cx='320' cy='60' r='40' fill='%23A5D6A7' opacity='0.6'/%3E%3Ccircle cx='80' cy='240' r='30' fill='%2381D4FA' opacity='0.5'/%3E%3Cellipse cx='200' cy='150' rx='80' ry='100' fill='%23C8E6C9' opacity='0.4'/%3E%3C/svg%3E" mode="aspectFit"></image>
+<view class="auth-page" style="{{shellStyle}}">
+  <view class="auth-hero">
+    <view class="brand-pill">
+      <image class="brand-mark" src="/images/brand/xinban-run-logo.jpg" mode="aspectFill"></image>
+      <text class="brand-name">心伴助跑精灵</text>
     </view>
-
-    <!-- 欢迎文字 -->
-    <view class="welcome-text">
-      <text class="welcome-title">助盲跑</text>
-      <text class="welcome-subtitle">让爱心点亮脚下的路</text>
+    <view class="auth-headline">
+      <text>陪你</text><text class="accent-word">向光</text>
+      <text class="block">一起奔跑</text>
     </view>
-
-    <!-- 装饰元素 -->
-    <view class="deco-circle deco-1"></view>
-    <view class="deco-circle deco-2"></view>
-    <view class="deco-line deco-3"></view>
+    <text class="auth-sub">连接视障跑者与经过认证的陪跑志愿者，让每一段路都有人同行。</text>
   </view>
 
-  <!-- 登录表单 -->
-  <view class="form-section">
-    <view class="form-card">
-      <!-- 手机号输入 -->
-      <view class="form-item">
-        <text class="form-label">手机号</text>
-        <view class="phone-input-row">
-          <input
-            class="form-input phone-input"
-            type="number"
-            maxlength="11"
-            placeholder="请输入手机号"
-            value="{{phone}}"
-            bindinput="onPhoneInput"
-            disabled="{{countdown > 0}}"
-          />
-          <!-- 获取验证码按钮 -->
-          <button
-            class="get-code-btn {{phone.length === 11 && !isSending ? 'active' : ''}}"
-            bindtap="getVerificationCode"
-            disabled="{{phone.length !== 11 || isSending || countdown > 0}}"
-          >
-            {{countdown > 0 ? countdown + 's' : '获取验证码'}}
-          </button>
+  <view class="card quick-card">
+    <text class="section-title section-title--accent">一键体验</text>
+    <text class="muted block">无需登录，一键以演示身份进入完整流程。</text>
+    <view class="quick-actions">
+      <view class="btn btn--accent quick-btn" bindtap="quickExperience" data-role="disabled">我想体验视障跑者</view>
+      <view class="btn btn--pine quick-btn" bindtap="quickExperience" data-role="volunteer">我想体验志愿者</view>
+    </view>
+  </view>
+
+  <view class="card auth-card {{role === 'volunteer' && mode === 'register' ? 'role-volunteer' : ''}}">
+    <view class="segmented auth-tabs">
+      <view class="segmented-item {{mode === 'login' ? 'is-active' : ''}}" bindtap="setMode" data-mode="login">登录</view>
+      <view class="segmented-item {{mode === 'register' ? 'is-active' : ''}}" bindtap="setMode" data-mode="register">注册</view>
+    </view>
+
+    <view wx:if="{{mode === 'register'}}" class="field">
+      <text class="field-label">我是</text>
+      <view class="role-pick">
+        <view class="role-option {{role === 'disabled' ? 'is-active role-disabled' : ''}}" bindtap="setRole" data-role="disabled">
+          <view class="role-icon role-icon--accent">跑</view>
+          <text class="role-name">视障跑者</text>
+          <text class="role-desc">发起陪跑，邀请志愿者并肩奔跑</text>
+        </view>
+        <view class="role-option {{role === 'volunteer' ? 'is-active role-volunteer' : ''}}" bindtap="setRole" data-role="volunteer">
+          <view class="role-icon role-icon--pine">护</view>
+          <text class="role-name">陪跑志愿者</text>
+          <text class="role-desc">通过认证后，为跑者引导护航</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="stack-sm">
+      <view class="field">
+        <text class="field-label">邮箱或手机号</text>
+        <view class="input-group">
+          <text class="input-icon">◎</text>
+          <input class="input input--bare" value="{{identifier}}" placeholder="you@example.com 或 手机号" bindinput="onInput" data-key="identifier" />
         </view>
       </view>
 
-      <!-- 验证码输入 -->
-      <view class="form-item">
-        <text class="form-label">验证码</text>
-        <input
-          class="form-input"
-          type="number"
-          maxlength="6"
-          placeholder="请输入6位验证码"
-          value="{{verifyCode}}"
-          bindinput="onCodeInput"
-        />
+      <view class="field">
+        <text class="field-label">密码</text>
+        <view class="input-group">
+          <text class="input-icon">□</text>
+          <input class="input input--bare" password="{{!showPassword}}" value="{{password}}" placeholder="请输入密码" bindinput="onInput" data-key="password" />
+          <view class="icon-btn" bindtap="togglePassword">{{showPassword ? '隐' : '显'}}</view>
+        </view>
       </view>
 
-      <!-- 登录按钮 -->
-      <button class="login-btn" bindtap="handleLogin">
-        登录
-      </button>
+      <block wx:if="{{mode === 'register'}}">
+        <view class="field">
+          <text class="field-label">昵称</text>
+          <input class="input" value="{{nickName}}" placeholder="他人看到的称呼" bindinput="onInput" data-key="nickName" />
+        </view>
+        <view class="field">
+          <text class="field-label">手机号码</text>
+          <input class="input" type="number" maxlength="11" value="{{phone}}" placeholder="用于接单后联系与语音播报" bindinput="onInput" data-key="phone" />
+        </view>
+        <view class="field">
+          <text class="field-label">真实姓名<text class="field-hint">（选填）</text></text>
+          <input class="input" value="{{name}}" placeholder="用于陪跑时的身份核对" bindinput="onInput" data-key="name" />
+        </view>
+        <view class="field">
+          <text class="field-label">常跑地点<text class="field-hint">（选填）</text></text>
+          <input class="input" value="{{runningLocation}}" placeholder="如：奥林匹克森林公园" bindinput="onInput" data-key="runningLocation" />
+        </view>
 
-      <!-- 开发者提示 -->
-      <text class="dev-tip">开发模式：不填手机号直接点「登录」即可进入</text>
+        <block wx:if="{{role === 'disabled'}}">
+          <view class="field">
+            <text class="field-label">紧急联系人</text>
+            <input class="input" value="{{emergencyName}}" placeholder="联系人姓名" bindinput="onInput" data-key="emergencyName" />
+          </view>
+          <view class="grid-2">
+            <view class="field">
+              <text class="field-label">联系电话</text>
+              <input class="input" type="number" maxlength="11" value="{{emergencyPhone}}" placeholder="手机号" bindinput="onInput" data-key="emergencyPhone" />
+            </view>
+            <view class="field">
+              <text class="field-label">关系</text>
+              <input class="input" value="{{emergencyRelation}}" placeholder="如：家人" bindinput="onInput" data-key="emergencyRelation" />
+            </view>
+          </view>
+        </block>
+
+        <block wx:else>
+          <view class="grid-2">
+            <view class="field">
+              <text class="field-label">跑龄</text>
+              <input class="input" value="{{runningYears}}" placeholder="如：3 年" bindinput="onInput" data-key="runningYears" />
+            </view>
+            <view class="field">
+              <text class="field-label">平均配速</text>
+              <input class="input" value="{{pace}}" placeholder="如：6'30&quot;" bindinput="onInput" data-key="pace" />
+            </view>
+          </view>
+          <view class="field">
+            <text class="field-label">是否有马拉松经历</text>
+            <view class="segmented">
+              <view class="segmented-item {{hasMarathon === 'yes' ? 'is-active' : ''}}" bindtap="setYesNo" data-key="hasMarathon" data-value="yes">是</view>
+              <view class="segmented-item {{hasMarathon === 'no' ? 'is-active' : ''}}" bindtap="setYesNo" data-key="hasMarathon" data-value="no">否</view>
+            </view>
+          </view>
+          <view class="field">
+            <text class="field-label">是否持有急救证书</text>
+            <view class="segmented">
+              <view class="segmented-item {{hasFirstAid === 'yes' ? 'is-active' : ''}}" bindtap="setYesNo" data-key="hasFirstAid" data-value="yes">是</view>
+              <view class="segmented-item {{hasFirstAid === 'no' ? 'is-active' : ''}}" bindtap="setYesNo" data-key="hasFirstAid" data-value="no">否</view>
+            </view>
+          </view>
+          <view class="field">
+            <text class="field-label">是否有陪跑经验</text>
+            <view class="segmented">
+              <view class="segmented-item {{hasCompanionExp === 'yes' ? 'is-active' : ''}}" bindtap="setYesNo" data-key="hasCompanionExp" data-value="yes">是</view>
+              <view class="segmented-item {{hasCompanionExp === 'no' ? 'is-active' : ''}}" bindtap="setYesNo" data-key="hasCompanionExp" data-value="no">否</view>
+            </view>
+          </view>
+        </block>
+      </block>
+
+      <text wx:if="{{error}}" class="field-error">{{error}}</text>
+      <view class="btn btn--accent btn--block" bindtap="submit">
+        {{submitting ? '处理中...' : (mode === 'login' ? '登录 →' : '创建账号 →')}}
+      </view>
     </view>
-  </view>
-
-  <!-- 底部说明 -->
-  <view class="footer-section">
-    <text class="footer-text">登录即表示同意</text>
-    <text class="footer-link">《用户服务协议》</text>
-    <text class="footer-text">和</text>
-    <text class="footer-link">《隐私政策》</text>
   </view>
 </view>
