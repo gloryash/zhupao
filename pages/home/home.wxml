@@ -87,8 +87,7 @@
           </view>
         </block>
 
-        <view wx:if="{{isVolunteer}}" class="btn btn--accent btn--block" bindtap="openLightMap" aria-role="button" aria-label="前往光境远征">前往光境远征 →</view>
-        <view wx:else class="btn btn--accent btn--block" bindtap="switchTab" data-key="sport" aria-role="button" aria-label="发起一次陪跑" data-voice="发起一次陪跑">发起一次陪跑 →</view>
+        <view class="btn btn--accent btn--block" bindtap="switchTab" data-key="sport" aria-role="button" aria-label="{{isVolunteer ? '前往接单广场' : '发起一次陪跑'}}" data-voice="{{isVolunteer ? '前往接单广场' : '发起一次陪跑'}}">{{isVolunteer ? '前往接单广场' : '发起一次陪跑'}} →</view>
         <view class="btn btn--ghost btn--block" bindtap="switchTab" data-key="appointments" aria-role="button" aria-label="{{isVolunteer ? '查看约跑日程' : '预约约跑'}}" data-voice="{{isVolunteer ? '查看约跑日程' : '预约陪跑'}}">{{isVolunteer ? '查看约跑日程' : '预约约跑'}}</view>
       </block>
 

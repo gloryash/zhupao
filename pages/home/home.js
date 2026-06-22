@@ -285,10 +285,6 @@ Page({
     await this.loadCurrentTab();
   },
 
-  openLightMap() {
-    wx.navigateTo({ url: '/pages/light-map/light-map' });
-  },
-
   async loadCurrentTab() {
     const key = this.data.activeTab;
     if (key === 'home') return this.loadHome();
