@@ -15,7 +15,7 @@
   },
   "devDependencies": {
     "@cloudbase/cli": "^3.5.3",
-    "@cloudbase/cloudbase-mcp": "^2.20.2",
+    "@cloudbase/cloudbase-mcp": "^2.22.0",
     "miniprogram-automator": "^0.12.1"
   }
 }

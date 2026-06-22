@@ -4,6 +4,7 @@ const fmt = require('../../utils/format');
 const loc = require('../../utils/location');
 const departure = require('../../utils/departure');
 const safeArea = require('../../utils/safe-area');
+const { speakVoiceCue } = require('../../utils/voice-player');
 
 const DURATIONS = [30, 45, 60, 90];
 const DISTANCE_FILTERS = [
@@ -52,6 +53,40 @@ const CITY_PRESETS = [
   { value: '杭州', label: '杭州' },
   { value: '成都', label: '成都' }
 ];
+const TAB_ICONS = {
+  home: {
+    iconPath: '/images/tabbar/home.svg',
+    activeIconPath: '/images/tabbar/home-active.svg'
+  },
+  sport: {
+    iconPath: '/images/tabbar/sport.svg',
+    activeIconPath: '/images/tabbar/sport-active.svg'
+  },
+  orders: {
+    iconPath: '/images/tabbar/clipboard-list.svg',
+    activeIconPath: '/images/tabbar/clipboard-list-active.svg'
+  },
+  training: {
+    iconPath: '/images/tabbar/graduation-cap.svg',
+    activeIconPath: '/images/tabbar/graduation-cap-active.svg'
+  },
+  appointments: {
+    iconPath: '/images/tabbar/calendar-days.svg',
+    activeIconPath: '/images/tabbar/calendar-days-active.svg'
+  },
+  mine: {
+    iconPath: '/images/tabbar/mine.svg',
+    activeIconPath: '/images/tabbar/mine-active.svg'
+  }
+};
+const HIDDEN_TABS = {
+  orders: {
+    key: 'orders',
+    label: '订单',
+    eyebrow: '视障跑者',
+    title: '我的订单'
+  }
+};
 
 Page({
   data: {
@@ -63,6 +98,7 @@ Page({
     navItems: [],
     headerTitle: '向光奔跑',
     eyebrow: '视障跑者',
+    voiceCue: '',
     loading: true,
     loadError: '',
 
@@ -140,6 +176,10 @@ Page({
     certificate: null,
     trainingPct: 0,
     questions: null,
+    currentQuestionIndex: 0,
+    currentQuestion: null,
+    isFirstQuestion: true,
+    isLastQuestion: true,
     passScore: 80,
     answeredCount: 0,
     examResult: null,
@@ -211,29 +251,38 @@ Page({
       emergencyPhone: user.emergencyPhone || '',
       emergencyRelation: user.emergencyRelation || ''
     });
-    this.syncChrome('home');
+    this.syncChrome(defaultEntryTab(role, user));
     await this.loadCurrentTab();
   },
 
   syncChrome(tabKey) {
-    const tab = buildTabs(this.data.role).find((item) => item.key === tabKey) || buildTabs(this.data.role)[0];
+    const tabs = buildTabs(this.data.role);
+    const tab = tabs.find((item) => item.key === tabKey) || resolveHiddenTab(tabKey, this.data.role) || tabs[0];
+    const activeNavKey = tab.navKey || tab.key;
     this.setData({
       activeTab: tab.key,
       headerTitle: tab.title,
       eyebrow: tab.eyebrow,
-      navItems: buildTabs(this.data.role).map((item) => ({ ...item, active: item.key === tab.key }))
+      navItems: tabs.map((item) => ({ ...item, active: item.key === activeNavKey }))
     });
   },
 
   async switchTab(e) {
     const key = e.currentTarget.dataset.key;
     this.syncChrome(key);
+    this.announce(tabVoiceLabel(this.data.activeTab, this.data.headerTitle));
     await this.loadCurrentTab();
   },
 
   goMine() {
     this.syncChrome('mine');
+    this.announce('进入个人中心');
     this.loadCurrentTab();
+  },
+
+  async refreshCurrentTab() {
+    this.announce('刷新重试');
+    await this.loadCurrentTab();
   },
 
   openLightMap() {
@@ -392,6 +441,7 @@ Page({
 
   async chooseCurrentEndpoint(e) {
     const field = e.currentTarget.dataset.field;
+    this.announce(`打开${field === 'start' ? '起点' : '终点'}地图选点`);
     try {
       const selected = await loc.chooseAddress();
       this.setEndpoint(field, selected);
@@ -426,6 +476,7 @@ Page({
       [`${field}Searching`]: false,
       targetDistance: field === 'start' || field === 'destination' ? 0 : this.data.targetDistance
     });
+    this.announce(`更改${field === 'start' ? '起点' : '终点'}`);
   },
 
   setEndpoint(field, item) {
@@ -452,6 +503,7 @@ Page({
     if (start && destination) next.targetDistance = loc.straightLineDistanceKm(start, destination);
     this.setData(next);
     this.pushAddressHistory(field, value);
+    this.announce(`已选择${field === 'start' ? '起点' : '终点'}：${value.displayAddress}`);
   },
 
   loadAddressHistories() {
@@ -467,12 +519,15 @@ Page({
   },
 
   setDuration(e) {
-    this.setData({ duration: Number(e.currentTarget.dataset.value) });
+    const duration = Number(e.currentTarget.dataset.value);
+    this.setData({ duration });
+    this.announce(`预计时长 ${duration} 分钟`);
   },
 
   setDepartureMode(e) {
     const mode = e.currentTarget.dataset.mode;
     this.setData({ departureMode: mode }, () => this.updateDepartureLabel());
+    this.announce(mode === 'delayed' ? '已选择延后出发' : '已选择立即出发');
   },
 
   onDepartureInput(e) {
@@ -504,6 +559,7 @@ Page({
       destination = found[0] || { ...loc.SHANGHAI, address: this.data.destinationQuery.trim(), longitude: loc.SHANGHAI.longitude + 0.02 };
     }
     if (!start || !destination) {
+      this.announce('请先选择起点和终点');
       wx.showToast({ title: '请先选择起点和终点', icon: 'none' });
       return;
     }
@@ -531,7 +587,9 @@ Page({
         activeOrderView: fmt.decorateOrder(order, 'disabled')
       });
       wx.showToast({ title: '陪跑需求已发布', icon: 'success' });
+      this.announce('已发布陪跑请求，正在为你匹配志愿者');
     } catch (err) {
+      this.announce(err.message || '发布失败');
       wx.showToast({ title: err.message || '发布失败', icon: 'none' });
     } finally {
       wx.hideLoading();
@@ -546,8 +604,10 @@ Page({
     try {
       await api.cancelOrder(orderId);
       wx.showToast({ title: '已取消', icon: 'success' });
+      this.announce('已取消该陪跑请求');
       await this.loadCurrentTab();
     } catch (err) {
+      this.announce(err.message || '取消失败');
       wx.showToast({ title: err.message || '取消失败', icon: 'none' });
     } finally {
       this.setData({ cancelling: false });
@@ -768,8 +828,16 @@ Page({
     }
   },
 
+  async refreshOrders() {
+    this.announce('刷新订单');
+    await this.loadOrders();
+  },
+
   setOrderFilter(e) {
-    this.setData({ orderFilter: e.currentTarget.dataset.key }, () => this.applyOrderFilter());
+    const key = e.currentTarget.dataset.key;
+    const option = (this.data.orderFilters || []).find((item) => item.key === key);
+    this.announce(`订单筛选${option ? option.label : ''}`);
+    this.setData({ orderFilter: key }, () => this.applyOrderFilter());
   },
 
   applyOrderFilter() {
@@ -796,6 +864,13 @@ Page({
         certificate: cert,
         certInput: status && status.certificateNo ? status.certificateNo : '',
         trainingPct: Math.round(flags.filter(Boolean).length / flags.length * 100),
+        questions: null,
+        currentQuestionIndex: 0,
+        currentQuestion: null,
+        isFirstQuestion: true,
+        isLastQuestion: true,
+        answeredCount: 0,
+        examResult: null,
         loading: false
       });
     } catch (err) {
@@ -822,10 +897,14 @@ Page({
           ...q,
           optionsView: (q.options || []).map((text, index) => ({ text, index, selected: false }))
         })),
+        currentQuestionIndex: 0,
+        currentQuestion: null,
+        isFirstQuestion: true,
+        isLastQuestion: true,
         passScore: res.passScore || 80,
         answeredCount: 0,
         examResult: null
-      });
+      }, () => this.syncCurrentQuestion());
     } catch (err) {
       wx.showToast({ title: err.message || '题目加载失败', icon: 'none' });
     } finally {
@@ -843,6 +922,29 @@ Page({
     this.setData({
       questions,
       answeredCount: questions.filter((q) => q.selectedIndex !== undefined).length
+    }, () => this.syncCurrentQuestion());
+  },
+
+  prevExamQuestion() {
+    const next = Math.max(0, Number(this.data.currentQuestionIndex || 0) - 1);
+    this.setData({ currentQuestionIndex: next }, () => this.syncCurrentQuestion());
+  },
+
+  nextExamQuestion() {
+    const total = (this.data.questions || []).length;
+    const next = Math.min(Math.max(total - 1, 0), Number(this.data.currentQuestionIndex || 0) + 1);
+    this.setData({ currentQuestionIndex: next }, () => this.syncCurrentQuestion());
+  },
+
+  syncCurrentQuestion() {
+    const questions = this.data.questions || [];
+    const max = Math.max(questions.length - 1, 0);
+    const index = Math.max(0, Math.min(max, Number(this.data.currentQuestionIndex) || 0));
+    this.setData({
+      currentQuestionIndex: index,
+      currentQuestion: questions[index] || null,
+      isFirstQuestion: index <= 0,
+      isLastQuestion: index >= max
     });
   },
 
@@ -866,7 +968,15 @@ Page({
   },
 
   retryExam() {
-    this.setData({ examResult: null, questions: null, answeredCount: 0 });
+    this.setData({
+      examResult: null,
+      questions: null,
+      answeredCount: 0,
+      currentQuestionIndex: 0,
+      currentQuestion: null,
+      isFirstQuestion: true,
+      isLastQuestion: true
+    });
   },
 
   onCertInput(e) {
@@ -911,13 +1021,23 @@ Page({
     const value = e.detail.value;
     const labelKey = key === 'apDate' ? 'apDateLabel' : 'apTimeLabel';
     this.setData({ [key]: value, [labelKey]: value || (key === 'apDate' ? '请选择日期' : '请选择时间') });
+    this.announce(`${key === 'apDate' ? '约跑日期' : '约跑时间'}：${value || '未选择'}`);
+  },
+
+  announceAppointmentPicker(e) {
+    const dataset = (e && e.currentTarget && e.currentTarget.dataset) || {};
+    const voice = dataset.voice;
+    this.announce(voice);
   },
 
   selectVolunteer(e) {
     this.setData({ selectedVolunteerId: e.currentTarget.dataset.id });
+    const selected = (this.data.volunteers || []).find((item) => item._id === e.currentTarget.dataset.id);
+    if (selected) this.announce(`已选择志愿者：${selected.nickName || '志愿者'}`);
   },
 
   async useAppointmentLocation() {
+    this.announce('选择集合地点');
     let current = null;
     try {
       current = await loc.chooseAddress();
@@ -937,10 +1057,12 @@ Page({
       }
     }
     this.setData(next);
+    if (next.apAddress) this.announce(`集合地点：${next.apAddress}`);
   },
 
   async submitAppointment() {
     if (!this.data.selectedVolunteerId || !this.data.apDate || !this.data.apTime) {
+      this.announce('请选择志愿者、日期和时间');
       wx.showToast({ title: '请选择志愿者、日期和时间', icon: 'none' });
       return;
     }
@@ -968,7 +1090,9 @@ Page({
         apTimeLabel: '请选择时间'
       });
       wx.showToast({ title: '约跑邀请已发送', icon: 'success' });
+      this.announce('约跑邀请已发送，请等待志愿者确认');
     } catch (err) {
+      this.announce(err.message || '预约失败');
       wx.showToast({ title: err.message || '预约失败', icon: 'none' });
     }
   },
@@ -976,6 +1100,8 @@ Page({
   async appointmentAction(e) {
     const id = e.currentTarget.dataset.id;
     const action = e.currentTarget.dataset.action;
+    if (action === 'cancel') this.announce('取消约跑');
+    if (action === 'complete') this.announce('提交评价');
     try {
       if (action === 'confirm') await api.confirmAppointment(id);
       if (action === 'cancel') await api.cancelAppointment(id);
@@ -984,14 +1110,18 @@ Page({
         this.setData({ completingAppointmentId: '', apComment: '', apRating: 5 });
       }
       wx.showToast({ title: '操作成功', icon: 'success' });
+      if (action === 'cancel') this.announce('约跑已取消');
+      if (action === 'complete') this.announce('评价已提交');
       await this.loadAppointments();
     } catch (err) {
+      this.announce(err.message || '操作失败');
       wx.showToast({ title: err.message || '操作失败', icon: 'none' });
     }
   },
 
   openCompleteAppointment(e) {
     this.setData({ completingAppointmentId: e.currentTarget.dataset.id });
+    this.announce('完成并评价');
   },
 
   closeCompleteAppointment() {
@@ -999,7 +1129,14 @@ Page({
   },
 
   setRating(e) {
-    this.setData({ apRating: Number(e.currentTarget.dataset.value) });
+    const rating = Number(e.currentTarget.dataset.value);
+    this.setData({ apRating: rating });
+    this.announce(`${rating} 分`);
+  },
+
+  async refreshAppointments() {
+    this.announce('刷新约跑');
+    await this.loadAppointments();
   },
 
   async loadMine() {
@@ -1013,6 +1150,7 @@ Page({
 
   async saveProfile() {
     if (!this.data.mineNickName.trim()) {
+      this.announce('昵称不能为空');
       wx.showToast({ title: '昵称不能为空', icon: 'none' });
       return;
     }
@@ -1022,7 +1160,9 @@ Page({
       session.updateUser(updated);
       this.setData({ user: updated, avatarText: initial(updated.nickName) });
       wx.showToast({ title: '资料已更新', icon: 'success' });
+      this.announce('资料已更新');
     } catch (err) {
+      this.announce(err.message || '保存失败');
       wx.showToast({ title: err.message || '保存失败', icon: 'none' });
     } finally {
       this.setData({ savingProfile: false });
@@ -1031,6 +1171,7 @@ Page({
 
   async saveEmergency() {
     if (!this.data.emergencyName.trim() || !this.data.emergencyPhone.trim()) {
+      this.announce('请填写联系人姓名和电话');
       wx.showToast({ title: '请填写联系人姓名和电话', icon: 'none' });
       return;
     }
@@ -1050,7 +1191,9 @@ Page({
       session.updateUser(user);
       this.setData({ user, avatarText: initial(user.nickName) });
       wx.showToast({ title: '联系人已更新', icon: 'success' });
+      this.announce('联系人已更新');
     } catch (err) {
+      this.announce(err.message || '保存失败');
       wx.showToast({ title: err.message || '保存失败', icon: 'none' });
     } finally {
       this.setData({ savingEmergency: false });
@@ -1058,6 +1201,7 @@ Page({
   },
 
   async logout() {
+    this.announce('退出登录');
     const token = session.getToken();
     session.clearSession();
     wx.reLaunch({ url: '/pages/login/login' });
@@ -1070,6 +1214,31 @@ Page({
 
   noop() {
     /* used by catchtap */
+  },
+
+  announceTap(e) {
+    const dataset = (e && e.currentTarget && e.currentTarget.dataset) || {};
+    const voice = dataset.voice;
+    this.announce(voice);
+  },
+
+  announceInputFocus(e) {
+    const dataset = (e && e.currentTarget && e.currentTarget.dataset) || {};
+    const voice = dataset.voice;
+    this.announce(voice);
+  },
+
+  announceMineInput(e) {
+    const dataset = (e && e.currentTarget && e.currentTarget.dataset) || {};
+    const voice = dataset.voice;
+    this.announce(voice);
+  },
+
+  announce(message) {
+    const text = String(message || '').replace(/\s+/g, ' ').trim();
+    if (!text || this.data.isVolunteer) return;
+    this.setData({ voiceCue: text });
+    speakVoiceCue(text);
   }
 });
 
@@ -1080,16 +1249,39 @@ function initial(name) {
 function buildTabs(role) {
   const isVolunteer = role === 'volunteer';
   const eyebrow = isVolunteer ? '陪跑志愿者' : '视障跑者';
-  const third = isVolunteer
-    ? { key: 'training', label: '培训', icon: '培', eyebrow, title: '陪跑培训' }
-    : { key: 'orders', label: '订单', icon: '单', eyebrow, title: '我的订单' };
-  return [
-    { key: 'home', label: '首页', icon: '首', eyebrow, title: '向光奔跑' },
-    { key: 'sport', label: isVolunteer ? '接单' : '陪跑', icon: '跑', eyebrow, title: isVolunteer ? '接单广场' : '发起陪跑' },
-    third,
-    { key: 'appointments', label: '约跑', icon: '约', eyebrow, title: '约跑日程' },
-    { key: 'mine', label: '我的', icon: '我', eyebrow, title: '个人中心' }
+  const tabs = [
+    { key: 'home', label: '首页', eyebrow, title: '向光奔跑' },
+    { key: 'sport', label: isVolunteer ? '接单' : '陪跑', eyebrow, title: isVolunteer ? '接单广场' : '发起陪跑' },
+    ...(isVolunteer ? [{ key: 'training', label: '培训', eyebrow, title: '陪跑培训' }] : []),
+    { key: 'appointments', label: '约跑', eyebrow, title: '约跑日程' },
+    { key: 'mine', label: '我的', eyebrow, title: '个人中心' }
   ];
+  return tabs.map((item) => ({ ...item, ...TAB_ICONS[item.key] }));
+}
+
+function resolveHiddenTab(tabKey, role) {
+  if (tabKey !== 'orders' || role === 'volunteer') return null;
+  return { ...HIDDEN_TABS.orders, navKey: 'mine' };
+}
+
+function defaultEntryTab(role, user) {
+  if (role === 'volunteer' && !isVolunteerCertified(user)) return 'training';
+  return 'home';
+}
+
+function isVolunteerCertified(user) {
+  if (!user) return false;
+  return !!(user.certificateNo || user.certificationStatus === 'certified' || (user.videoWatched && user.examPassed));
+}
+
+function tabVoiceLabel(tabKey, headerTitle) {
+  if (tabKey === 'sport' && headerTitle === '接单广场') return '进入接单广场';
+  if (tabKey === 'sport') return '进入发起陪跑';
+  if (tabKey === 'appointments') return '进入约跑日程';
+  if (tabKey === 'mine') return '进入个人中心';
+  if (tabKey === 'orders') return '进入我的订单';
+  if (tabKey === 'training') return '进入陪跑培训';
+  return `进入${headerTitle || '页面'}`;
 }
 
 function buildHomeStats(user, stats) {

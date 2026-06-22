@@ -1,6 +1,7 @@
 const api = require('../../utils/api');
 const session = require('../../utils/session');
 const safeArea = require('../../utils/safe-area');
+const { speakVoiceCue } = require('../../utils/voice-player');
 
 const DEMO_ACCOUNTS = {
   disabled: {
@@ -20,6 +21,7 @@ Page({
     submitting: false,
     showPassword: false,
     error: '',
+    voiceCue: '',
 
     identifier: '',
     password: '',
@@ -46,15 +48,21 @@ Page({
   },
 
   setMode(e) {
-    this.setData({ mode: e.currentTarget.dataset.mode, error: '' });
+    const mode = e.currentTarget.dataset.mode;
+    this.setData({ mode, error: '' });
+    this.announce(mode === 'register' ? '注册' : '登录');
   },
 
   setRole(e) {
-    this.setData({ role: e.currentTarget.dataset.role, error: '' });
+    const role = e.currentTarget.dataset.role;
+    this.setData({ role, error: '' });
+    this.announce(role === 'volunteer' ? '我是陪跑志愿者' : '我是视障跑者');
   },
 
   togglePassword() {
-    this.setData({ showPassword: !this.data.showPassword });
+    const showPassword = !this.data.showPassword;
+    this.setData({ showPassword });
+    this.announce(showPassword ? '密码已显示' : '密码已隐藏');
   },
 
   onInput(e) {
@@ -66,6 +74,12 @@ Page({
     const key = e.currentTarget.dataset.key;
     const value = e.currentTarget.dataset.value;
     this.setData({ [key]: value });
+    const labels = {
+      hasMarathon: value === 'yes' ? '有马拉松经历' : '无马拉松经历',
+      hasFirstAid: value === 'yes' ? '持有急救证书' : '未持有急救证书',
+      hasCompanionExp: value === 'yes' ? '有陪跑经验' : '无陪跑经验'
+    };
+    this.announce(labels[key]);
   },
 
   async quickExperience(e) {
@@ -154,7 +168,21 @@ Page({
 
   fail(message) {
     this.setData({ error: message });
+    this.announce(message);
     wx.showToast({ title: message, icon: 'none' });
+  },
+
+  announceTap(e) {
+    const dataset = (e && e.currentTarget && e.currentTarget.dataset) || {};
+    const voice = dataset.voice;
+    this.announce(voice);
+  },
+
+  announce(message) {
+    const text = String(message || '').replace(/\s+/g, ' ').trim();
+    if (!text) return;
+    this.setData({ voiceCue: text });
+    speakVoiceCue(text);
   }
 });
 

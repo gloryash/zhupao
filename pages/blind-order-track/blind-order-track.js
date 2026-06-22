@@ -1,4 +1,5 @@
 const app = getApp();
+const fmt = require('../../utils/format');
 
 Page({
   data: {
@@ -50,11 +51,30 @@ Page({
         );
         if (activeOrder) {
           this._renderOrder({
+            ...activeOrder,
             id: activeOrder._id,
             blindPhone: '',
             blindName: activeOrder.userName,
-            blindLatitude: activeOrder.latitude,
-            blindLongitude: activeOrder.longitude,
+            blindLatitude: (() => {
+              const start = fmt.orderStart(activeOrder);
+              return (start && start.latitude) || activeOrder.latitude;
+            })(),
+            blindLongitude: (() => {
+              const start = fmt.orderStart(activeOrder);
+              return (start && start.longitude) || activeOrder.longitude;
+            })(),
+            startAddress: {
+              name: fmt.startAddress(activeOrder),
+              address: fmt.startAddress(activeOrder),
+              ...(fmt.orderStart(activeOrder) || {})
+            },
+            endAddress: fmt.destinationAddress(activeOrder)
+              ? {
+                  name: fmt.destinationAddress(activeOrder),
+                  address: fmt.destinationAddress(activeOrder),
+                  ...(fmt.orderDestination(activeOrder) || {})
+                }
+              : null,
             volunteerName: activeOrder.volunteerName,
             volunteerPhone: activeOrder.volunteerPhone,
             volunteerLat: activeOrder.volunteerLat || 0,
@@ -197,7 +217,15 @@ Page({
           },
         });
         // 终点红圆（若有 endAddress）
-        const endAddr = (myOrder.endAddress) || ((app.globalData.orderInfo || {}).endAddress);
+        const endAddr = myOrder.endAddress ||
+          (fmt.destinationAddress(myOrder)
+            ? {
+                name: fmt.destinationAddress(myOrder),
+                address: fmt.destinationAddress(myOrder),
+                ...(fmt.orderDestination(myOrder) || {})
+              }
+            : null) ||
+          ((app.globalData.orderInfo || {}).endAddress);
         if (endAddr && endAddr.latitude) {
           mapMarkers.push({
             id: 3,

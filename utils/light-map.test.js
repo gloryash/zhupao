@@ -79,6 +79,16 @@ test('stages use fixed challenge names and advance only after full-stage perfect
   assert.equal(perfectFirstStage.currentStage.routeNodes[0].label, '2-1');
 });
 
+test('first stage is named island mist forest for the dedicated visual demo', () => {
+  const state = lightMap.buildLightMapState({ completedRuns: 1 });
+
+  assert.equal(state.stages[0].id, 'island-mist-forest');
+  assert.equal(state.stages[0].name, '海岛雾林');
+  assert.equal(state.stages[0].shortName, '雾林');
+  assert.match(state.stages[0].summary, /海岛雾林/);
+  assert.match(state.stages[0].challenge, /短距离基础陪跑/);
+});
+
 test('scoreRunLight turns assist-run quality into one to three light stars', () => {
   assert.deepEqual(lightMap.scoreRunLight({
     routeFit: 96,

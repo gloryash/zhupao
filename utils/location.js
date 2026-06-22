@@ -29,7 +29,9 @@ function chooseAddress() {
         resolve({
           latitude: res.latitude,
           longitude: res.longitude,
+          name: res.name || '',
           address: res.address || res.name || '已选择位置',
+          detail: res.address || '',
           city: '',
           source: 'chooseLocation'
         });

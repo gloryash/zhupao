@@ -46,7 +46,162 @@
     <view class="terrain-shadow terrain-shadow--left"></view>
     <view class="terrain-shadow terrain-shadow--right"></view>
 
-    <view class="diorama-camera">
+    <view class="newbie-island-demo">
+      <view class="island-blue-saw-edge island-blue-saw-edge--top"></view>
+      <view class="island-blue-saw-edge island-blue-saw-edge--bottom"></view>
+
+      <view class="island-team-panel" bindtap="toggleRoomSheet">
+        <view class="island-team-pad island-team-pad--blue"></view>
+        <view class="island-team-pad island-team-pad--red"></view>
+        <view class="island-team-plus">+</view>
+        <text class="island-team-title">管理队伍</text>
+      </view>
+
+      <view class="island-map-frame">
+        <view class="diorama-camera newbie-island-camera">
+          <view class="newbie-island-board">
+            <view class="island-lake-mass">
+              <view class="lake-wave lake-wave--a"></view>
+              <view class="lake-wave lake-wave--b"></view>
+              <view class="lake-wave lake-wave--c"></view>
+              <view class="lake-rock lake-rock--a"></view>
+              <view class="lake-rock lake-rock--b"></view>
+              <view class="lake-buoy"></view>
+            </view>
+            <view class="island-grass-mass island-grass-mass--north">
+              <view class="pine-grove pine-grove--north">
+                <view class="scene-pine scene-pine--a"></view>
+                <view class="scene-pine scene-pine--b"></view>
+                <view class="scene-pine scene-pine--c"></view>
+                <view class="scene-pine scene-pine--d"></view>
+              </view>
+              <view class="wood-fence wood-fence--north"></view>
+            </view>
+            <view class="island-grass-mass island-grass-mass--south">
+              <view class="pine-grove pine-grove--south">
+                <view class="scene-pine scene-pine--a"></view>
+                <view class="scene-pine scene-pine--b"></view>
+                <view class="scene-pine scene-pine--c"></view>
+                <view class="scene-pine scene-pine--d"></view>
+                <view class="scene-pine scene-pine--e"></view>
+              </view>
+              <view class="low-hill"></view>
+            </view>
+            <view class="island-building-cluster">
+              <view class="blue-roof-building blue-roof-building--left"></view>
+              <view class="blue-roof-building blue-roof-building--right"></view>
+            </view>
+            <view class="roadside-flag roadside-flag--a"></view>
+            <view class="roadside-flag roadside-flag--b"></view>
+            <view class="red-kiosk"></view>
+
+            <view class="island-hex-field">
+              <view class="island-hex-tile is-locked island-hex-tile--r1c1"></view>
+              <view class="island-hex-tile is-locked island-hex-tile--r1c2"></view>
+              <view class="island-hex-tile is-lit island-hex-tile--r1c3">
+                <view class="hex-tree hex-tree--a"></view>
+                <view class="hex-tree hex-tree--b"></view>
+              </view>
+              <view class="island-hex-tile is-lit island-hex-tile--r1c4">
+                <view class="hex-house"></view>
+              </view>
+              <view class="island-hex-tile is-locked island-hex-tile--r1c5"></view>
+
+              <view class="island-hex-tile is-locked island-hex-tile--r2c1"></view>
+              <view class="island-hex-tile is-lit island-hex-tile--r2c2">
+                <view class="hex-tree hex-tree--a"></view>
+                <view class="hex-rock"></view>
+              </view>
+              <view class="island-hex-tile is-lit island-lake-tile island-hex-tile--r2c3">
+                <view class="lake-spark lake-spark--a"></view>
+                <view class="lake-spark lake-spark--b"></view>
+              </view>
+              <view class="island-hex-tile is-lit island-lake-tile island-hex-tile--r2c4"></view>
+              <view class="island-hex-tile is-locked island-hex-tile--r2c5"></view>
+
+              <view class="island-hex-tile is-lit island-hex-tile--r3c1">
+                <view class="hex-lamp"></view>
+              </view>
+              <view class="island-hex-tile is-lit island-lake-tile island-hex-tile--r3c2"></view>
+              <view class="island-hex-tile is-lit island-hex-tile--r3c3">
+                <view class="hex-dock"></view>
+              </view>
+              <view class="island-hex-tile is-lit island-hex-tile--r3c4">
+                <view class="hex-tree hex-tree--a"></view>
+                <view class="hex-tree hex-tree--b"></view>
+                <view class="hex-tree hex-tree--c"></view>
+              </view>
+              <view class="island-hex-tile is-locked island-hex-tile--r3c5"></view>
+
+              <view class="island-hex-tile is-locked island-hex-tile--r4c1"></view>
+              <view class="island-hex-tile is-lit island-hex-tile--r4c2">
+                <view class="hex-shop"></view>
+              </view>
+              <view class="island-hex-tile is-lit island-hex-tile--r4c3"></view>
+              <view class="island-hex-tile is-lit island-hex-tile--r4c4">
+                <view class="hex-tree hex-tree--a"></view>
+              </view>
+              <view class="island-hex-tile is-locked island-hex-tile--r4c5"></view>
+            </view>
+
+            <view class="island-main-road">
+              <view class="island-road-track island-road-track--a"><view class="island-road-shine"></view></view>
+              <view class="island-road-track island-road-track--b"><view class="island-road-shine"></view></view>
+              <view class="island-road-track island-road-track--c"><view class="island-road-shine"></view></view>
+              <view class="island-road-track island-road-track--d"><view class="island-road-shine"></view></view>
+              <view class="island-road-joint island-road-joint--a"></view>
+              <view class="island-road-joint island-road-joint--b"></view>
+              <view class="island-road-joint island-road-joint--c"></view>
+              <view class="island-road-joint island-road-joint--d"></view>
+              <view class="island-road-joint island-road-joint--e"></view>
+            </view>
+
+            <view class="stage-focus-label stage-focus-label--one-two">1-2</view>
+            <view class="stage-focus-label stage-focus-label--one-three">1-3</view>
+            <view class="stage-focus-label stage-focus-label--one-four">1-4</view>
+
+            <view
+              wx:for="{{demoStage.routeNodes}}"
+              wx:key="id"
+              class="island-stage-node island-stage-node--{{item.key}} route-node--{{item.status}}"
+              bindtap="showNodeProgress"
+              data-index="{{index}}"
+            >
+              <view class="island-stage-node-disc">
+                <text class="island-stage-node-label">{{item.label}}</text>
+                <view class="island-stage-node-stars">
+                  <text
+                    wx:for="{{item.starTokens}}"
+                    wx:for-item="star"
+                    wx:key="id"
+                    class="island-stage-node-star {{star.filled ? 'is-filled' : ''}}"
+                  >★</text>
+                </view>
+              </view>
+            </view>
+
+            <view class="guide-dog-carrier guide-dog-carrier--{{demoStage.carrierKey}}">
+              <view class="guide-dog-light"></view>
+              <view class="runner-silhouette">
+                <view class="runner-head"></view>
+                <view class="runner-body"></view>
+                <view class="runner-cane"></view>
+              </view>
+              <view class="guide-dog-leash"></view>
+              <view class="guide-dog-body">
+                <view class="guide-dog-head"></view>
+                <view class="guide-dog-ear"></view>
+                <view class="guide-dog-tail"></view>
+                <view class="guide-dog-leg guide-dog-leg--a"></view>
+                <view class="guide-dog-leg guide-dog-leg--b"></view>
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view wx:if="{{false}}" class="diorama-camera">
       <view class="terrain-island">
         <view class="ground-ring ground-ring--outer"></view>
         <view class="ground-ring ground-ring--middle"></view>

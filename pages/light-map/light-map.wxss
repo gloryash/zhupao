@@ -277,6 +277,1449 @@ page {
   perspective: 1800rpx;
 }
 
+.newbie-island-demo {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  overflow: hidden;
+  background: #d59a3a;
+}
+
+.island-blue-saw-edge {
+  position: absolute;
+  z-index: 12;
+  left: -42rpx;
+  right: -42rpx;
+  height: 56rpx;
+  pointer-events: none;
+  background:
+    linear-gradient(135deg, #13a8df 25%, transparent 25%) 0 0 / 42rpx 42rpx repeat-x,
+    linear-gradient(225deg, #13a8df 25%, transparent 25%) 21rpx 0 / 42rpx 42rpx repeat-x,
+    linear-gradient(180deg, #1fb6ef, #0a83c8);
+  box-shadow: 0 6rpx 0 rgba(5, 92, 150, 0.42);
+}
+
+.island-blue-saw-edge--top {
+  top: calc(var(--status-bar-height, 0px) + 84rpx);
+  transform: rotate(180deg);
+}
+
+.island-blue-saw-edge--bottom {
+  bottom: calc(var(--safe-bottom, 0px) + 8rpx);
+}
+
+.island-team-panel {
+  position: absolute;
+  z-index: 23;
+  top: calc(var(--status-bar-height, 0px) + 104rpx);
+  right: 18rpx;
+  width: 244rpx;
+  min-height: 104rpx;
+  padding: 16rpx 18rpx 14rpx;
+  box-sizing: border-box;
+  border: 5rpx solid rgba(155, 223, 255, 0.88);
+  background: linear-gradient(180deg, #168be0, #075aaf);
+  color: #fff7de;
+  box-shadow: 0 9rpx 0 #06447f, 0 18rpx 36rpx rgba(15, 52, 85, 0.34);
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.island-team-pad {
+  position: relative;
+  width: 48rpx;
+  height: 33rpx;
+  border-radius: 16rpx 16rpx 10rpx 10rpx;
+  background: #f8fcff;
+  border: 4rpx solid rgba(255, 255, 255, 0.7);
+  box-shadow: 0 7rpx 0 rgba(3, 47, 84, 0.28);
+}
+
+.island-team-pad::before,
+.island-team-pad::after {
+  content: "";
+  position: absolute;
+  bottom: -10rpx;
+  width: 18rpx;
+  height: 18rpx;
+  border-radius: 50%;
+  background: inherit;
+  border: inherit;
+}
+
+.island-team-pad::before { left: 2rpx; }
+.island-team-pad::after { right: 2rpx; }
+
+.island-team-pad--red {
+  background: #df4945;
+}
+
+.island-team-plus {
+  width: 38rpx;
+  height: 38rpx;
+  border-radius: 8rpx;
+  border: 4rpx solid rgba(255, 255, 255, 0.54);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 30rpx;
+  font-weight: 950;
+  color: rgba(255, 255, 255, 0.76);
+}
+
+.island-team-title {
+  position: absolute;
+  left: 18rpx;
+  bottom: -36rpx;
+  padding: 4rpx 10rpx;
+  border-radius: 999rpx;
+  background: rgba(8, 78, 136, 0.9);
+  font-size: 20rpx;
+  line-height: 1.15;
+  font-weight: 900;
+}
+
+.island-map-frame {
+  position: absolute;
+  z-index: 7;
+  left: -120rpx;
+  right: -120rpx;
+  top: calc(var(--status-bar-height, 0px) + 74rpx);
+  bottom: calc(var(--safe-bottom, 0px) - 32rpx);
+  overflow: hidden;
+  perspective: 5200rpx;
+}
+
+.island-cut-edge {
+  position: absolute;
+  z-index: 20;
+  left: -40rpx;
+  right: -40rpx;
+  height: 54rpx;
+  background:
+    linear-gradient(135deg, #0d9ed8 25%, transparent 25%) 0 0 / 42rpx 42rpx repeat-x,
+    linear-gradient(225deg, #0d9ed8 25%, transparent 25%) 21rpx 0 / 42rpx 42rpx repeat-x;
+  opacity: 0.92;
+}
+
+.island-cut-edge--top {
+  top: 0;
+  transform: rotate(180deg);
+}
+
+.island-cut-edge--bottom {
+  bottom: 0;
+}
+
+.newbie-island-camera {
+  top: 58%;
+  width: 1480rpx;
+  height: 1120rpx;
+  transform: translate(-50%, -50%) rotateX(34deg) rotateZ(-45deg);
+  transform-origin: 50% 52%;
+  perspective: 5200rpx;
+}
+
+.newbie-island-board {
+  position: absolute;
+  inset: 0;
+  border-radius: 30rpx;
+  overflow: hidden;
+  background: #d59a3a;
+  background-image:
+    radial-gradient(circle at 50% 0%, transparent 36rpx, rgba(132, 91, 31, 0.28) 37rpx, rgba(132, 91, 31, 0.28) 40rpx, transparent 41rpx),
+    radial-gradient(circle at 50% 100%, transparent 36rpx, rgba(132, 91, 31, 0.24) 37rpx, rgba(132, 91, 31, 0.24) 40rpx, transparent 41rpx);
+  background-size: 126rpx 60rpx, 126rpx 60rpx;
+  background-position: 0 0, 63rpx 30rpx;
+  box-shadow:
+    0 18rpx 0 #9d6f2c,
+    0 36rpx 52rpx rgba(92, 58, 21, 0.2),
+    inset 0 0 0 8rpx rgba(255, 231, 161, 0.16);
+}
+
+.island-lake-mass {
+  position: absolute;
+  z-index: 3;
+  left: 300rpx;
+  top: 160rpx;
+  width: 620rpx;
+  height: 430rpx;
+  border-radius: 44% 56% 48% 52%;
+  background:
+    radial-gradient(circle at 26% 30%, rgba(255, 255, 255, 0.34) 0 5%, transparent 6%),
+    radial-gradient(circle at 76% 68%, rgba(0, 126, 164, 0.24) 0 13%, transparent 14%),
+    linear-gradient(145deg, #4ee3e7 0%, #15b8d2 54%, #097fba 100%);
+  border: 8rpx solid rgba(7, 105, 145, 0.5);
+  box-shadow:
+    inset 0 -18rpx 0 rgba(5, 91, 139, 0.14),
+    0 10rpx 0 rgba(7, 92, 120, 0.16);
+}
+
+.lake-wave {
+  position: absolute;
+  height: 11rpx;
+  border-radius: 999rpx;
+  background: rgba(255, 255, 255, 0.58);
+}
+
+.lake-wave--a {
+  left: 115rpx;
+  top: 116rpx;
+  width: 148rpx;
+  transform: rotate(-10deg);
+}
+
+.lake-wave--b {
+  right: 142rpx;
+  top: 260rpx;
+  width: 116rpx;
+  transform: rotate(-13deg);
+}
+
+.lake-wave--c {
+  left: 300rpx;
+  top: 332rpx;
+  width: 74rpx;
+  transform: rotate(-9deg);
+}
+
+.lake-rock {
+  position: absolute;
+  border-radius: 45% 55% 42% 48%;
+  background: linear-gradient(180deg, #d4bc89, #805d36);
+  box-shadow: 0 6rpx 0 rgba(72, 49, 29, 0.22);
+}
+
+.lake-rock--a {
+  left: 22rpx;
+  top: 254rpx;
+  width: 58rpx;
+  height: 34rpx;
+}
+
+.lake-rock--b {
+  right: 58rpx;
+  top: 202rpx;
+  width: 46rpx;
+  height: 30rpx;
+}
+
+.lake-buoy {
+  position: absolute;
+  left: 248rpx;
+  top: 284rpx;
+  width: 28rpx;
+  height: 38rpx;
+  border-radius: 50% 50% 44% 44%;
+  background: linear-gradient(180deg, #fff6dd 0 34%, #e23e30 34% 70%, #fff6dd 70%);
+  border: 4rpx solid rgba(117, 49, 30, 0.72);
+  transform: rotateZ(45deg) rotateX(-34deg) translateZ(32rpx);
+  box-shadow: 0 8rpx 0 rgba(18, 78, 103, 0.26);
+}
+
+.island-grass-mass {
+  position: absolute;
+  z-index: 4;
+  background:
+    radial-gradient(circle at 38% 18%, rgba(226, 255, 116, 0.42), transparent 23%),
+    linear-gradient(145deg, #a7ee54 0%, #62cf42 50%, #2eab43 100%);
+  box-shadow:
+    inset 0 -16rpx 0 rgba(28, 118, 44, 0.14),
+    0 10rpx 0 rgba(58, 113, 35, 0.14);
+}
+
+.island-grass-mass--north {
+  left: 455rpx;
+  top: 74rpx;
+  width: 500rpx;
+  height: 230rpx;
+  border-radius: 46% 54% 42% 58%;
+}
+
+.island-grass-mass--south {
+  left: 560rpx;
+  top: 520rpx;
+  width: 620rpx;
+  height: 320rpx;
+  border-radius: 48% 52% 46% 54%;
+}
+
+.pine-grove,
+.scene-pine,
+.wood-fence,
+.low-hill,
+.island-building-cluster,
+.roadside-flag,
+.red-kiosk {
+  position: absolute;
+  transform: rotateZ(45deg) rotateX(-34deg) translateZ(56rpx);
+  transform-style: preserve-3d;
+}
+
+.pine-grove--north {
+  left: 150rpx;
+  top: 46rpx;
+  width: 190rpx;
+  height: 120rpx;
+}
+
+.pine-grove--south {
+  left: 358rpx;
+  top: 94rpx;
+  width: 230rpx;
+  height: 150rpx;
+}
+
+.scene-pine {
+  width: 42rpx;
+  height: 62rpx;
+  border-radius: 18rpx 18rpx 10rpx 10rpx;
+  background: linear-gradient(180deg, #36c95d 0 35%, #1f9a4b 35% 68%, #14723d 68%);
+  border: 3rpx solid rgba(45, 81, 39, 0.32);
+  clip-path: polygon(50% 0, 86% 34%, 70% 34%, 96% 65%, 73% 65%, 84% 100%, 16% 100%, 27% 65%, 4% 65%, 30% 34%, 14% 34%);
+  box-shadow: inset -5rpx -6rpx 0 rgba(0, 0, 0, 0.08);
+}
+
+.scene-pine--a { left: 0; top: 44rpx; }
+.scene-pine--b { left: 42rpx; top: 12rpx; transform: scale(1.08); }
+.scene-pine--c { left: 86rpx; top: 44rpx; transform: scale(0.86); }
+.scene-pine--d { left: 128rpx; top: 26rpx; transform: scale(0.78); }
+.scene-pine--e { left: 176rpx; top: 62rpx; transform: scale(0.84); }
+
+.wood-fence {
+  left: 254rpx;
+  top: 138rpx;
+  width: 112rpx;
+  height: 28rpx;
+  border-radius: 999rpx;
+  background: repeating-linear-gradient(90deg, #865f36 0 18rpx, #e5bd6b 18rpx 34rpx);
+  box-shadow: 0 5rpx 0 rgba(86, 58, 31, 0.26);
+}
+
+.low-hill {
+  right: -6rpx;
+  bottom: -10rpx;
+  width: 185rpx;
+  height: 86rpx;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #a46c39, #765130);
+  box-shadow: inset 0 14rpx 0 rgba(255, 215, 129, 0.12);
+}
+
+.island-building-cluster {
+  z-index: 13;
+  left: 980rpx;
+  top: 660rpx;
+  width: 190rpx;
+  height: 126rpx;
+}
+
+.blue-roof-building {
+  position: absolute;
+  bottom: 8rpx;
+  width: 82rpx;
+  height: 72rpx;
+  border-radius: 10rpx;
+  background: #dfe5e6;
+  border: 5rpx solid #56636f;
+  box-shadow: 0 9rpx 0 #56636f, inset -6rpx -6rpx 0 rgba(74, 90, 103, 0.12);
+}
+
+.blue-roof-building::before {
+  content: "";
+  position: absolute;
+  left: -6rpx;
+  top: -31rpx;
+  width: 86rpx;
+  height: 36rpx;
+  border-radius: 10rpx 10rpx 5rpx 5rpx;
+  background: linear-gradient(180deg, #a9d7ff, #4e8dd8);
+  border: 5rpx solid #56636f;
+}
+
+.blue-roof-building::after {
+  content: "";
+  position: absolute;
+  left: 24rpx;
+  top: 24rpx;
+  width: 26rpx;
+  height: 22rpx;
+  border-radius: 5rpx;
+  background: #f6fbff;
+  border: 3rpx solid #56636f;
+}
+
+.blue-roof-building--left { left: 4rpx; }
+.blue-roof-building--right { right: 8rpx; bottom: 20rpx; }
+
+.roadside-flag {
+  z-index: 12;
+  width: 52rpx;
+  height: 78rpx;
+}
+
+.roadside-flag::before {
+  content: "";
+  position: absolute;
+  left: 23rpx;
+  top: 4rpx;
+  width: 7rpx;
+  height: 68rpx;
+  border-radius: 999rpx;
+  background: #494d42;
+}
+
+.roadside-flag::after {
+  content: "";
+  position: absolute;
+  left: 30rpx;
+  top: 9rpx;
+  width: 44rpx;
+  height: 26rpx;
+  border-radius: 4rpx 18rpx 18rpx 4rpx;
+  background: linear-gradient(180deg, #fff7dd 0 34%, #e5392e 34% 68%, #fff7dd 68%);
+  border: 3rpx solid #684324;
+}
+
+.roadside-flag--a { left: 700rpx; top: 545rpx; }
+.roadside-flag--b { left: 872rpx; top: 720rpx; }
+
+.red-kiosk {
+  z-index: 12;
+  left: 480rpx;
+  top: 705rpx;
+  width: 82rpx;
+  height: 66rpx;
+  border-radius: 8rpx;
+  background: #fff1bf;
+  border: 4rpx solid #80512e;
+  box-shadow: 0 7rpx 0 #80512e;
+}
+
+.red-kiosk::before {
+  content: "";
+  position: absolute;
+  left: -8rpx;
+  top: -26rpx;
+  width: 96rpx;
+  height: 32rpx;
+  border-radius: 12rpx 12rpx 5rpx 5rpx;
+  background: #ef5b3d;
+  border: 4rpx solid #80512e;
+}
+
+.stage-focus-label {
+  position: absolute;
+  z-index: 14;
+  color: #fffaf0;
+  font-size: 42rpx;
+  line-height: 1;
+  font-weight: 950;
+  transform: rotateZ(45deg) rotateX(-34deg) translateZ(78rpx);
+  text-shadow:
+    0 4rpx 0 rgba(54, 44, 25, 0.62),
+    4rpx 0 0 rgba(54, 44, 25, 0.45),
+    -4rpx 0 0 rgba(54, 44, 25, 0.45);
+}
+
+.stage-focus-label--one-two {
+  left: 612rpx;
+  top: 392rpx;
+}
+
+.stage-focus-label--one-three {
+  left: 754rpx;
+  top: 512rpx;
+}
+
+.stage-focus-label--one-four {
+  left: 940rpx;
+  top: 630rpx;
+}
+
+.island-hex-field {
+  position: absolute;
+  z-index: 4;
+  left: 152rpx;
+  top: 126rpx;
+  width: 1180rpx;
+  height: 850rpx;
+}
+
+.island-hex-tile {
+  position: absolute;
+  width: 186rpx;
+  height: 88rpx;
+  clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%);
+  background-size: 126rpx 60rpx;
+  background-position: center;
+  box-shadow:
+    inset 0 -10rpx 0 rgba(42, 32, 22, 0.18),
+    0 8rpx 0 rgba(59, 44, 29, 0.24);
+}
+
+.island-hex-tile.is-lit {
+  background:
+    radial-gradient(circle at 45% 23%, rgba(245, 255, 163, 0.42), transparent 32%),
+    linear-gradient(180deg, #91e85d, #36b848);
+  box-shadow:
+    inset 0 -10rpx 0 rgba(32, 128, 48, 0.22),
+    0 8rpx 0 rgba(37, 116, 45, 0.34),
+    0 0 26rpx rgba(120, 239, 96, 0.26);
+}
+
+.island-hex-tile.is-locked {
+  background: #735c3d;
+  filter: saturate(0.82) brightness(0.86);
+}
+
+.island-lake-tile.is-lit {
+  background:
+    radial-gradient(circle at 35% 28%, rgba(255, 255, 255, 0.52), transparent 19%),
+    linear-gradient(145deg, #5fe2ee, #13aed0 55%, #0a80bc);
+  box-shadow:
+    inset 0 -10rpx 0 rgba(7, 87, 133, 0.2),
+    0 8rpx 0 rgba(15, 93, 117, 0.25);
+}
+
+.island-hex-tile--r1c1 { left: 40rpx; top: 56rpx; }
+.island-hex-tile--r1c2 { left: 224rpx; top: 56rpx; }
+.island-hex-tile--r1c3 { left: 408rpx; top: 56rpx; }
+.island-hex-tile--r1c4 { left: 592rpx; top: 56rpx; }
+.island-hex-tile--r1c5 { left: 776rpx; top: 56rpx; }
+.island-hex-tile--r2c1 { left: 132rpx; top: 144rpx; }
+.island-hex-tile--r2c2 { left: 316rpx; top: 144rpx; }
+.island-hex-tile--r2c3 { left: 500rpx; top: 144rpx; }
+.island-hex-tile--r2c4 { left: 684rpx; top: 144rpx; }
+.island-hex-tile--r2c5 { left: 868rpx; top: 144rpx; }
+.island-hex-tile--r3c1 { left: 40rpx; top: 232rpx; }
+.island-hex-tile--r3c2 { left: 224rpx; top: 232rpx; }
+.island-hex-tile--r3c3 { left: 408rpx; top: 232rpx; }
+.island-hex-tile--r3c4 { left: 592rpx; top: 232rpx; }
+.island-hex-tile--r3c5 { left: 776rpx; top: 232rpx; }
+.island-hex-tile--r4c1 { left: 132rpx; top: 320rpx; }
+.island-hex-tile--r4c2 { left: 316rpx; top: 320rpx; }
+.island-hex-tile--r4c3 { left: 500rpx; top: 320rpx; }
+.island-hex-tile--r4c4 { left: 684rpx; top: 320rpx; }
+.island-hex-tile--r4c5 { left: 868rpx; top: 320rpx; }
+
+.lake-spark {
+  position: absolute;
+  height: 8rpx;
+  border-radius: 999rpx;
+  background: rgba(255, 255, 255, 0.66);
+}
+
+.lake-spark--a {
+  left: 52rpx;
+  top: 32rpx;
+  width: 58rpx;
+  transform: rotate(-10deg);
+}
+
+.lake-spark--b {
+  left: 102rpx;
+  top: 50rpx;
+  width: 34rpx;
+  transform: rotate(-13deg);
+}
+
+.hex-tree,
+.hex-rock,
+.hex-house,
+.hex-shop,
+.hex-lamp,
+.hex-dock {
+  position: absolute;
+  transform: rotateZ(45deg) rotateX(-34deg) translateZ(42rpx);
+}
+
+.hex-tree {
+  width: 34rpx;
+  height: 52rpx;
+  border-radius: 18rpx 18rpx 10rpx 10rpx;
+  background: linear-gradient(180deg, #44c85b, #177b3b);
+  border: 3rpx solid rgba(44, 92, 42, 0.35);
+  clip-path: polygon(50% 0, 84% 34%, 69% 34%, 94% 67%, 72% 67%, 82% 100%, 18% 100%, 28% 67%, 6% 67%, 31% 34%, 16% 34%);
+}
+
+.hex-tree--a { left: 62rpx; top: 12rpx; }
+.hex-tree--b { left: 102rpx; top: 22rpx; transform: rotateZ(45deg) rotateX(-34deg) translateZ(42rpx) scale(0.84); }
+.hex-tree--c { left: 24rpx; top: 26rpx; transform: rotateZ(45deg) rotateX(-34deg) translateZ(42rpx) scale(0.75); }
+
+.hex-rock {
+  left: 110rpx;
+  top: 46rpx;
+  width: 42rpx;
+  height: 26rpx;
+  border-radius: 45% 55% 40% 48%;
+  background: linear-gradient(180deg, #d4bd8a, #8a653a);
+  box-shadow: 0 5rpx 0 rgba(82, 56, 31, 0.26);
+}
+
+.hex-house,
+.hex-shop {
+  left: 56rpx;
+  top: 14rpx;
+  width: 70rpx;
+  height: 52rpx;
+  border-radius: 10rpx;
+  background: #fff1bd;
+  border: 4rpx solid #765031;
+  box-shadow: 0 7rpx 0 #765031;
+}
+
+.hex-house::before,
+.hex-shop::before {
+  content: "";
+  position: absolute;
+  left: -8rpx;
+  top: -24rpx;
+  width: 86rpx;
+  height: 30rpx;
+  border-radius: 12rpx 12rpx 5rpx 5rpx;
+  background: #ef5b3d;
+  border: 4rpx solid #765031;
+}
+
+.hex-shop {
+  background: #f7f2d2;
+}
+
+.hex-shop::before {
+  background: repeating-linear-gradient(90deg, #f05d44 0 14rpx, #fff1d0 14rpx 28rpx);
+}
+
+.hex-lamp {
+  left: 84rpx;
+  top: 10rpx;
+  width: 10rpx;
+  height: 58rpx;
+  border-radius: 999rpx;
+  background: #5a472f;
+}
+
+.hex-lamp::before {
+  content: "";
+  position: absolute;
+  left: -15rpx;
+  top: -10rpx;
+  width: 40rpx;
+  height: 30rpx;
+  border-radius: 50%;
+  background: #ffdf6d;
+  box-shadow: 0 0 30rpx rgba(255, 221, 109, 0.68);
+}
+
+.hex-dock {
+  left: 34rpx;
+  top: 38rpx;
+  width: 116rpx;
+  height: 16rpx;
+  border-radius: 999rpx;
+  background: repeating-linear-gradient(90deg, #85613a 0 16rpx, #e8c476 16rpx 31rpx);
+  box-shadow: 0 5rpx 0 rgba(91, 61, 31, 0.34);
+}
+
+.island-main-road {
+  position: absolute;
+  z-index: 8;
+  inset: 0;
+}
+
+.island-road-track {
+  position: absolute;
+  height: 62rpx;
+  border-radius: 999rpx;
+  background: linear-gradient(180deg, #ffe36a, #e7ae37);
+  border: 4rpx solid rgba(126, 82, 28, 0.32);
+  box-shadow: 0 8rpx 0 rgba(130, 82, 26, 0.36);
+}
+
+.island-road-shine {
+  position: absolute;
+  left: 24rpx;
+  right: 24rpx;
+  top: 14rpx;
+  height: 8rpx;
+  border-radius: 999rpx;
+  background: rgba(255, 255, 255, 0.42);
+}
+
+.island-road-track--a {
+  left: 430rpx;
+  top: 270rpx;
+  width: 250rpx;
+  transform: rotate(92deg);
+}
+
+.island-road-track--b {
+  left: 485rpx;
+  top: 420rpx;
+  width: 340rpx;
+  transform: rotate(18deg);
+}
+
+.island-road-track--c {
+  left: 748rpx;
+  top: 530rpx;
+  width: 250rpx;
+  transform: rotate(64deg);
+}
+
+.island-road-track--d {
+  left: 868rpx;
+  top: 690rpx;
+  width: 268rpx;
+  transform: rotate(2deg);
+}
+
+.island-road-joint {
+  position: absolute;
+  width: 82rpx;
+  height: 82rpx;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #ffe977, #e5ac36 70%);
+  border: 4rpx solid rgba(126, 82, 28, 0.32);
+  box-shadow: 0 8rpx 0 rgba(130, 82, 26, 0.34);
+}
+
+.island-road-joint--a { left: 520rpx; top: 228rpx; }
+.island-road-joint--b { left: 520rpx; top: 390rpx; }
+.island-road-joint--c { left: 720rpx; top: 456rpx; }
+.island-road-joint--d { left: 865rpx; top: 600rpx; }
+.island-road-joint--e { left: 1040rpx; top: 690rpx; }
+
+.island-locked-hexfield {
+  position: absolute;
+  background-color: #5f5549;
+  background-image:
+    linear-gradient(30deg, transparent 45%, rgba(42, 34, 27, 0.58) 46% 50%, transparent 51%),
+    linear-gradient(150deg, transparent 45%, rgba(42, 34, 27, 0.58) 46% 50%, transparent 51%),
+    linear-gradient(90deg, transparent 47%, rgba(42, 34, 27, 0.42) 48% 50%, transparent 51%);
+  background-size: 126rpx 60rpx;
+  background-position: 0 0;
+}
+
+.island-locked-hexfield--base {
+  inset: 0;
+}
+
+.island-locked-hexfield--left {
+  left: -70rpx;
+  top: -10rpx;
+  width: 390rpx;
+  height: 880rpx;
+  background-color: #50473e;
+  filter: brightness(0.78) saturate(0.82);
+}
+
+.island-locked-hexfield--right {
+  right: -45rpx;
+  top: 24rpx;
+  width: 430rpx;
+  height: 570rpx;
+  background-color: #695d4d;
+}
+
+.island-locked-hexfield--south {
+  right: -40rpx;
+  bottom: -20rpx;
+  width: 590rpx;
+  height: 260rpx;
+  background-color: #453d34;
+  filter: brightness(0.72) saturate(0.78);
+}
+
+.island-water {
+  position: absolute;
+  z-index: 3;
+  left: 250rpx;
+  top: 185rpx;
+  width: 820rpx;
+  height: 610rpx;
+  border-radius: 44% 56% 47% 53%;
+  background:
+    radial-gradient(circle at 30% 22%, rgba(255, 255, 255, 0.32) 0 5%, transparent 6%),
+    radial-gradient(circle at 78% 66%, rgba(0, 122, 167, 0.24) 0 12%, transparent 13%),
+    linear-gradient(145deg, #36e3e7 0%, #13b8d0 48%, #087db3 100%);
+  border: 8rpx solid rgba(7, 109, 146, 0.7);
+  box-shadow:
+    inset 0 -28rpx 0 rgba(2, 91, 135, 0.18),
+    0 12rpx 0 rgba(1, 83, 113, 0.18);
+}
+
+.island-water-shine {
+  position: absolute;
+  height: 12rpx;
+  border-radius: 999rpx;
+  background: rgba(255, 255, 255, 0.54);
+}
+
+.island-water-shine--a {
+  left: 160rpx;
+  top: 152rpx;
+  width: 170rpx;
+  transform: rotate(-10deg);
+}
+
+.island-water-shine--b {
+  left: 360rpx;
+  top: 305rpx;
+  width: 110rpx;
+  transform: rotate(-15deg);
+}
+
+.island-buoy {
+  position: absolute;
+  left: 225rpx;
+  top: 308rpx;
+  width: 26rpx;
+  height: 34rpx;
+  border-radius: 50% 50% 44% 44%;
+  background: linear-gradient(180deg, #fff6dd 0 34%, #e04431 34% 70%, #fff6dd 70%);
+  border: 4rpx solid rgba(117, 49, 30, 0.72);
+  transform: rotateZ(45deg) rotateX(-34deg) translateZ(34rpx);
+  box-shadow: 0 8rpx 0 rgba(22, 80, 105, 0.32);
+}
+
+.island-reeds {
+  position: absolute;
+  width: 96rpx;
+  height: 70rpx;
+  background:
+    linear-gradient(76deg, transparent 42%, #6d4e2c 43% 48%, transparent 49%),
+    linear-gradient(100deg, transparent 47%, #7d5d31 48% 53%, transparent 54%),
+    linear-gradient(118deg, transparent 50%, #4d7f43 51% 56%, transparent 57%);
+}
+
+.island-reeds--a {
+  left: 40rpx;
+  top: 340rpx;
+  transform: rotate(-18deg);
+}
+
+.island-reeds--b {
+  right: -14rpx;
+  top: 318rpx;
+  transform: rotate(14deg);
+}
+
+.island-greenland {
+  position: absolute;
+  z-index: 4;
+  background:
+    radial-gradient(circle at 35% 22%, rgba(202, 255, 99, 0.46), transparent 24%),
+    linear-gradient(30deg, transparent 45%, rgba(47, 145, 54, 0.2) 46% 50%, transparent 51%),
+    linear-gradient(150deg, transparent 45%, rgba(47, 145, 54, 0.2) 46% 50%, transparent 51%),
+    linear-gradient(145deg, #a6f047 0%, #54c83e 48%, #24a846 100%);
+  background-size: auto, 126rpx 60rpx, 126rpx 60rpx, auto;
+  box-shadow:
+    inset 0 -18rpx 0 rgba(30, 119, 47, 0.17),
+    0 12rpx 0 rgba(63, 109, 34, 0.18);
+}
+
+.island-greenland--north {
+  left: 560rpx;
+  top: 130rpx;
+  width: 540rpx;
+  height: 260rpx;
+  border-radius: 46% 54% 42% 58%;
+}
+
+.island-greenland--south {
+  left: 575rpx;
+  top: 680rpx;
+  width: 650rpx;
+  height: 320rpx;
+  border-radius: 48% 52% 46% 54%;
+}
+
+.island-greenland--east {
+  right: 160rpx;
+  top: 550rpx;
+  width: 390rpx;
+  height: 260rpx;
+  border-radius: 44% 56% 42% 58%;
+}
+
+.island-greenland--west {
+  left: 300rpx;
+  top: 365rpx;
+  width: 270rpx;
+  height: 250rpx;
+  border-radius: 42% 58% 52% 48%;
+}
+
+.island-cliff {
+  position: absolute;
+  z-index: 5;
+  width: 205rpx;
+  height: 86rpx;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #9f6730, #624221);
+  box-shadow: inset 0 20rpx 0 rgba(255, 221, 137, 0.12);
+}
+
+.island-cliff--east {
+  right: 150rpx;
+  bottom: 95rpx;
+  transform: rotate(15deg);
+}
+
+.island-cliff--west {
+  left: 180rpx;
+  top: 275rpx;
+  transform: rotate(-28deg);
+}
+
+.island-yellow-road {
+  position: absolute;
+  z-index: 8;
+  height: 72rpx;
+  border-radius: 999rpx;
+  background: linear-gradient(180deg, #ffe66d, #eab53c);
+  border: 5rpx solid rgba(142, 96, 35, 0.34);
+  box-shadow: 0 10rpx 0 rgba(151, 91, 24, 0.45);
+  overflow: hidden;
+}
+
+.island-road-glint {
+  position: absolute;
+  left: 28rpx;
+  right: 28rpx;
+  top: 16rpx;
+  height: 9rpx;
+  border-radius: 999rpx;
+  background: rgba(255, 255, 255, 0.44);
+}
+
+.island-yellow-road--north {
+  left: 556rpx;
+  top: 240rpx;
+  width: 210rpx;
+  transform: rotate(96deg);
+}
+
+.island-yellow-road--middle {
+  left: 550rpx;
+  top: 430rpx;
+  width: 420rpx;
+  transform: rotate(24deg);
+}
+
+.island-yellow-road--south {
+  left: 850rpx;
+  top: 585rpx;
+  width: 250rpx;
+  transform: rotate(70deg);
+}
+
+.island-yellow-road--tail {
+  left: 936rpx;
+  top: 752rpx;
+  width: 230rpx;
+  transform: rotate(5deg);
+}
+
+.island-bridge-piece {
+  position: absolute;
+  z-index: 9;
+  left: 830rpx;
+  top: 544rpx;
+  width: 174rpx;
+  height: 64rpx;
+  border-radius: 14rpx;
+  background: linear-gradient(180deg, #f6d878, #c7903c);
+  border: 5rpx solid rgba(108, 72, 28, 0.58);
+  transform: rotate(20deg);
+  box-shadow: 0 11rpx 0 rgba(99, 64, 25, 0.38);
+}
+
+.island-pine-cluster,
+.island-rocks,
+.island-shop-building,
+.island-mini-house,
+.island-flag {
+  position: absolute;
+  z-index: 12;
+  transform: rotateZ(45deg) rotateX(-34deg) translateZ(64rpx);
+  transform-style: preserve-3d;
+}
+
+.island-pine-cluster--north {
+  left: 755rpx;
+  top: 220rpx;
+  width: 190rpx;
+  height: 120rpx;
+}
+
+.island-pine-cluster--east {
+  left: 985rpx;
+  top: 610rpx;
+  width: 230rpx;
+  height: 160rpx;
+}
+
+.island-pine {
+  position: absolute;
+  width: 54rpx;
+  height: 76rpx;
+  border-radius: 20rpx 20rpx 12rpx 12rpx;
+  background:
+    linear-gradient(180deg, #38c864 0 33%, #219d4e 33% 65%, #137342 65%);
+  border: 4rpx solid rgba(54, 83, 39, 0.4);
+  box-shadow: inset -6rpx -8rpx 0 rgba(0, 0, 0, 0.1), 0 8rpx 0 rgba(63, 64, 31, 0.22);
+  clip-path: polygon(50% 0, 86% 30%, 70% 30%, 96% 62%, 73% 62%, 88% 100%, 12% 100%, 27% 62%, 4% 62%, 30% 30%, 14% 30%);
+}
+
+.island-pine--a { left: 5rpx; top: 34rpx; }
+.island-pine--b { left: 46rpx; top: 8rpx; transform: scale(1.12); }
+.island-pine--c { left: 90rpx; top: 34rpx; transform: scale(0.9); }
+.island-pine--d { left: 124rpx; top: 18rpx; transform: scale(0.76); }
+.island-pine--e { left: 164rpx; top: 54rpx; transform: scale(0.82); }
+
+.island-rocks--left {
+  left: 260rpx;
+  top: 255rpx;
+  width: 145rpx;
+  height: 108rpx;
+}
+
+.island-rocks--right {
+  left: 1130rpx;
+  top: 310rpx;
+  width: 120rpx;
+  height: 86rpx;
+}
+
+.island-rock {
+  position: absolute;
+  border-radius: 35% 50% 42% 48%;
+  background: linear-gradient(180deg, #d2ba88, #755537);
+  border: 4rpx solid rgba(83, 55, 33, 0.34);
+  box-shadow: 0 8rpx 0 rgba(75, 50, 29, 0.25);
+}
+
+.island-rock--a {
+  left: 8rpx;
+  top: 44rpx;
+  width: 56rpx;
+  height: 44rpx;
+}
+
+.island-rock--b {
+  left: 46rpx;
+  top: 20rpx;
+  width: 72rpx;
+  height: 58rpx;
+}
+
+.island-rock--c {
+  left: 96rpx;
+  top: 52rpx;
+  width: 46rpx;
+  height: 36rpx;
+}
+
+.island-shop-building {
+  left: 1050rpx;
+  top: 790rpx;
+  width: 160rpx;
+  height: 128rpx;
+}
+
+.island-shop-shadow {
+  position: absolute;
+  left: 4rpx;
+  right: 4rpx;
+  bottom: 0;
+  height: 30rpx;
+  border-radius: 50%;
+  background: rgba(20, 63, 37, 0.22);
+}
+
+.island-shop-body {
+  position: absolute;
+  left: 24rpx;
+  bottom: 18rpx;
+  width: 108rpx;
+  height: 70rpx;
+  border-radius: 12rpx;
+  background: linear-gradient(180deg, #d9e7ee, #8fa5b0);
+  border: 5rpx solid #4f5e69;
+  box-shadow: 0 10rpx 0 #56636b;
+}
+
+.island-shop-roof {
+  position: absolute;
+  left: 14rpx;
+  bottom: 82rpx;
+  width: 130rpx;
+  height: 44rpx;
+  border-radius: 14rpx 14rpx 6rpx 6rpx;
+  background: linear-gradient(180deg, #eef8ff, #b7cbd5);
+  border: 5rpx solid #4f5e69;
+}
+
+.island-shop-window {
+  position: absolute;
+  bottom: 42rpx;
+  width: 28rpx;
+  height: 24rpx;
+  border-radius: 6rpx;
+  background: #f7fcff;
+  border: 4rpx solid #4f5e69;
+}
+
+.island-shop-window--a { left: 44rpx; }
+.island-shop-window--b { left: 86rpx; }
+
+.island-mini-house {
+  left: 650rpx;
+  top: 260rpx;
+  width: 112rpx;
+  height: 116rpx;
+}
+
+.island-house-body {
+  position: absolute;
+  left: 26rpx;
+  bottom: 12rpx;
+  width: 66rpx;
+  height: 58rpx;
+  border-radius: 10rpx;
+  background: #fff1bf;
+  border: 5rpx solid #7b532c;
+  box-shadow: 0 8rpx 0 #7b532c;
+}
+
+.island-house-roof {
+  position: absolute;
+  left: 14rpx;
+  bottom: 64rpx;
+  width: 92rpx;
+  height: 42rpx;
+  border-radius: 16rpx 16rpx 6rpx 6rpx;
+  background: #f35838;
+  border: 5rpx solid #7b532c;
+}
+
+.island-house-door {
+  position: absolute;
+  left: 50rpx;
+  bottom: 16rpx;
+  width: 22rpx;
+  height: 35rpx;
+  border-radius: 8rpx 8rpx 4rpx 4rpx;
+  background: #7b532c;
+}
+
+.island-flag {
+  width: 48rpx;
+  height: 70rpx;
+}
+
+.island-flag::before {
+  content: "";
+  position: absolute;
+  left: 21rpx;
+  top: 0;
+  width: 7rpx;
+  height: 68rpx;
+  border-radius: 999rpx;
+  background: #494d42;
+}
+
+.island-flag::after {
+  content: "";
+  position: absolute;
+  left: 27rpx;
+  top: 7rpx;
+  width: 42rpx;
+  height: 26rpx;
+  border-radius: 4rpx 18rpx 18rpx 4rpx;
+  background: linear-gradient(180deg, #fff7dd 0 34%, #e5392e 34% 68%, #fff7dd 68%);
+  border: 3rpx solid #684324;
+}
+
+.island-flag--a {
+  left: 795rpx;
+  top: 540rpx;
+}
+
+.island-flag--b {
+  left: 980rpx;
+  top: 785rpx;
+}
+
+.island-stage-node {
+  position: absolute;
+  z-index: 15;
+  width: 126rpx;
+  height: 118rpx;
+  transform: translate(-50%, -50%) rotateZ(45deg) rotateX(-34deg) translateZ(92rpx);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+}
+
+.island-stage-node-disc {
+  position: relative;
+  width: 104rpx;
+  height: 96rpx;
+  border-radius: 50%;
+  border: 6rpx solid #fff6d8;
+  background: linear-gradient(180deg, #ffbe43, #e06a2d);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  box-shadow:
+    0 9rpx 0 #8e4c24,
+    0 16rpx 24rpx rgba(59, 39, 23, 0.28),
+    inset 0 9rpx 0 rgba(255, 255, 255, 0.22);
+}
+
+.island-stage-node-disc::after {
+  content: "";
+  position: absolute;
+  left: 18rpx;
+  right: 18rpx;
+  bottom: -15rpx;
+  height: 18rpx;
+  border-radius: 50%;
+  background: rgba(56, 39, 24, 0.24);
+  filter: blur(3rpx);
+}
+
+.route-node--active .island-stage-node-disc {
+  background: linear-gradient(180deg, #56ccff, #167aca);
+  box-shadow:
+    0 9rpx 0 #0e4d7e,
+    0 0 32rpx rgba(87, 204, 255, 0.42),
+    inset 0 9rpx 0 rgba(255, 255, 255, 0.22);
+}
+
+.route-node--completed .island-stage-node-disc {
+  background: linear-gradient(180deg, #ffe15d, #f08b31);
+  color: #34230f;
+  box-shadow:
+    0 9rpx 0 #96501f,
+    0 0 28rpx rgba(255, 216, 82, 0.38),
+    inset 0 9rpx 0 rgba(255, 255, 255, 0.25);
+}
+
+.route-node--locked .island-stage-node-disc {
+  background: linear-gradient(180deg, #7d806f, #42483f);
+  color: rgba(255, 247, 222, 0.62);
+  filter: grayscale(0.45) brightness(0.88);
+  box-shadow:
+    0 9rpx 0 #2f332d,
+    0 16rpx 24rpx rgba(32, 28, 24, 0.28);
+}
+
+.island-stage-node-pin {
+  position: absolute;
+  left: 40rpx;
+  top: 40rpx;
+  width: 36rpx;
+  height: 46rpx;
+  border-radius: 50% 50% 50% 8rpx;
+  background: linear-gradient(180deg, #52c8ff, #116cb6);
+  border: 5rpx solid #fff8df;
+  transform: rotate(45deg);
+  box-shadow: 0 8rpx 0 rgba(33, 54, 59, 0.34);
+}
+
+.island-stage-node.route-node--completed .island-stage-node-pin {
+  background: linear-gradient(180deg, #ffd94d, #eb7f2f);
+}
+
+.island-stage-node.route-node--locked .island-stage-node-pin {
+  background: linear-gradient(180deg, #7b806f, #394139);
+  filter: grayscale(0.6);
+}
+
+.island-stage-node-label {
+  position: relative;
+  z-index: 2;
+  color: #fff7de;
+  font-size: 34rpx;
+  line-height: 1;
+  font-weight: 950;
+  text-shadow:
+    0 4rpx 0 #4e3b22,
+    4rpx 0 0 #4e3b22,
+    -4rpx 0 0 #4e3b22;
+}
+
+.island-stage-node-stars {
+  position: relative;
+  z-index: 2;
+  margin-top: 6rpx;
+  display: flex;
+  gap: 2rpx;
+}
+
+.island-stage-node-star {
+  font-size: 19rpx;
+  line-height: 1;
+  color: rgba(255, 247, 222, 0.34);
+  text-shadow: 0 2rpx 0 rgba(74, 47, 18, 0.26);
+}
+
+.island-stage-node-star.is-filled {
+  color: #fff05a;
+}
+
+.island-stage-node--start { left: 590rpx; top: 220rpx; }
+.island-stage-node--mid-a { left: 570rpx; top: 405rpx; }
+.island-stage-node--mid-b { left: 740rpx; top: 520rpx; }
+.island-stage-node--mid-c { left: 930rpx; top: 620rpx; }
+.island-stage-node--end { left: 1045rpx; top: 790rpx; }
+
+.guide-dog-carrier {
+  position: absolute;
+  z-index: 18;
+  width: 172rpx;
+  height: 112rpx;
+  transform: translate(-50%, -50%) rotateZ(45deg) rotateX(-34deg) translateZ(118rpx);
+  transform-style: preserve-3d;
+}
+
+.guide-dog-carrier--start { left: 590rpx; top: 306rpx; }
+.guide-dog-carrier--mid-a { left: 570rpx; top: 488rpx; }
+.guide-dog-carrier--mid-b { left: 740rpx; top: 604rpx; }
+.guide-dog-carrier--mid-c { left: 930rpx; top: 704rpx; }
+.guide-dog-carrier--end { left: 1045rpx; top: 874rpx; }
+
+.guide-dog-light {
+  position: absolute;
+  left: 10rpx;
+  right: 8rpx;
+  bottom: 2rpx;
+  height: 44rpx;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 232, 111, 0.82), rgba(255, 213, 79, 0.28) 48%, transparent 72%);
+  box-shadow: 0 0 42rpx rgba(255, 222, 92, 0.62);
+}
+
+.runner-silhouette {
+  position: absolute;
+  left: 12rpx;
+  bottom: 22rpx;
+  width: 48rpx;
+  height: 76rpx;
+}
+
+.runner-head {
+  position: absolute;
+  left: 13rpx;
+  top: 0;
+  width: 24rpx;
+  height: 24rpx;
+  border-radius: 50%;
+  background: #ffd2a0;
+  border: 3rpx solid #674227;
+}
+
+.runner-body {
+  position: absolute;
+  left: 9rpx;
+  top: 23rpx;
+  width: 32rpx;
+  height: 46rpx;
+  border-radius: 16rpx 16rpx 10rpx 10rpx;
+  background: linear-gradient(180deg, #2fb5ee, #136bb4);
+  border: 3rpx solid #173d68;
+  box-shadow: inset -6rpx -5rpx 0 rgba(0, 0, 0, 0.13);
+}
+
+.runner-cane {
+  position: absolute;
+  left: 42rpx;
+  top: 35rpx;
+  width: 7rpx;
+  height: 58rpx;
+  border-radius: 999rpx;
+  background: #fff7dd;
+  border: 2rpx solid #51412d;
+  transform: rotate(-26deg);
+  transform-origin: top center;
+}
+
+.guide-dog-leash {
+  position: absolute;
+  left: 54rpx;
+  top: 52rpx;
+  width: 52rpx;
+  height: 5rpx;
+  border-radius: 999rpx;
+  background: #f9f0c8;
+  border: 2rpx solid rgba(78, 58, 34, 0.62);
+  transform: rotate(8deg);
+}
+
+.guide-dog-body {
+  position: absolute;
+  left: 95rpx;
+  bottom: 24rpx;
+  width: 58rpx;
+  height: 34rpx;
+  border-radius: 22rpx 24rpx 18rpx 18rpx;
+  background: linear-gradient(180deg, #fff3c8, #d59845);
+  border: 4rpx solid #6b4728;
+  box-shadow: inset -7rpx -6rpx 0 rgba(113, 69, 28, 0.18), 0 7rpx 0 rgba(72, 47, 26, 0.18);
+}
+
+.guide-dog-head {
+  position: absolute;
+  right: -22rpx;
+  top: -7rpx;
+  width: 32rpx;
+  height: 30rpx;
+  border-radius: 50% 46% 46% 50%;
+  background: linear-gradient(180deg, #fff1c4, #d99a45);
+  border: 4rpx solid #6b4728;
+}
+
+.guide-dog-ear {
+  position: absolute;
+  right: -9rpx;
+  top: -15rpx;
+  width: 18rpx;
+  height: 24rpx;
+  border-radius: 80% 30% 70% 40%;
+  background: #7b4c25;
+  transform: rotate(20deg);
+}
+
+.guide-dog-tail {
+  position: absolute;
+  left: -17rpx;
+  top: 5rpx;
+  width: 24rpx;
+  height: 8rpx;
+  border-radius: 999rpx;
+  background: #6b4728;
+  transform: rotate(-30deg);
+}
+
+.guide-dog-leg {
+  position: absolute;
+  bottom: -18rpx;
+  width: 10rpx;
+  height: 22rpx;
+  border-radius: 999rpx;
+  background: #704825;
+}
+
+.guide-dog-leg--a { left: 14rpx; }
+.guide-dog-leg--b { right: 14rpx; }
+
 .terrain-island {
   position: absolute;
   inset: 0;

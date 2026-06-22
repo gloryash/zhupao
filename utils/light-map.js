@@ -35,7 +35,7 @@ const STAGES = [
     theme: 'island',
     difficulty: '新手入门',
     challenge: '短距离基础陪跑，植被多、路线平缓，适合建立第一次陪伴信心。',
-    summary: '海风和雾林把第一段路围住，短距离陪跑会先点亮安全起点。',
+    summary: '海岛雾林把第一段路放在清澈水域和绿色岛屿之间，短距离陪跑会先点亮安全起点。',
     lockedText: '完成基础陪跑后，海岛雾林会先亮起来。',
     landmarks: [
       { id: 'coast-park', name: '雾林公园', type: 'facility', visual: 'park', step: 1, x: 18, y: 61 },

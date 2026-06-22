@@ -4,6 +4,7 @@ const lightMap = require('../../utils/light-map');
 const safeArea = require('../../utils/safe-area');
 
 const INITIAL_MAP_STATE = lightMap.buildLightMapState({});
+const INITIAL_DEMO_STAGE = getDemoStage(INITIAL_MAP_STATE);
 
 Page({
   data: {
@@ -13,6 +14,7 @@ Page({
     shellStyle: '',
     mapState: INITIAL_MAP_STATE,
     displayStage: decorateStageForView(INITIAL_MAP_STATE.currentStage),
+    demoStage: INITIAL_DEMO_STAGE,
     stageIndex: 0,
     returnStops: lightMap.buildReturnStops(INITIAL_MAP_STATE),
     roomStages: INITIAL_MAP_STATE.stages,
@@ -44,6 +46,7 @@ Page({
         user: profile,
         mapState,
         displayStage: decorateStageForView(mapState.currentStage),
+        demoStage: getDemoStage(mapState),
         stageIndex: mapState.currentStageIndex,
         returnStops: lightMap.buildReturnStops(mapState),
         roomStages: mapState.stages,
@@ -70,12 +73,13 @@ Page({
 
   showNodeProgress(e) {
     const index = Number(e.currentTarget.dataset.index);
-    const node = this.data.displayStage && this.data.displayStage.routeNodes
-      ? this.data.displayStage.routeNodes[index]
+    const stage = this.data.demoStage || this.data.displayStage;
+    const node = stage && stage.routeNodes
+      ? stage.routeNodes[index]
       : null;
     if (!node) return;
     this.setData({
-      selectedNode: decorateNodeForPopover(this.data.displayStage, node, this.data.mapState),
+      selectedNode: decorateNodeForPopover(stage, node, this.data.mapState),
       showNodePopover: true
     });
   },
@@ -104,6 +108,13 @@ Page({
     /* used by catchtap */
   }
 });
+
+function getDemoStage(mapState) {
+  const firstStage = mapState && mapState.stages && mapState.stages[0]
+    ? mapState.stages[0]
+    : INITIAL_MAP_STATE.stages[0];
+  return decorateStageForView(firstStage);
+}
 
 function decorateStageForView(stage) {
   if (!stage) return null;

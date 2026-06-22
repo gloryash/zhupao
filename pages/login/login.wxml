@@ -1,4 +1,5 @@
 <view class="auth-page" style="{{shellStyle}}">
+  <text class="sr-voice" aria-live="polite">{{voiceCue}}</text>
   <view class="auth-hero">
     <view class="brand-pill">
       <image class="brand-mark" src="/images/brand/xinban-run-logo.jpg" mode="aspectFill"></image>
@@ -26,15 +27,15 @@
       <view class="segmented-item {{mode === 'register' ? 'is-active' : ''}}" bindtap="setMode" data-mode="register">注册</view>
     </view>
 
-    <view wx:if="{{mode === 'register'}}" class="field">
+    <view wx:if="{{mode === 'register'}}" class="field role-field">
       <text class="field-label">我是</text>
       <view class="role-pick">
-        <view class="role-option {{role === 'disabled' ? 'is-active role-disabled' : ''}}" bindtap="setRole" data-role="disabled">
+        <view class="role-option {{role === 'disabled' ? 'is-active role-disabled' : ''}}" bindtap="setRole" data-role="disabled" aria-role="button" aria-label="我是视障跑者">
           <view class="role-icon role-icon--accent">跑</view>
           <text class="role-name">视障跑者</text>
           <text class="role-desc">发起陪跑，邀请志愿者并肩奔跑</text>
         </view>
-        <view class="role-option {{role === 'volunteer' ? 'is-active role-volunteer' : ''}}" bindtap="setRole" data-role="volunteer">
+        <view class="role-option {{role === 'volunteer' ? 'is-active role-volunteer' : ''}}" bindtap="setRole" data-role="volunteer" aria-role="button" aria-label="我是陪跑志愿者">
           <view class="role-icon role-icon--pine">护</view>
           <text class="role-name">陪跑志愿者</text>
           <text class="role-desc">通过认证后，为跑者引导护航</text>
@@ -42,12 +43,12 @@
       </view>
     </view>
 
-    <view class="stack-sm">
+    <view class="stack-sm auth-form-stack">
       <view class="field">
         <text class="field-label">邮箱或手机号</text>
         <view class="input-group">
           <text class="input-icon">◎</text>
-          <input class="input input--bare" value="{{identifier}}" placeholder="you@example.com 或 手机号" bindinput="onInput" data-key="identifier" />
+          <input class="input input--bare" value="{{identifier}}" placeholder="you@example.com 或 手机号" bindinput="onInput" bindfocus="announceTap" data-key="identifier" data-voice="邮箱或手机号" aria-label="邮箱或手机号" />
         </view>
       </view>
 
@@ -55,42 +56,44 @@
         <text class="field-label">密码</text>
         <view class="input-group">
           <text class="input-icon">□</text>
-          <input class="input input--bare" password="{{!showPassword}}" value="{{password}}" placeholder="请输入密码" bindinput="onInput" data-key="password" />
-          <view class="icon-btn" bindtap="togglePassword">{{showPassword ? '隐' : '显'}}</view>
+          <input class="input input--bare" password="{{!showPassword}}" value="{{password}}" placeholder="请输入密码" bindinput="onInput" bindfocus="announceTap" data-key="password" data-voice="密码" aria-label="密码" />
+          <view class="icon-btn password-eye" bindtap="togglePassword" aria-role="button" aria-label="{{showPassword ? '隐藏密码' : '显示密码'}}">
+            <view class="eye-icon {{showPassword ? 'eye-icon--open' : 'eye-icon--closed'}}"></view>
+          </view>
         </view>
       </view>
 
       <block wx:if="{{mode === 'register'}}">
         <view class="field">
           <text class="field-label">昵称</text>
-          <input class="input" value="{{nickName}}" placeholder="他人看到的称呼" bindinput="onInput" data-key="nickName" />
+          <input class="input" value="{{nickName}}" placeholder="他人看到的称呼" bindinput="onInput" bindfocus="announceTap" data-key="nickName" data-voice="昵称" aria-label="昵称" />
         </view>
         <view class="field">
           <text class="field-label">手机号码</text>
-          <input class="input" type="number" maxlength="11" value="{{phone}}" placeholder="用于接单后联系与语音播报" bindinput="onInput" data-key="phone" />
+          <input class="input" type="number" maxlength="11" value="{{phone}}" placeholder="用于接单后联系与语音播报" bindinput="onInput" bindfocus="announceTap" data-key="phone" data-voice="手机号码" aria-label="手机号码" />
         </view>
         <view class="field">
           <text class="field-label">真实姓名<text class="field-hint">（选填）</text></text>
-          <input class="input" value="{{name}}" placeholder="用于陪跑时的身份核对" bindinput="onInput" data-key="name" />
+          <input class="input" value="{{name}}" placeholder="用于陪跑时的身份核对" bindinput="onInput" bindfocus="announceTap" data-key="name" data-voice="真实姓名" aria-label="真实姓名" />
         </view>
         <view class="field">
           <text class="field-label">常跑地点<text class="field-hint">（选填）</text></text>
-          <input class="input" value="{{runningLocation}}" placeholder="如：奥林匹克森林公园" bindinput="onInput" data-key="runningLocation" />
+          <input class="input" value="{{runningLocation}}" placeholder="如：奥林匹克森林公园" bindinput="onInput" bindfocus="announceTap" data-key="runningLocation" data-voice="常跑地点" aria-label="常跑地点" />
         </view>
 
         <block wx:if="{{role === 'disabled'}}">
           <view class="field">
             <text class="field-label">紧急联系人</text>
-            <input class="input" value="{{emergencyName}}" placeholder="联系人姓名" bindinput="onInput" data-key="emergencyName" />
+            <input class="input" value="{{emergencyName}}" placeholder="联系人姓名" bindinput="onInput" bindfocus="announceTap" data-key="emergencyName" data-voice="紧急联系人" aria-label="紧急联系人" />
           </view>
           <view class="grid-2">
             <view class="field">
               <text class="field-label">联系电话</text>
-              <input class="input" type="number" maxlength="11" value="{{emergencyPhone}}" placeholder="手机号" bindinput="onInput" data-key="emergencyPhone" />
+              <input class="input" type="number" maxlength="11" value="{{emergencyPhone}}" placeholder="手机号" bindinput="onInput" bindfocus="announceTap" data-key="emergencyPhone" data-voice="联系电话" aria-label="联系电话" />
             </view>
             <view class="field">
               <text class="field-label">关系</text>
-              <input class="input" value="{{emergencyRelation}}" placeholder="如：家人" bindinput="onInput" data-key="emergencyRelation" />
+              <input class="input" value="{{emergencyRelation}}" placeholder="如：家人" bindinput="onInput" bindfocus="announceTap" data-key="emergencyRelation" data-voice="关系" aria-label="关系" />
             </view>
           </view>
         </block>
@@ -99,11 +102,11 @@
           <view class="grid-2">
             <view class="field">
               <text class="field-label">跑龄</text>
-              <input class="input" value="{{runningYears}}" placeholder="如：3 年" bindinput="onInput" data-key="runningYears" />
+              <input class="input" value="{{runningYears}}" placeholder="如：3 年" bindinput="onInput" bindfocus="announceTap" data-key="runningYears" data-voice="跑龄" aria-label="跑龄" />
             </view>
             <view class="field">
               <text class="field-label">平均配速</text>
-              <input class="input" value="{{pace}}" placeholder="如：6'30&quot;" bindinput="onInput" data-key="pace" />
+              <input class="input" value="{{pace}}" placeholder="如：6'30&quot;" bindinput="onInput" bindfocus="announceTap" data-key="pace" data-voice="平均配速" aria-label="平均配速" />
             </view>
           </view>
           <view class="field">

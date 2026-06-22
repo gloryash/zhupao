@@ -1,4 +1,5 @@
 const app = getApp();
+const fmt = require('../../utils/format');
 
 Page({
   data: {
@@ -269,14 +270,18 @@ Page({
           if (res.success && res.orders && res.orders.length > 0) {
             // 找到第一个等待中的订单
             const order = res.orders[0];
+            const startAddress = fmt.startAddress(order);
+            const destinationAddress = fmt.destinationAddress(order);
+            const orderStart = fmt.orderStart(order);
+            const orderDestination = fmt.orderDestination(order);
 
             // 显示新订单
             wx.vibrateShort();
             this.setData({
               hasNewOrder: true,
               orderStatus: 'waiting',
-              latitude: order.latitude,
-              longitude: order.longitude,
+              latitude: (orderStart && orderStart.latitude) || order.latitude,
+              longitude: (orderStart && orderStart.longitude) || order.longitude,
               locationReady: true,
               orderInfo: {
                 id: order._id,
@@ -285,13 +290,16 @@ Page({
                 phone: order.phone || '',
                 targetDistance: order.targetDistance,
                 estimatedDuration: order.estimatedDuration,
-                latitude: order.latitude,
-                longitude: order.longitude
+                latitude: (orderStart && orderStart.latitude) || order.latitude,
+                longitude: (orderStart && orderStart.longitude) || order.longitude,
+                startAddress: startAddress ? { name: startAddress, address: startAddress, ...(orderStart || {}) } : null,
+                endAddress: destinationAddress ? { name: destinationAddress, address: destinationAddress, ...(orderDestination || {}) } : null,
+                address: startAddress || order.address || '视障人士位置'
               },
               markers: [{
                 id: 1,
-                latitude: order.latitude,
-                longitude: order.longitude,
+                latitude: (orderStart && orderStart.latitude) || order.latitude,
+                longitude: (orderStart && orderStart.longitude) || order.longitude,
                 width: 50,
                 height: 50,
                 callout: {

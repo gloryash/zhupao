@@ -1,4 +1,5 @@
 <view class="app-page {{isVolunteer ? 'role-volunteer' : 'role-runner'}}" style="{{shellStyle}}">
+  <text class="sr-voice" aria-live="polite">{{voiceCue}}</text>
   <view class="app-header">
     <view class="header-titles">
       <view class="app-brand">
@@ -8,7 +9,7 @@
       <text class="app-eyebrow">{{eyebrow}}</text>
       <text class="app-title">{{headerTitle}}</text>
     </view>
-    <view class="avatar-button" bindtap="goMine">
+    <view class="avatar-button" bindtap="goMine" aria-role="button" aria-label="个人中心" data-voice="个人中心">
       <image wx:if="{{user.avatarUrl}}" class="avatar-img" src="{{user.avatarUrl}}" mode="aspectFill"></image>
       <text wx:else>{{avatarText}}</text>
     </view>
@@ -24,7 +25,7 @@
       <view class="card empty-card">
         <text class="empty-title">没能加载数据</text>
         <text class="empty-text">{{loadError}}</text>
-        <view class="btn btn--accent btn--block" bindtap="loadCurrentTab">刷新重试</view>
+        <view class="btn btn--accent btn--block" bindtap="refreshCurrentTab" aria-role="button" aria-label="刷新重试" data-voice="刷新重试">刷新重试</view>
       </view>
     </view>
 
@@ -86,9 +87,9 @@
           </view>
         </block>
 
-        <view wx:if="{{isVolunteer}}" class="btn btn--accent btn--block" bindtap="openLightMap">前往光境远征 →</view>
-        <view wx:else class="btn btn--accent btn--block" bindtap="switchTab" data-key="sport">发起一次陪跑 →</view>
-        <view class="btn btn--ghost btn--block" bindtap="switchTab" data-key="appointments">{{isVolunteer ? '查看约跑日程' : '预约约跑'}}</view>
+        <view wx:if="{{isVolunteer}}" class="btn btn--accent btn--block" bindtap="openLightMap" aria-role="button" aria-label="前往光境远征">前往光境远征 →</view>
+        <view wx:else class="btn btn--accent btn--block" bindtap="switchTab" data-key="sport" aria-role="button" aria-label="发起一次陪跑" data-voice="发起一次陪跑">发起一次陪跑 →</view>
+        <view class="btn btn--ghost btn--block" bindtap="switchTab" data-key="appointments" aria-role="button" aria-label="{{isVolunteer ? '查看约跑日程' : '预约约跑'}}" data-voice="{{isVolunteer ? '查看约跑日程' : '预约陪跑'}}">{{isVolunteer ? '查看约跑日程' : '预约约跑'}}</view>
       </block>
 
       <!-- Sport: runner -->
@@ -103,12 +104,12 @@
 
         <view class="card">
           <text class="section-title">陪跑请求</text>
-          <view class="field">
+          <view class="field runner-search-field">
             <view class="field-head">
               <text class="field-label"><text class="addr-dot addr-dot--start"></text>起点</text>
               <view class="seg-mini">
                 <view class="seg-mini-item is-active">搜索</view>
-                <view class="seg-mini-item" bindtap="chooseCurrentEndpoint" data-field="start">地图</view>
+                <view class="seg-mini-item" bindtap="chooseCurrentEndpoint" data-field="start" aria-role="button" aria-label="选择起点地图位置" data-voice="选择起点地图位置">地图</view>
               </view>
             </view>
             <view wx:if="{{start}}" class="addr-chosen">
@@ -116,19 +117,19 @@
                 <text class="addr-chosen-title">{{start.displayName || start.name || start.address}}</text>
                 <text wx:if="{{start.displayDetail}}" class="addr-chosen-detail">{{start.displayDetail}}</text>
               </view>
-              <view class="btn btn--ghost btn--sm" bindtap="clearEndpoint" data-field="start">更改</view>
+              <view class="btn btn--ghost btn--sm" bindtap="clearEndpoint" data-field="start" aria-role="button" aria-label="更改起点" data-voice="更改起点">更改</view>
             </view>
             <block wx:else>
-              <input class="input" value="{{startQuery}}" placeholder="搜索小区 / 地标 / 街道，如「世纪公园」" bindinput="onAddressInput" data-field="start" confirm-type="search" bindconfirm="searchEndpoint" />
+              <input class="input" value="{{startQuery}}" placeholder="搜索小区 / 地标 / 街道，如「世纪公园」" bindinput="onAddressInput" bindfocus="announceInputFocus" data-field="start" data-voice="起点搜索输入框" confirm-type="search" bindconfirm="searchEndpoint" aria-label="起点搜索输入框" />
               <scroll-view wx:if="{{startQuery.length < 2 && startHistory.length}}" scroll-y class="addr-list">
                 <view class="addr-list-caption">最近使用</view>
-                <view class="addr-list-item" wx:for="{{startHistory}}" wx:key="address" bindtap="selectHistoryEndpoint" data-field="start" data-index="{{index}}">
+                <view class="addr-list-item" wx:for="{{startHistory}}" wx:key="address" bindtap="selectHistoryEndpoint" data-field="start" data-index="{{index}}" aria-role="button" aria-label="选择起点历史地址" data-voice="选择起点历史地址">
                   <text class="addr-name">{{item.name || item.address}}</text>
                   <text class="addr-detail">{{item.detail || item.address}}</text>
                 </view>
               </scroll-view>
               <scroll-view wx:elif="{{startResults.length}}" scroll-y class="addr-list">
-                <view class="addr-list-item" wx:for="{{startResults}}" wx:key="id" bindtap="selectEndpoint" data-field="start" data-index="{{index}}">
+                <view class="addr-list-item" wx:for="{{startResults}}" wx:key="id" bindtap="selectEndpoint" data-field="start" data-index="{{index}}" aria-role="button" aria-label="选择起点搜索结果" data-voice="选择起点搜索结果">
                   <text class="addr-name">{{item.name}}</text>
                   <text class="addr-detail">{{item.detail || item.address}}</text>
                 </view>
@@ -137,12 +138,12 @@
             </block>
           </view>
 
-          <view class="field">
+          <view class="field runner-search-field">
             <view class="field-head">
               <text class="field-label"><text class="addr-dot addr-dot--destination"></text>终点</text>
               <view class="seg-mini">
                 <view class="seg-mini-item is-active">搜索</view>
-                <view class="seg-mini-item" bindtap="chooseCurrentEndpoint" data-field="destination">地图</view>
+                <view class="seg-mini-item" bindtap="chooseCurrentEndpoint" data-field="destination" aria-role="button" aria-label="选择终点地图位置" data-voice="选择终点地图位置">地图</view>
               </view>
             </view>
             <view wx:if="{{destination}}" class="addr-chosen">
@@ -150,19 +151,19 @@
                 <text class="addr-chosen-title">{{destination.displayName || destination.name || destination.address}}</text>
                 <text wx:if="{{destination.displayDetail}}" class="addr-chosen-detail">{{destination.displayDetail}}</text>
               </view>
-              <view class="btn btn--ghost btn--sm" bindtap="clearEndpoint" data-field="destination">更改</view>
+              <view class="btn btn--ghost btn--sm" bindtap="clearEndpoint" data-field="destination" aria-role="button" aria-label="更改终点" data-voice="更改终点">更改</view>
             </view>
             <block wx:else>
-              <input class="input" value="{{destinationQuery}}" placeholder="搜索目的地，如「徐家汇」" bindinput="onAddressInput" data-field="destination" confirm-type="search" bindconfirm="searchEndpoint" />
+              <input class="input" value="{{destinationQuery}}" placeholder="搜索目的地，如「徐家汇」" bindinput="onAddressInput" bindfocus="announceInputFocus" data-field="destination" data-voice="终点搜索输入框" confirm-type="search" bindconfirm="searchEndpoint" aria-label="终点搜索输入框" />
               <scroll-view wx:if="{{destinationQuery.length < 2 && destinationHistory.length}}" scroll-y class="addr-list">
                 <view class="addr-list-caption">最近使用</view>
-                <view class="addr-list-item" wx:for="{{destinationHistory}}" wx:key="address" bindtap="selectHistoryEndpoint" data-field="destination" data-index="{{index}}">
+                <view class="addr-list-item" wx:for="{{destinationHistory}}" wx:key="address" bindtap="selectHistoryEndpoint" data-field="destination" data-index="{{index}}" aria-role="button" aria-label="选择终点历史地址" data-voice="选择终点历史地址">
                   <text class="addr-name">{{item.name || item.address}}</text>
                   <text class="addr-detail">{{item.detail || item.address}}</text>
                 </view>
               </scroll-view>
               <scroll-view wx:elif="{{destinationResults.length}}" scroll-y class="addr-list">
-                <view class="addr-list-item" wx:for="{{destinationResults}}" wx:key="id" bindtap="selectEndpoint" data-field="destination" data-index="{{index}}">
+                <view class="addr-list-item" wx:for="{{destinationResults}}" wx:key="id" bindtap="selectEndpoint" data-field="destination" data-index="{{index}}" aria-role="button" aria-label="选择终点搜索结果" data-voice="选择终点搜索结果">
                   <text class="addr-name">{{item.name}}</text>
                   <text class="addr-detail">{{item.detail || item.address}}</text>
                 </view>
@@ -171,28 +172,28 @@
             </block>
           </view>
 
-          <view class="field">
+          <view class="field runner-duration-field">
             <text class="field-label">预计时长</text>
             <view class="segmented">
-              <view wx:for="{{durationOptions}}" wx:key="*this" class="segmented-item {{duration === item ? 'is-active' : ''}}" bindtap="setDuration" data-value="{{item}}">{{item}} 分钟</view>
+              <view wx:for="{{durationOptions}}" wx:key="*this" class="segmented-item {{duration === item ? 'is-active' : ''}}" bindtap="setDuration" data-value="{{item}}" aria-role="button" aria-label="选择预计时长{{item}}分钟" data-voice="选择预计时长{{item}}分钟">{{item}} 分钟</view>
             </view>
           </view>
 
-          <view class="field">
-            <text class="field-label">出发时间</text>
+          <view class="field runner-departure-field">
+            <text class="field-label runner-departure-label">出发时间</text>
             <view class="segmented">
-              <view class="segmented-item {{departureMode === 'immediate' ? 'is-active' : ''}}" bindtap="setDepartureMode" data-mode="immediate">立即出发</view>
-              <view class="segmented-item {{departureMode === 'delayed' ? 'is-active' : ''}}" bindtap="setDepartureMode" data-mode="delayed">延后出发</view>
+              <view class="segmented-item {{departureMode === 'immediate' ? 'is-active' : ''}}" bindtap="setDepartureMode" data-mode="immediate" aria-role="button" aria-label="立即出发" data-voice="立即出发">立即出发</view>
+              <view class="segmented-item {{departureMode === 'delayed' ? 'is-active' : ''}}" bindtap="setDepartureMode" data-mode="delayed" aria-role="button" aria-label="延后出发" data-voice="延后出发">延后出发</view>
             </view>
             <view wx:if="{{departureMode === 'delayed'}}" class="delay-panel">
               <view class="grid-2">
                 <view class="field">
                   <text class="field-label">小时</text>
-                  <input class="input" type="number" value="{{departureHour}}" bindinput="onDepartureInput" data-key="departureHour" />
+                  <input class="input" type="number" value="{{departureHour}}" bindinput="onDepartureInput" bindfocus="announceInputFocus" data-key="departureHour" data-voice="出发小时" aria-label="出发小时" />
                 </view>
                 <view class="field">
                   <text class="field-label">分钟</text>
-                  <input class="input" type="number" value="{{departureMinute}}" bindinput="onDepartureInput" data-key="departureMinute" />
+                  <input class="input" type="number" value="{{departureMinute}}" bindinput="onDepartureInput" bindfocus="announceInputFocus" data-key="departureMinute" data-voice="出发分钟" aria-label="出发分钟" />
                 </view>
               </view>
             </view>
@@ -202,7 +203,7 @@
 
         <view wx:if="{{start && destination}}" class="card">
           <text class="section-title">确认并发布</text>
-          <view class="btn btn--accent btn--block" bindtap="publishRunnerOrder">{{publishing ? '发布中...' : '确认发布陪跑需求'}}</view>
+          <view class="btn btn--accent btn--block" bindtap="publishRunnerOrder" aria-role="button" aria-label="确认发布陪跑需求" data-voice="确认发布陪跑需求">{{publishing ? '发布中...' : '确认发布陪跑需求'}}</view>
           <view class="confirm-grid">
             <view><text class="confirm-label">起点</text><text class="confirm-value">{{start.displayAddress || start.address}}</text></view>
             <view><text class="confirm-label">终点</text><text class="confirm-value">{{destination.displayAddress || destination.address}}</text></view>
@@ -219,7 +220,7 @@
             <text wx:if="{{activeOrderView.destinationAddress}}"><text class="addr-dot addr-dot--destination"></text>{{activeOrderView.destinationAddress}}</text>
           </view>
           <view class="meta-row"><text>目标 {{activeOrderView.targetDistanceText}}</text><text>预计 {{activeOrderView.durationText}}</text></view>
-          <view wx:if="{{activeOrderView.status !== 'completed' && activeOrderView.status !== 'cancelled'}}" class="btn btn--coral btn--block btn--sm" bindtap="cancelOrder" data-id="{{activeOrderView._id}}">取消请求</view>
+          <view wx:if="{{activeOrderView.status !== 'completed' && activeOrderView.status !== 'cancelled'}}" class="btn btn--coral btn--block btn--sm" bindtap="cancelOrder" data-id="{{activeOrderView._id}}" aria-role="button" aria-label="取消请求" data-voice="取消请求">取消请求</view>
         </view>
         <view wx:else class="empty">
           <text class="empty-title">还没有进行中的请求</text>
@@ -387,12 +388,11 @@
 
       <!-- Orders -->
       <block wx:if="{{activeTab === 'orders'}}">
-        <view class="row row-between">
-          <text class="section-title">我的订单</text>
-          <view class="btn btn--ghost btn--sm" bindtap="loadOrders">刷新</view>
+        <view class="row row-between orders-toolbar">
+          <view class="btn btn--ghost btn--sm" bindtap="refreshOrders" aria-role="button" aria-label="刷新订单" data-voice="刷新订单">刷新</view>
         </view>
         <view class="segmented">
-          <view wx:for="{{orderFilters}}" wx:key="key" class="segmented-item {{orderFilter === item.key ? 'is-active' : ''}}" bindtap="setOrderFilter" data-key="{{item.key}}">{{item.label}}</view>
+          <view wx:for="{{orderFilters}}" wx:key="key" class="segmented-item {{orderFilter === item.key ? 'is-active' : ''}}" bindtap="setOrderFilter" data-key="{{item.key}}" aria-role="button" aria-label="订单筛选{{item.label}}" data-voice="订单筛选{{item.label}}">{{item.label}}</view>
         </view>
         <view wx:if="{{filteredOrders.length}}" class="stack-sm">
           <view class="card order-card" wx:for="{{filteredOrders}}" wx:key="_id">
@@ -403,13 +403,13 @@
             </view>
             <view class="meta-row"><text>目标 {{item.targetDistanceText}}</text><text>预计 {{item.durationText}}</text></view>
             <text class="party-line">{{item.partyLabel}} · {{item.partyName}}</text>
-            <view wx:if="{{item.status !== 'completed' && item.status !== 'cancelled'}}" class="btn btn--coral btn--block btn--sm" bindtap="cancelOrder" data-id="{{item._id}}">取消请求</view>
+            <view wx:if="{{item.status !== 'completed' && item.status !== 'cancelled'}}" class="btn btn--coral btn--block btn--sm" bindtap="cancelOrder" data-id="{{item._id}}" aria-role="button" aria-label="取消请求" data-voice="取消请求">取消请求</view>
           </view>
         </view>
         <view wx:else class="empty">
           <text class="empty-title">{{orderFilter === 'all' ? '还没有陪跑订单' : '该分类下暂无订单'}}</text>
           <text class="empty-text">发起一次陪跑后，订单与实时状态会显示在这里。</text>
-          <view class="btn btn--accent btn--block" bindtap="switchTab" data-key="sport">发起一次陪跑</view>
+          <view class="btn btn--accent btn--block" bindtap="switchTab" data-key="sport" aria-role="button" aria-label="发起一次陪跑" data-voice="发起一次陪跑">发起一次陪跑</view>
         </view>
       </block>
 
@@ -447,10 +447,15 @@
 
           <view wx:if="{{questions && !examResult}}" class="card">
             <view class="row row-between"><text class="section-title">在线考核</text><view class="chip">{{answeredCount}}/{{questions.length}}</view></view>
-            <view wx:for="{{questions}}" wx:key="_id" wx:for-index="qi" class="exam-q">
-              <text class="exam-title">{{qi + 1}}. {{item.question}}</text>
-              <view wx:for="{{item.optionsView}}" wx:key="index" wx:for-item="opt" class="exam-opt {{opt.selected ? 'is-selected' : ''}}" bindtap="chooseExamOption" data-qi="{{qi}}" data-oi="{{opt.index}}">
+            <view wx:if="{{currentQuestion}}" class="exam-round-card">
+              <text class="exam-title">{{currentQuestionIndex + 1}}. {{currentQuestion.question}}</text>
+              <view wx:for="{{currentQuestion.optionsView}}" wx:key="index" wx:for-item="opt" class="exam-opt {{opt.selected ? 'is-selected' : ''}}" bindtap="chooseExamOption" data-qi="{{currentQuestionIndex}}" data-oi="{{opt.index}}">
                 <text>{{opt.text}}</text>
+              </view>
+              <view class="exam-nav">
+                <view class="btn btn--ghost btn--sm {{isFirstQuestion ? 'is-disabled' : ''}}" bindtap="prevExamQuestion">上一题</view>
+                <text class="field-hint">{{currentQuestionIndex + 1}} / {{questions.length}}</text>
+                <view class="btn btn--ghost btn--sm {{isLastQuestion ? 'is-disabled' : ''}}" bindtap="nextExamQuestion">下一题</view>
               </view>
             </view>
             <view class="btn btn--accent btn--block" bindtap="submitExam">提交答卷</view>
@@ -507,36 +512,36 @@
               <text class="field-label">选择志愿者</text>
               <text class="field-hint">{{appointmentNearbyMode ? '按距离排序' : '认证志愿者'}}</text>
             </view>
-            <view class="vol-option {{selectedVolunteerId === item._id ? 'is-selected' : ''}}" wx:for="{{volunteers}}" wx:key="_id" bindtap="selectVolunteer" data-id="{{item._id}}">
+            <view class="vol-option {{selectedVolunteerId === item._id ? 'is-selected' : ''}}" wx:for="{{volunteers}}" wx:key="_id" bindtap="selectVolunteer" data-id="{{item._id}}" aria-role="button" aria-label="选择志愿者" data-voice="选择志愿者">
             <view class="avatar"><text>{{item.nickNameInitial || '志'}}</text></view>
               <view class="list-body"><text class="list-title">{{item.nickName || '志愿者'}}</text><text class="list-meta">{{item.distanceText ? '距你 ' + item.distanceText + ' · ' : ''}}{{item.tierName || '认证志愿者'}} · {{item.totalRuns || 0}} 次陪跑</text></view>
               <view wx:if="{{selectedVolunteerId === item._id}}" class="chip chip--pine">已选</view>
             </view>
           </view>
-          <view class="grid-2">
-            <view class="field">
+          <view class="grid-2 appointment-form-row">
+            <view class="field appointment-form-field">
               <text class="field-label">约跑日期</text>
-              <picker mode="date" value="{{apDate}}" start="{{today}}" bindchange="onAppointmentPicker" data-key="apDate">
+              <picker mode="date" value="{{apDate}}" start="{{today}}" bindchange="onAppointmentPicker" bindtap="announceAppointmentPicker" data-key="apDate" data-voice="约跑日期">
                 <view class="picker-field">{{apDateLabel}}</view>
               </picker>
             </view>
-            <view class="field">
+            <view class="field appointment-form-field">
               <text class="field-label">约跑时间</text>
-              <picker mode="time" value="{{apTime}}" bindchange="onAppointmentPicker" data-key="apTime">
+              <picker mode="time" value="{{apTime}}" bindchange="onAppointmentPicker" bindtap="announceAppointmentPicker" data-key="apTime" data-voice="约跑时间">
                 <view class="picker-field">{{apTimeLabel}}</view>
               </picker>
             </view>
           </view>
-          <view class="grid-2">
-            <view class="field"><text class="field-label">目标距离（公里）</text><input class="input" type="digit" value="{{apDistance}}" placeholder="例如：5" bindinput="onAppointmentInput" data-key="apDistance" /></view>
-            <view class="field"><text class="field-label">预计时长（分钟）</text><input class="input" type="number" value="{{apDuration}}" placeholder="例如：40" bindinput="onAppointmentInput" data-key="apDuration" /></view>
+          <view class="grid-2 appointment-form-row">
+            <view class="field appointment-form-field"><text class="field-label">目标距离（公里）</text><input class="input" type="digit" value="{{apDistance}}" placeholder="例如：5" bindinput="onAppointmentInput" bindfocus="announceInputFocus" data-key="apDistance" data-voice="目标距离" aria-label="目标距离" /></view>
+            <view class="field appointment-form-field"><text class="field-label">预计时长（分钟）</text><input class="input" type="number" value="{{apDuration}}" placeholder="例如：40" bindinput="onAppointmentInput" bindfocus="announceInputFocus" data-key="apDuration" data-voice="预计时长" aria-label="预计时长" /></view>
           </view>
-          <view class="field"><text class="field-label">集合地点</text><view class="input-action"><input class="input input--bare" value="{{apAddress}}" placeholder="例如：奥林匹克森林公园南门" bindinput="onAppointmentInput" data-key="apAddress" /><view class="btn btn--ghost btn--sm" bindtap="useAppointmentLocation">选点</view></view><text class="field-hint">选择集合地点后，会优先展示附近正在接单的志愿者。</text></view>
-          <view class="field"><text class="field-label">备注</text><textarea class="textarea" value="{{apNote}}" placeholder="希望陪跑节奏轻松一些，集合后电话联系。" bindinput="onAppointmentInput" data-key="apNote"></textarea></view>
-          <view class="btn btn--accent btn--block" bindtap="submitAppointment">发送约跑邀请</view>
+          <view class="field appointment-form-field"><text class="field-label">集合地点</text><view class="input-action"><input class="input input--bare" value="{{apAddress}}" placeholder="例如：奥林匹克森林公园南门" bindinput="onAppointmentInput" bindfocus="announceInputFocus" data-key="apAddress" data-voice="集合地点" aria-label="集合地点" /><view class="btn btn--ghost btn--sm" bindtap="useAppointmentLocation" aria-role="button" aria-label="选择集合地点" data-voice="选择集合地点">选点</view></view><text class="field-hint">选择集合地点后，会优先展示附近正在接单的志愿者。</text></view>
+          <view class="field appointment-form-field"><text class="field-label">备注</text><textarea class="textarea" value="{{apNote}}" placeholder="希望陪跑节奏轻松一些，集合后电话联系。" bindinput="onAppointmentInput" bindfocus="announceInputFocus" data-key="apNote" data-voice="备注" aria-label="备注"></textarea></view>
+          <view class="btn btn--accent btn--block" bindtap="submitAppointment" aria-role="button" aria-label="发送约跑邀请" data-voice="发送约跑邀请">发送约跑邀请</view>
         </view>
 
-        <view class="row row-between"><text class="section-title">我的约跑</text><view class="btn btn--ghost btn--sm" bindtap="loadAppointments">刷新</view></view>
+        <view class="row row-between"><text class="section-title">我的约跑</text><view class="btn btn--ghost btn--sm" bindtap="refreshAppointments" aria-role="button" aria-label="刷新约跑" data-voice="刷新约跑">刷新</view></view>
         <view wx:if="{{appointments.length}}" class="stack-sm">
           <view class="card order-card" wx:for="{{appointments}}" wx:key="_id">
             <view class="row row-between"><view class="chip chip--{{item.statusTone}}">{{item.statusLabel}}</view><text class="metric-tag">{{item.appointmentDate || '待定'}}</text></view>
@@ -549,8 +554,8 @@
               <view wx:if="{{item.status === 'pending' || item.status === 'confirmed'}}" class="btn btn--ghost btn--block btn--sm" bindtap="appointmentAction" data-id="{{item._id}}" data-action="cancel">{{item.status === 'pending' ? '拒绝邀请' : '取消约跑'}}</view>
             </block>
             <block wx:else>
-              <view wx:if="{{item.status === 'confirmed'}}" class="btn btn--accent btn--block btn--sm" bindtap="openCompleteAppointment" data-id="{{item._id}}">完成并评价</view>
-              <view wx:if="{{item.status === 'pending' || item.status === 'confirmed'}}" class="btn btn--ghost btn--block btn--sm" bindtap="appointmentAction" data-id="{{item._id}}" data-action="cancel">取消约跑</view>
+              <view wx:if="{{item.status === 'confirmed'}}" class="btn btn--accent btn--block btn--sm" bindtap="openCompleteAppointment" data-id="{{item._id}}" aria-role="button" aria-label="完成并评价" data-voice="完成并评价">完成并评价</view>
+              <view wx:if="{{item.status === 'pending' || item.status === 'confirmed'}}" class="btn btn--ghost btn--block btn--sm" bindtap="appointmentAction" data-id="{{item._id}}" data-action="cancel" aria-role="button" aria-label="取消约跑" data-voice="取消约跑">取消约跑</view>
             </block>
           </view>
         </view>
@@ -561,10 +566,10 @@
             <view class="sheet-handle"></view>
             <text class="sheet-title">完成并评价</text>
             <view class="chip-group rating-group">
-              <view wx:for="{{ratingOptions}}" wx:key="*this" class="chip chip-toggle {{apRating === item ? 'chip-toggle--on' : ''}}" bindtap="setRating" data-value="{{item}}">{{item}} 分</view>
+              <view wx:for="{{ratingOptions}}" wx:key="*this" class="chip chip-toggle {{apRating === item ? 'chip-toggle--on' : ''}}" bindtap="setRating" data-value="{{item}}" aria-role="button" aria-label="评价{{item}}分" data-voice="评价{{item}}分">{{item}} 分</view>
             </view>
-            <textarea class="textarea" value="{{apComment}}" placeholder="说说这次陪跑的体验吧。" bindinput="onAppointmentInput" data-key="apComment"></textarea>
-            <view class="btn btn--accent btn--block" bindtap="appointmentAction" data-id="{{completingAppointmentId}}" data-action="complete">提交评价</view>
+            <textarea class="textarea" value="{{apComment}}" placeholder="说说这次陪跑的体验吧。" bindinput="onAppointmentInput" bindfocus="announceInputFocus" data-key="apComment" data-voice="评价内容" aria-label="评价内容"></textarea>
+            <view class="btn btn--accent btn--block" bindtap="appointmentAction" data-id="{{completingAppointmentId}}" data-action="complete" aria-role="button" aria-label="提交评价" data-voice="提交评价">提交评价</view>
           </view>
         </view>
       </block>
@@ -589,21 +594,25 @@
 
         <view class="card">
           <text class="section-title">账号资料</text>
-          <view class="field"><text class="field-label">昵称</text><input class="input" value="{{mineNickName}}" placeholder="他人看到的称呼" bindinput="onMineInput" data-key="mineNickName" /></view>
-          <view class="field"><text class="field-label">真实姓名<text class="field-hint">（用于陪跑身份核对）</text></text><input class="input" value="{{mineName}}" placeholder="选填" bindinput="onMineInput" data-key="mineName" /></view>
-          <view class="btn btn--accent btn--block" bindtap="saveProfile">{{savingProfile ? '保存中...' : '保存资料'}}</view>
+          <view class="field"><text class="field-label">昵称</text><input class="input" value="{{mineNickName}}" placeholder="他人看到的称呼" bindinput="onMineInput" bindfocus="announceMineInput" data-key="mineNickName" data-voice="昵称" aria-label="昵称" /></view>
+          <view class="field mine-form-field"><text class="field-label">真实姓名<text class="field-hint">（用于陪跑身份核对）</text></text><input class="input" value="{{mineName}}" placeholder="选填" bindinput="onMineInput" bindfocus="announceMineInput" data-key="mineName" data-voice="真实姓名" aria-label="真实姓名" /></view>
+          <view class="btn btn--accent btn--block" bindtap="saveProfile" aria-role="button" aria-label="保存资料" data-voice="保存资料">{{savingProfile ? '保存中...' : '保存资料'}}</view>
         </view>
 
-        <view wx:if="{{!isVolunteer}}" class="card">
-          <text class="section-title">紧急联系人</text>
-          <text class="body-text">陪跑过程中如遇突发情况，志愿者可第一时间联系到 TA。</text>
-          <view class="field"><text class="field-label">联系人姓名</text><input class="input" value="{{emergencyName}}" placeholder="联系人姓名" bindinput="onMineInput" data-key="emergencyName" /></view>
-          <view class="grid-2">
-            <view class="field"><text class="field-label">联系电话</text><input class="input" type="number" value="{{emergencyPhone}}" placeholder="手机号" bindinput="onMineInput" data-key="emergencyPhone" /></view>
-            <view class="field"><text class="field-label">关系</text><input class="input" value="{{emergencyRelation}}" placeholder="如：家人" bindinput="onMineInput" data-key="emergencyRelation" /></view>
+        <block wx:if="{{!isVolunteer}}">
+          <view class="card">
+            <text class="section-title">紧急联系人</text>
+            <text class="body-text">陪跑过程中如遇突发情况，志愿者可第一时间联系到 TA。</text>
+            <view class="field"><text class="field-label">联系人姓名</text><input class="input" value="{{emergencyName}}" placeholder="联系人姓名" bindinput="onMineInput" bindfocus="announceMineInput" data-key="emergencyName" data-voice="联系人姓名" aria-label="联系人姓名" /></view>
+            <view class="grid-2">
+              <view class="field mine-form-field"><text class="field-label">联系电话</text><input class="input" type="number" value="{{emergencyPhone}}" placeholder="手机号" bindinput="onMineInput" bindfocus="announceMineInput" data-key="emergencyPhone" data-voice="联系电话" aria-label="联系电话" /></view>
+              <view class="field mine-form-field"><text class="field-label">关系</text><input class="input" value="{{emergencyRelation}}" placeholder="如：家人" bindinput="onMineInput" bindfocus="announceMineInput" data-key="emergencyRelation" data-voice="关系" aria-label="关系" /></view>
+            </view>
+            <view class="btn btn--accent btn--block" bindtap="saveEmergency" aria-role="button" aria-label="保存联系人" data-voice="保存联系人">{{savingEmergency ? '保存中...' : '保存联系人'}}</view>
           </view>
-          <view class="btn btn--accent btn--block" bindtap="saveEmergency">{{savingEmergency ? '保存中...' : '保存联系人'}}</view>
-        </view>
+
+          <view class="btn btn--ghost btn--block mine-orders-entry" bindtap="switchTab" data-key="orders" aria-role="button" aria-label="我的订单" data-voice="我的订单">我的订单</view>
+        </block>
 
         <view wx:else class="card">
           <text class="section-title">陪跑资料</text>
@@ -623,14 +632,16 @@
           <view wx:if="{{isVolunteer}}" class="detail-row"><text>陪跑认证</text><text>{{user.certificateNo ? '已认证 · ' + user.certificateNo : (user.examPassed ? '考核已通过' : '未开始认证')}}</text></view>
         </view>
 
-        <view class="btn btn--ghost btn--block" bindtap="logout">退出登录</view>
+        <view class="btn btn--ghost btn--block" bindtap="logout" aria-role="button" aria-label="退出登录" data-voice="退出登录">退出登录</view>
       </block>
     </view>
   </scroll-view>
 
   <view class="bottom-nav">
-    <view wx:for="{{navItems}}" wx:key="key" class="bottom-nav-item {{item.active ? 'is-active' : ''}}" bindtap="switchTab" data-key="{{item.key}}">
-      <view class="bottom-nav-icon">{{item.icon}}</view>
+    <view wx:for="{{navItems}}" wx:key="key" class="bottom-nav-item {{item.active ? 'is-active' : ''}}" bindtap="switchTab" data-key="{{item.key}}" aria-role="button" aria-label="{{item.label}}">
+      <view class="bottom-nav-icon">
+        <image class="bottom-nav-icon-img" src="{{item.active ? item.activeIconPath : item.iconPath}}" mode="aspectFit"></image>
+      </view>
       <text class="bottom-nav-label">{{item.label}}</text>
     </view>
   </view>
