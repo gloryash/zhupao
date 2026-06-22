@@ -3,14 +3,18 @@
     <view class="hud-left">
       <view class="round-btn" bindtap="openHome">‹</view>
       <view class="hud-copy">
-        <text class="hud-kicker">志愿者成长地图</text>
-        <text class="hud-title">光的地图</text>
-        <text class="hud-sub">已点亮 {{mapState.completedRuns}} 次陪跑</text>
+        <text class="hud-kicker">志愿者成长地图・光境远征</text>
+        <text class="hud-title">{{mapState.gameName}}</text>
+        <text class="hud-sub">已点亮陪跑次数 {{mapState.completedRuns}}</text>
       </view>
     </view>
     <view class="hud-stats">
+      <view class="star-meter">
+        <text class="star-meter-icon">★</text>
+        <text class="star-meter-value">{{mapState.totalStars}}</text>
+      </view>
       <view class="hud-stat">
-        <text class="hud-stat-value">{{displayStage.level}}</text>
+        <text class="hud-stat-value">Lv.{{displayStage.level}}</text>
         <text class="hud-stat-label">LEVEL</text>
       </view>
       <view class="hud-stat">
@@ -21,7 +25,7 @@
         <text class="hud-stat-value">{{returnStops.length}}</text>
         <text class="hud-stat-label">STAGE</text>
       </view>
-      <view class="round-btn round-btn--home" bindtap="toggleStagePicker">房</view>
+      <view class="round-btn round-btn--home" bindtap="toggleRoomSheet">房</view>
     </view>
   </view>
 
@@ -42,103 +46,165 @@
     <view class="terrain-shadow terrain-shadow--left"></view>
     <view class="terrain-shadow terrain-shadow--right"></view>
 
-    <view class="terrain-island">
-      <view class="ground-ring ground-ring--outer"></view>
-      <view class="ground-ring ground-ring--middle"></view>
-      <view class="ground-ring ground-ring--inner"></view>
-      <view class="road-main"><view class="road-highlight"></view></view>
-      <view class="road-branch road-branch--top"></view>
-      <view class="road-branch road-branch--right"></view>
-      <view class="road-branch road-branch--bottom"></view>
-      <view class="route-node route-node--start">1</view>
-      <view class="route-node route-node--mid">2</view>
-      <view class="route-node route-node--end {{displayStage.completed ? 'is-complete' : ''}}">{{displayStage.completed ? '5' : '3'}}</view>
-
-      <view
-        wx:for="{{displayStage.landmarks}}"
-        wx:key="id"
-        class="landmark landmark--{{item.visual}} {{item.revealed ? 'is-lit' : 'is-muted'}}"
-        style="left: {{item.x}}%; top: {{item.y}}%;"
-      >
-        <view class="landmark-shadow"></view>
-        <view class="landmark-shape landmark-shape--{{item.visual}}">
-          <view class="park-path"></view>
-          <view class="tree-crown tree-crown--a"></view>
-          <view class="tree-crown tree-crown--b"></view>
-          <view class="tree-trunk"></view>
-          <view class="lake-shape"></view>
-          <view class="lake-shine"></view>
-          <view class="lake-bridge"></view>
-          <view class="shop-base"></view>
-          <view class="shop-roof building-roof"></view>
-          <view class="shop-window"></view>
-          <view class="shop-sign"></view>
-          <view class="bridge-arch"></view>
-          <view class="bridge-road"></view>
-          <view class="windmill-tower"></view>
-          <view class="windmill-hub"></view>
-          <view class="windmill-blades"></view>
-          <view class="tower-body"></view>
-          <view class="tower-top building-roof"></view>
-          <view class="plaza-base"></view>
-          <view class="person-board"></view>
-          <view class="person-body"></view>
-          <view class="person-head"></view>
-          <view class="lamp-post"></view>
-          <view class="lamp-light"></view>
+    <view class="diorama-camera">
+      <view class="terrain-island">
+        <view class="ground-ring ground-ring--outer"></view>
+        <view class="ground-ring ground-ring--middle"></view>
+        <view class="ground-ring ground-ring--inner"></view>
+        <view class="map-lake">
+          <view class="map-lake-shine map-lake-shine--a"></view>
+          <view class="map-lake-shine map-lake-shine--b"></view>
+          <view class="map-lake-bridge"></view>
         </view>
-      </view>
+        <view
+          wx:for="{{displayStage.hexTiles}}"
+          wx:key="id"
+          class="territory-hex is-{{item.state}} territory-hex--{{item.kind}}"
+          style="left: {{item.x}}rpx; top: {{item.y}}rpx;"
+        >
+          <text class="territory-poi">{{item.poi}}</text>
+        </view>
+        <view class="road-main"><view class="road-highlight"></view></view>
+        <view class="road-branch road-branch--top"></view>
+        <view class="road-branch road-branch--right"></view>
+        <view class="road-branch road-branch--bottom"></view>
+        <view class="assist-carrier assist-carrier--{{displayStage.carrierKey}}">
+          <view class="carrier-light"></view>
+          <view class="person-mini volunteer-figure">
+            <view class="person-mini-head"></view>
+            <view class="person-mini-body"></view>
+          </view>
+          <view class="person-mini blind-runner-figure">
+            <view class="person-mini-head"></view>
+            <view class="person-mini-body"></view>
+            <view class="guide-cane"></view>
+          </view>
+        </view>
+        <view
+          wx:for="{{displayStage.routeNodes}}"
+          wx:key="id"
+          class="route-node route-node--{{item.key}} route-node--{{item.status}}"
+          bindtap="showNodeProgress"
+          data-index="{{index}}"
+        >
+          <text class="route-node-label">{{item.label}}</text>
+          <view class="route-node-stars">
+            <text
+              wx:for="{{item.starTokens}}"
+              wx:for-item="star"
+              wx:key="id"
+              class="route-node-star {{star.filled ? 'is-filled' : ''}}"
+            >★</text>
+          </view>
+        </view>
 
-      <view class="fog-edge fog-edge--top"></view>
-      <view class="fog-edge fog-edge--bottom"></view>
-      <view class="fog-edge fog-edge--left"></view>
-      <view class="fog-edge fog-edge--right"></view>
+        <view
+          wx:for="{{displayStage.landmarks}}"
+          wx:key="id"
+          class="landmark landmark--{{item.visual}} {{item.revealed ? 'is-lit' : 'is-muted'}}"
+          style="left: {{item.x}}%; top: {{item.y}}%;"
+        >
+          <view class="landmark-shadow"></view>
+          <view class="landmark-shape landmark-shape--{{item.visual}}">
+            <view class="park-path"></view>
+            <view class="tree-crown tree-crown--a"></view>
+            <view class="tree-crown tree-crown--b"></view>
+            <view class="tree-trunk"></view>
+            <view class="lake-shape"></view>
+            <view class="lake-shine"></view>
+            <view class="lake-bridge"></view>
+            <view class="shop-base"></view>
+            <view class="shop-roof building-roof"></view>
+            <view class="shop-window"></view>
+            <view class="shop-sign"></view>
+            <view class="bridge-arch"></view>
+            <view class="bridge-road"></view>
+            <view class="windmill-tower"></view>
+            <view class="windmill-hub"></view>
+            <view class="windmill-blades"></view>
+            <view class="tower-body"></view>
+            <view class="tower-top building-roof"></view>
+            <view class="plaza-base"></view>
+            <view class="person-board"></view>
+            <view class="person-body"></view>
+            <view class="person-head"></view>
+            <view class="lamp-post"></view>
+            <view class="lamp-light"></view>
+          </view>
+        </view>
+
+        <view class="fog-edge fog-edge--top"></view>
+        <view class="fog-edge fog-edge--bottom"></view>
+        <view class="fog-edge fog-edge--left"></view>
+        <view class="fog-edge fog-edge--right"></view>
+      </view>
     </view>
 
-    <view class="stage-toast">
-      <view class="stage-toast-line">
-        <text class="stage-toast-title">{{displayStage.name}}</text>
-        <text class="stage-toast-meta">Lv.{{displayStage.level}} / {{displayStage.maxLevel}}</text>
-      </view>
-      <text class="stage-toast-desc">{{mapState.nextUnlockText}}</text>
-      <view class="stage-toast-track">
-        <view class="stage-toast-fill" style="width: {{displayStage.progressPct}}%;"></view>
-      </view>
-    </view>
-
-    <view class="stage-switch">
-      <view
-        wx:for="{{mapState.stages}}"
-        wx:key="id"
-        class="stage-switch-item {{item.status === 'locked' ? 'is-locked' : ''}} {{stageIndex === index ? 'is-current' : ''}}"
-        bindtap="jumpToStage"
-        data-index="{{index}}"
-      >
-        <text class="stage-switch-dot">{{item.stageNo}}</text>
-        <text class="stage-switch-label">{{item.shortName}}</text>
+    <view wx:if="{{showNodePopover && selectedNode}}" class="node-progress-popover" catchtap="closeNodeProgress">
+      <view class="node-progress-card" catchtap="noop">
+        <view class="node-progress-head">
+          <view>
+            <text class="node-progress-kicker">{{selectedNode.stageName}} · {{selectedNode.difficulty}}</text>
+            <text class="node-progress-title">{{selectedNode.label}}</text>
+          </view>
+          <view class="node-progress-close" bindtap="closeNodeProgress">×</view>
+        </view>
+        <view class="node-progress-stars">
+          <text
+            wx:for="{{selectedNode.starTokens}}"
+            wx:for-item="star"
+            wx:key="id"
+            class="node-progress-star {{star.filled ? 'is-filled' : ''}}"
+          >★</text>
+          <text class="node-progress-light">+{{selectedNode.light}} LIGHT</text>
+        </view>
+        <text class="node-progress-text">{{selectedNode.progressText}}</text>
+        <text class="node-progress-voice">{{selectedNode.voicePrompt}}</text>
       </view>
     </view>
   </view>
 
-  <view wx:if="{{showStagePicker}}" class="stage-sheet" catchtap="toggleStagePicker">
-    <view class="stage-sheet-panel" catchtap="noop">
+  <view wx:if="{{showRoomSheet}}" class="stage-sheet" catchtap="toggleRoomSheet">
+    <scroll-view class="stage-sheet-panel" scroll-y enhanced show-scrollbar="{{false}}" catchtap="noop">
       <view class="sheet-head">
-        <text class="sheet-title">回到已点亮的地图</text>
-        <text class="sheet-sub">点击后自动跳转，不需要手动拖地图寻找。</text>
+        <text class="sheet-title">房间</text>
+        <text class="sheet-sub">历史关卡、陪跑记录和组队管理；查看当前队伍。</text>
       </view>
-      <view class="return-grid">
+      <view class="room-tabs">
+        <view class="room-tab {{roomTab === 'stages' ? 'is-active' : ''}}" bindtap="switchRoomTab" data-tab="stages">历史关卡</view>
+        <view class="room-tab {{roomTab === 'records' ? 'is-active' : ''}}" bindtap="switchRoomTab" data-tab="records">陪跑记录</view>
+        <view class="room-tab {{roomTab === 'team' ? 'is-active' : ''}}" bindtap="switchRoomTab" data-tab="team">组队管理</view>
+      </view>
+      <view wx:if="{{roomTab === 'stages'}}" class="return-grid">
         <view
-          wx:for="{{returnStops}}"
+          wx:for="{{roomStages}}"
           wx:key="id"
-          class="return-stop {{item.current ? 'is-current' : ''}}"
+          class="return-stop {{item.active ? 'is-current' : ''}} {{item.locked ? 'is-locked' : ''}}"
           bindtap="jumpToStage"
-          data-index="{{item.index}}"
+          data-index="{{index}}"
         >
           <view class="return-mini-map return-mini-map--{{item.id}}"></view>
-          <text class="return-name">{{item.label}}</text>
-          <text class="return-meta">{{item.current ? '当前所在' : '已点亮'}}</text>
+          <text class="return-name">{{item.name}}</text>
+          <text class="return-meta">{{item.difficulty}} · {{item.status === 'locked' ? '未解锁' : (item.status === 'completed' ? '已满星' : '进行中')}}</text>
         </view>
       </view>
-    </view>
+      <view wx:elif="{{roomTab === 'records'}}" class="room-section">
+        <text class="room-section-title">陪跑记录</text>
+        <view class="run-record" wx:for="{{mapState.runHistory}}" wx:key="id">
+          <text class="run-record-title">{{item.label}}</text>
+          <text class="run-record-meta">{{item.result}} · {{item.stars}} 星 · {{item.light}} 光值</text>
+        </view>
+      </view>
+      <view wx:elif="{{roomTab === 'team'}}" class="room-section">
+        <text class="room-section-title">组队管理</text>
+        <view class="team-row">
+          <view class="team-slot" wx:for="{{mapState.teamSlots}}" wx:key="id">
+            <text class="team-avatar">队</text>
+            <text class="team-name">{{item.name}}</text>
+            <text class="team-role">{{item.role}}</text>
+          </view>
+        </view>
+      </view>
+    </scroll-view>
   </view>
 </view>

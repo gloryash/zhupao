@@ -86,7 +86,7 @@
           </view>
         </block>
 
-        <view wx:if="{{isVolunteer}}" class="btn btn--accent btn--block" bindtap="openLightMap">前往光的地图 →</view>
+        <view wx:if="{{isVolunteer}}" class="btn btn--accent btn--block" bindtap="openLightMap">前往光境远征 →</view>
         <view wx:else class="btn btn--accent btn--block" bindtap="switchTab" data-key="sport">发起一次陪跑 →</view>
         <view class="btn btn--ghost btn--block" bindtap="switchTab" data-key="appointments">{{isVolunteer ? '查看约跑日程' : '预约约跑'}}</view>
       </block>

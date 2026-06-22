@@ -12,7 +12,7 @@ test('volunteer home primary action opens the light map page', () => {
 
   assert.ok(appJson.pages.includes('pages/light-map/light-map'));
   assert.match(homeWxml, /bindtap="openLightMap"/);
-  assert.match(homeWxml, /前往光的地图/);
+  assert.match(homeWxml, /前往光境远征/);
   assert.match(homeJs, /openLightMap\(\)/);
   assert.match(homeJs, /wx\.navigateTo\(\{\s*url: '\/pages\/light-map\/light-map'/);
 });

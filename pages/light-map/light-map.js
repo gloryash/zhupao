@@ -15,7 +15,11 @@ Page({
     displayStage: decorateStageForView(INITIAL_MAP_STATE.currentStage),
     stageIndex: 0,
     returnStops: lightMap.buildReturnStops(INITIAL_MAP_STATE),
-    showStagePicker: false
+    roomStages: INITIAL_MAP_STATE.stages,
+    selectedNode: decorateNodeForPopover(INITIAL_MAP_STATE.currentStage, INITIAL_MAP_STATE.currentStage.routeNodes[0], INITIAL_MAP_STATE),
+    showNodePopover: false,
+    showRoomSheet: false,
+    roomTab: 'stages'
   },
 
   onLoad() {
@@ -42,6 +46,8 @@ Page({
         displayStage: decorateStageForView(mapState.currentStage),
         stageIndex: mapState.currentStageIndex,
         returnStops: lightMap.buildReturnStops(mapState),
+        roomStages: mapState.stages,
+        selectedNode: decorateNodeForPopover(mapState.currentStage, mapState.currentStage.routeNodes[0], mapState),
         loading: false
       });
     } catch (err) {
@@ -49,8 +55,33 @@ Page({
     }
   },
 
-  toggleStagePicker() {
-    this.setData({ showStagePicker: !this.data.showStagePicker });
+  toggleRoomSheet() {
+    this.setData({
+      showRoomSheet: !this.data.showRoomSheet,
+      roomTab: this.data.showRoomSheet ? this.data.roomTab : 'stages'
+    });
+  },
+
+  switchRoomTab(e) {
+    const tab = e.currentTarget.dataset.tab;
+    if (!['stages', 'records', 'team'].includes(tab)) return;
+    this.setData({ roomTab: tab });
+  },
+
+  showNodeProgress(e) {
+    const index = Number(e.currentTarget.dataset.index);
+    const node = this.data.displayStage && this.data.displayStage.routeNodes
+      ? this.data.displayStage.routeNodes[index]
+      : null;
+    if (!node) return;
+    this.setData({
+      selectedNode: decorateNodeForPopover(this.data.displayStage, node, this.data.mapState),
+      showNodePopover: true
+    });
+  },
+
+  closeNodeProgress() {
+    this.setData({ showNodePopover: false });
   },
 
   jumpToStage(e) {
@@ -58,7 +89,7 @@ Page({
     if (!this.data.mapState || !Number.isFinite(index)) return;
     const displayStage = this.data.mapState.stages[index] || this.data.mapState.currentStage;
     if (displayStage.locked) return;
-    this.setData({ stageIndex: index, displayStage: decorateStageForView(displayStage), showStagePicker: false });
+    this.setData({ stageIndex: index, displayStage: decorateStageForView(displayStage), showRoomSheet: false });
   },
 
   openHome() {
@@ -77,8 +108,29 @@ Page({
 function decorateStageForView(stage) {
   if (!stage) return null;
   const opacity = Math.min(1, stage.progressPct / 100 + 0.25);
+  const carrierNodeIndex = Math.max(0, Math.min(stage.routeNodes.length - 1, stage.level - 1));
+  const carrierNode = stage.routeNodes[carrierNodeIndex] || stage.routeNodes[0];
   return {
     ...stage,
+    carrierKey: carrierNode ? carrierNode.key : 'start',
     lightOpacity: opacity.toFixed(2)
+  };
+}
+
+function decorateNodeForPopover(stage, node, mapState) {
+  if (!stage || !node) return null;
+  const nextText = node.status === 'completed'
+    ? '周边地块已点亮'
+    : node.status === 'active'
+      ? mapState.nextUnlockText
+      : '沿主线完成前置关卡后开放';
+
+  return {
+    ...node,
+    stageName: stage.name,
+    difficulty: stage.difficulty,
+    challenge: stage.challenge,
+    progressText: nextText,
+    voicePrompt: mapState.voicePrompt
   };
 }
